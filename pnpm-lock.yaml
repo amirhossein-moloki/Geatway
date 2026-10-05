@@ -29,6 +29,23 @@ importers:
         specifier: ^1.6.0
         version: 1.6.1
 
+  examples/basic-mellat:
+    dependencies:
+      '@company/payment-core':
+        specifier: workspace:*
+        version: link:../../packages/payment-core
+      '@company/payment-mellat':
+        specifier: workspace:*
+        version: link:../../packages/payment-mellat
+
+  packages/payment-core: {}
+
+  packages/payment-mellat:
+    dependencies:
+      '@company/payment-core':
+        specifier: workspace:*
+        version: link:../payment-core
+
 packages:
   '@esbuild/aix-ppc64@0.21.5':
     resolution:

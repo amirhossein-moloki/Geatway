@@ -1,0 +1,10 @@
+{
+  "name": "basic-mellat-example",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@company/payment-core": "workspace:*",
+    "@company/payment-mellat": "workspace:*"
+  }
+}
