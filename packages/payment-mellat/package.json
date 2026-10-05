@@ -1,0 +1,41 @@
+{
+  "name": "@company/payment-mellat",
+  "version": "1.0.0",
+  "description": "Payment gateway implementation for Mellat PSP based on Mellat.md specification",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rimraf dist",
+    "lint": "eslint 'src/**/*.ts' 'tests/**/*.ts'",
+    "lint:fix": "eslint 'src/**/*.ts' 'tests/**/*.ts' --fix",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@company/payment-core": "workspace:*"
+  },
+  "keywords": [
+    "payment",
+    "gateway",
+    "mellat",
+    "behperedasht",
+    "typescript"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
