@@ -73,10 +73,7 @@ query {
 
 ```graphql
 mutation {
-  CardAdd(
-    pan: "1111222233334444",
-    expired_at: "2020-02-05 00:00:00"
-  ) {
+  CardAdd(pan: "1111222233334444", expired_at: "2020-02-05 00:00:00") {
     id
   }
 }
@@ -112,14 +109,14 @@ GraphQL زرین‌پال از Typeهای مختلفی استفاده می‌ک�
 
 مهم‌ترین Typeها عبارت‌اند از:
 
-| Type | کاربرد |
-|---|---|
-| `String` | رشته متنی |
-| `Int` | عدد صحیح |
-| `DateTime` | تاریخ و زمان |
-| `ID` | شناسه یکتا |
-| `Boolean` | مقدار صحیح/غلط |
-| `Enum` | مجموعه‌ای از مقادیر مشخص |
+| Type       | کاربرد                   |
+| ---------- | ------------------------ |
+| `String`   | رشته متنی                |
+| `Int`      | عدد صحیح                 |
+| `DateTime` | تاریخ و زمان             |
+| `ID`       | شناسه یکتا               |
+| `Boolean`  | مقدار صحیح/غلط           |
+| `Enum`     | مجموعه‌ای از مقادیر مشخص |
 
 علامت `!` در GraphQL نشان‌دهنده **Non-Null** بودن مقدار است.
 
@@ -201,17 +198,15 @@ pnpm add zarinpal-node-sdk
 نمونه ساده:
 
 ```javascript
-const response = await fetch(
-  'https://next.zarinpal.com/api/v4/graphql/',
-  {
-    method: 'POST',
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${ACCESS_TOKEN}`
-    },
-    body: JSON.stringify({
-      query: `
+const response = await fetch('https://next.zarinpal.com/api/v4/graphql/', {
+  method: 'POST',
+  headers: {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${ACCESS_TOKEN}`,
+  },
+  body: JSON.stringify({
+    query: `
         query {
           Application {
             application
@@ -219,10 +214,9 @@ const response = await fetch(
           }
         }
       `,
-      variables: null
-    })
-  }
-);
+    variables: null,
+  }),
+});
 
 const data = await response.json();
 
