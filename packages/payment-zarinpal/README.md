@@ -1,0 +1,54 @@
+# @company/payment-zarinpal
+
+درگاه پرداخت زرین‌پال (GraphQL) برای اکوسیستم `@company/payment-core`.
+
+## Source of Truth
+
+پیاده‌سازی این پکیج کاملاً مستند بر اساس فایل `zarinpall.md` و معماری GraphQL نسخه 4 زرین‌پال انجام شده است.
+
+## نصب
+
+```bash
+pnpm add @company/payment-zarinpal @company/payment-core
+```
+
+## نحوه استفاده
+
+```ts
+import { GatewayRegistry, Payment } from '@company/payment-core';
+import { ZarinpalGateway } from '@company/payment-zarinpal';
+
+const registry = new GatewayRegistry();
+
+const zarinpalGateway = new ZarinpalGateway({
+  accessToken: 'YOUR_ACCESS_TOKEN',
+  merchantId: 'YOUR_MERCHANT_ID',
+  callbackUrl: 'https://yourdomain.com/callback',
+});
+
+registry.register(zarinpalGateway);
+
+// Create Payment
+const payment = Payment.create({
+  id: 'order-2002',
+  amount: 200000, // Toman/Rial based on store policy
+  currency: 'IRR',
+  gatewayId: 'zarinpal',
+  description: 'خرید اشتراک',
+});
+
+const result = await zarinpalGateway.createPayment({ payment });
+console.log(result.redirectUrl);
+```
+
+## قابلیت‌ها (Capabilities)
+
+- `CREATE_PAYMENT`
+- `VERIFY`
+- `CALLBACK`
+
+## تست‌ها
+
+```bash
+pnpm --filter @company/payment-zarinpal test
+```
