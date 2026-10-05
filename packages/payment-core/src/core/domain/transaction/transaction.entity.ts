@@ -1,5 +1,8 @@
 export enum TransactionType {
   PAYMENT = 'PAYMENT',
+  AUTHORIZATION = 'AUTHORIZATION',
+  CAPTURE = 'CAPTURE',
+  CANCEL = 'CANCEL',
   VERIFY = 'VERIFY',
   REFUND = 'REFUND',
   REVERSE = 'REVERSE',

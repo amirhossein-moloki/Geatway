@@ -1,5 +1,8 @@
 export enum GatewayCapability {
   CREATE_PAYMENT = 'CREATE_PAYMENT',
+  AUTHORIZE = 'AUTHORIZE',
+  CAPTURE = 'CAPTURE',
+  CANCEL = 'CANCEL',
   VERIFY = 'VERIFY',
   INQUIRY = 'INQUIRY',
   REFUND = 'REFUND',
