@@ -1,34 +1,68 @@
-# Payment Platform Core Foundation (@payment-platform/core)
+# Payment Platform Ecosystem
 
-Phase 1 implementation of the Core Payment Gateway Platform architecture in TypeScript and Node.js.
+Professional, modular, provider-agnostic multi-gateway payment orchestration platform built with Node.js, pnpm workspaces, and TypeScript (Strict Mode).
 
-## Overview
-This package provides a provider-agnostic core payment orchestration domain designed to handle Iranian and international payment gateways using capability-based gateway contracts, strict status transitions, standard error handling, and in-memory gateway registry.
+## Project Goal
 
-## Features
-- **Provider-Agnostic Core Domain**: Decoupled from specific provider APIs.
-- **Capability-Based Gateway Contracts**: Gateways only declare and implement capabilities they support (`CREATE_PAYMENT`, `VERIFY`, `INQUIRY`, `REFUND`, `REVERSE`, `WEBHOOK`, `TOKENIZATION`, `RECURRING`).
-- **Payment Lifecycle State Machine**: Enforces strict state transition rules for payments.
-- **Gateway Registry**: In-memory registry for registering, enabling/disabling, and inspecting gateways and capabilities.
-- **Standardized Error Hierarchy**: Error classes with error codes, HTTP status mapping, and JSON serialization.
-- **Mock Gateway**: Built-in test gateway for contract validation.
+The Payment Platform ecosystem is designed to standardise payment processing across Iranian (Mellat, Zarinpal, Zibal, Saman, etc.) and international (Stripe, PayPal, Adyen, etc.) payment gateways.
 
-## Installation & Setup
+## Architecture & Monorepo Structure
 
-```bash
-# Install dependencies
-npm install
-
-# Build TypeScript output
-npm run build
-
-# Run unit tests
-npm test
-
-# Check code formatting & linting
-npm run lint
-npm run format:check
+```text
+payment-platform/
+├── packages/
+│   └── payment-core/        # Provider-agnostic domain models, gateway contracts, & registry
+├── examples/
+│   └── basic-usage.ts       # Example showing Core + Registry usage
+├── docs/
+│   └── architecture.md      # Detailed architectural specification
+├── package.json             # Workspace root config
+├── pnpm-workspace.yaml      # Monorepo workspace configuration
+├── tsconfig.json            # Base strict TypeScript config
+├── eslint.config.js         # Workspace ESLint rules
+└── prettier.config.js       # Workspace formatting config
 ```
 
-## Architecture Documentation
-For details on architectural decisions, state transitions, gateway capability contracts, and future extensions, see [ARCHITECTURE.md](./ARCHITECTURE.md).
+### Dependency Direction Rules
+
+1. **Core is Independent**: `@company/payment-core` does NOT depend on any payment provider or framework.
+2. **Providers depend on Core**: Future provider packages (e.g. `@company/payment-mellat`) will import contracts and domain interfaces from `@company/payment-core`.
+3. **Explicit Registration**: Core does not hardcode provider packages. Providers register explicitly via `GatewayRegistry`.
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js >= 18
+- pnpm >= 8
+
+### Installation & Commands
+
+```bash
+# Install workspace dependencies
+pnpm install
+
+# Build all packages
+pnpm build
+
+# Run unit test suite across workspace
+pnpm test
+
+# Run ESLint across workspace
+pnpm lint
+
+# Check code formatting
+pnpm run format:check
+```
+
+## Future Architecture Roadmap (Phase 2+)
+
+```text
+packages/
+├── payment-core/
+├── payment-mellat/      # Phase 2
+├── payment-zarinpal/    # Phase 3
+├── payment-zibal/
+├── payment-stripe/
+└── ...
+```

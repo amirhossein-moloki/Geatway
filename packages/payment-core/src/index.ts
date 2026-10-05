@@ -5,7 +5,7 @@ export * from './core/domain/transaction/transaction.entity.js';
 export * from './core/domain/gateway/gateway.info.js';
 export * from './core/contracts/payment-gateway.interface.js';
 export * from './core/configuration/gateway-configuration.interface.js';
+export * from './core/idempotency/idempotency-store.interface.js';
 export * from './core/errors/index.js';
 export * from './core/registry/gateway.registry.js';
 export * from './core/services/payment.service.js';
-export * from './mock/mock-gateway.js';

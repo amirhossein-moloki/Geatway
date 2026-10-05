@@ -1,28 +1,16 @@
 {
-  "name": "@payment-platform/core",
+  "name": "payment-platform-monorepo",
   "version": "1.0.0",
-  "description": "Core foundation for multi-gateway payment platform",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "private": true,
+  "description": "Payment Platform Monorepo Ecosystem",
   "scripts": {
-    "build": "tsc",
-    "clean": "rimraf dist",
-    "lint": "eslint 'src/**/*.ts' 'tests/**/*.ts'",
-    "lint:fix": "eslint 'src/**/*.ts' 'tests/**/*.ts' --fix",
-    "format": "prettier --write 'src/**/*.ts' 'tests/**/*.ts'",
-    "format:check": "prettier --check 'src/**/*.ts' 'tests/**/*.ts'",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "build": "pnpm --recursive run build",
+    "test": "pnpm --recursive run test",
+    "lint": "pnpm --recursive run lint",
+    "lint:fix": "pnpm --recursive run lint:fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
-  "keywords": [
-    "payment",
-    "gateway",
-    "core",
-    "typescript"
-  ],
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
@@ -31,5 +19,9 @@
     "prettier": "^3.2.5",
     "typescript": "^5.4.5",
     "vitest": "^1.6.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
   }
 }
