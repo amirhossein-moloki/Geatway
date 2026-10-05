@@ -12,9 +12,59 @@ export interface CreatePaymentRequest {
 export interface CreatePaymentResponse {
   readonly success: boolean;
   readonly redirectUrl?: string;
+  readonly actionUrl?: string;
+  readonly action?: Record<string, unknown>;
   readonly gatewayTransactionId?: string;
   readonly reference?: string;
   readonly status: PaymentStatus;
+  readonly metadata?: Record<string, unknown>;
+  readonly rawResponse?: unknown;
+}
+
+export interface AuthorizePaymentRequest {
+  readonly payment: Payment;
+  readonly options?: Record<string, unknown>;
+}
+
+export interface AuthorizePaymentResponse {
+  readonly success: boolean;
+  readonly gatewayTransactionId?: string;
+  readonly reference?: string;
+  readonly status: PaymentStatus;
+  readonly redirectUrl?: string;
+  readonly actionUrl?: string;
+  readonly action?: Record<string, unknown>;
+  readonly metadata?: Record<string, unknown>;
+  readonly rawResponse?: unknown;
+}
+
+export interface CapturePaymentRequest {
+  readonly paymentId: string;
+  readonly amount: number;
+  readonly currency: string;
+  readonly gatewayTransactionId?: string;
+  readonly options?: Record<string, unknown>;
+}
+
+export interface CapturePaymentResponse {
+  readonly success: boolean;
+  readonly status: PaymentStatus;
+  readonly amountCaptured: number;
+  readonly captureTransactionId?: string;
+  readonly metadata?: Record<string, unknown>;
+  readonly rawResponse?: unknown;
+}
+
+export interface CancelPaymentRequest {
+  readonly paymentId: string;
+  readonly gatewayTransactionId?: string;
+  readonly reason?: string;
+  readonly options?: Record<string, unknown>;
+}
+
+export interface CancelPaymentResponse {
+  readonly success: boolean;
+  readonly cancelTransactionId?: string;
   readonly metadata?: Record<string, unknown>;
   readonly rawResponse?: unknown;
 }
@@ -119,6 +169,18 @@ export interface ParsedWebhookResult {
 
 export interface CanCreatePayment {
   createPayment(request: CreatePaymentRequest): Promise<CreatePaymentResponse>;
+}
+
+export interface CanAuthorize {
+  authorize(request: AuthorizePaymentRequest): Promise<AuthorizePaymentResponse>;
+}
+
+export interface CanCapture {
+  capture(request: CapturePaymentRequest): Promise<CapturePaymentResponse>;
+}
+
+export interface CanCancel {
+  cancel(request: CancelPaymentRequest): Promise<CancelPaymentResponse>;
 }
 
 export interface CanVerify {

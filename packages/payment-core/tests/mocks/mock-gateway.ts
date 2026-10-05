@@ -1,6 +1,9 @@
 import {
   PaymentGateway,
   CanCreatePayment,
+  CanAuthorize,
+  CanCapture,
+  CanCancel,
   CanVerify,
   CanInquire,
   CanRefund,
@@ -9,6 +12,12 @@ import {
   CanHandleWebhook,
   CreatePaymentRequest,
   CreatePaymentResponse,
+  AuthorizePaymentRequest,
+  AuthorizePaymentResponse,
+  CapturePaymentRequest,
+  CapturePaymentResponse,
+  CancelPaymentRequest,
+  CancelPaymentResponse,
   VerifyPaymentRequest,
   VerifyPaymentResponse,
   InquiryPaymentRequest,
@@ -41,6 +50,9 @@ export class MockGateway
   implements
     PaymentGateway,
     CanCreatePayment,
+    CanAuthorize,
+    CanCapture,
+    CanCancel,
     CanVerify,
     CanInquire,
     CanRefund,
@@ -63,6 +75,9 @@ export class MockGateway
 
     this.capabilities = new Set<GatewayCapability>([
       GatewayCapability.CREATE_PAYMENT,
+      GatewayCapability.AUTHORIZE,
+      GatewayCapability.CAPTURE,
+      GatewayCapability.CANCEL,
       GatewayCapability.VERIFY,
       GatewayCapability.INQUIRY,
       GatewayCapability.REFUND,
@@ -74,6 +89,38 @@ export class MockGateway
 
   public supportsCapability(capability: GatewayCapability): boolean {
     return this.capabilities.has(capability);
+  }
+
+  public async authorize(request: AuthorizePaymentRequest): Promise<AuthorizePaymentResponse> {
+    const gatewayTxId = `mock_auth_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    return {
+      success: true,
+      gatewayTransactionId: gatewayTxId,
+      reference: `ref_${gatewayTxId}`,
+      status: PaymentStatus.AUTHORIZED,
+      metadata: { mockAuthorized: true, paymentId: request.payment.id },
+      rawResponse: { code: 100, message: 'Mock authorization successful' },
+    };
+  }
+
+  public async capture(request: CapturePaymentRequest): Promise<CapturePaymentResponse> {
+    return {
+      success: true,
+      status: PaymentStatus.SUCCESS,
+      amountCaptured: request.amount,
+      captureTransactionId: `mock_cap_${Date.now()}`,
+      metadata: { mockCaptured: true },
+      rawResponse: { code: 100, message: 'Mock capture successful' },
+    };
+  }
+
+  public async cancel(request: CancelPaymentRequest): Promise<CancelPaymentResponse> {
+    return {
+      success: true,
+      cancelTransactionId: `mock_cancel_${Date.now()}`,
+      metadata: { mockCancelled: true, reason: request.reason },
+      rawResponse: { code: 100, message: 'Mock cancel successful' },
+    };
   }
 
   public async createPayment(request: CreatePaymentRequest): Promise<CreatePaymentResponse> {
