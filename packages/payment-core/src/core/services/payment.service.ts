@@ -23,7 +23,7 @@ import {
   RefundPaymentRequest,
   ReversePaymentRequest,
 } from '../contracts/payment-gateway.interface.js';
-import { UnsupportedCapabilityError } from '../errors/index.js';
+import { UnsupportedCapabilityError, ValidationError } from '../errors/index.js';
 
 export class PaymentService {
   constructor(private readonly gatewayRegistry: GatewayRegistry) {}
@@ -32,6 +32,10 @@ export class PaymentService {
     payment: Payment,
     options?: Record<string, unknown>,
   ): Promise<{ payment: Payment; response: CreatePaymentResponse; transaction: Transaction }> {
+    if (!payment.gateway) {
+      throw new ValidationError('Gateway must be specified on payment entity');
+    }
+
     const gateway = this.gatewayRegistry.getActiveGateway(
       payment.gateway,
       GatewayCapability.CREATE_PAYMENT,
@@ -71,6 +75,10 @@ export class PaymentService {
     payment: Payment,
     request: Omit<VerifyPaymentRequest, 'paymentId' | 'amount' | 'currency'>,
   ): Promise<{ payment: Payment; response: VerifyPaymentResponse; transaction: Transaction }> {
+    if (!payment.gateway) {
+      throw new ValidationError('Gateway must be specified on payment entity');
+    }
+
     const gateway = this.gatewayRegistry.getActiveGateway(
       payment.gateway,
       GatewayCapability.VERIFY,
@@ -112,6 +120,10 @@ export class PaymentService {
     payment: Payment,
     request?: Omit<InquiryPaymentRequest, 'paymentId'>,
   ): Promise<{ payment: Payment; response: InquiryPaymentResponse; transaction: Transaction }> {
+    if (!payment.gateway) {
+      throw new ValidationError('Gateway must be specified on payment entity');
+    }
+
     const gateway = this.gatewayRegistry.getActiveGateway(
       payment.gateway,
       GatewayCapability.INQUIRY,
@@ -151,6 +163,10 @@ export class PaymentService {
     payment: Payment,
     request: Omit<RefundPaymentRequest, 'paymentId' | 'amount' | 'currency'> & { amount?: number },
   ): Promise<{ payment: Payment; response: RefundPaymentResponse; transaction: Transaction }> {
+    if (!payment.gateway) {
+      throw new ValidationError('Gateway must be specified on payment entity');
+    }
+
     const gateway = this.gatewayRegistry.getActiveGateway(
       payment.gateway,
       GatewayCapability.REFUND,
@@ -191,6 +207,10 @@ export class PaymentService {
     payment: Payment,
     request?: Omit<ReversePaymentRequest, 'paymentId'>,
   ): Promise<{ payment: Payment; response: ReversePaymentResponse; transaction: Transaction }> {
+    if (!payment.gateway) {
+      throw new ValidationError('Gateway must be specified on payment entity');
+    }
+
     const gateway = this.gatewayRegistry.getActiveGateway(
       payment.gateway,
       GatewayCapability.REVERSE,

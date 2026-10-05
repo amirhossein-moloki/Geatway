@@ -1,14 +1,14 @@
 import { PaymentStatus, PaymentStateMachine } from './payment-status.enum.js';
-import { InvalidStateTransitionError, ValidationError } from '../../errors/index.js';
+import { InvalidPaymentStateError, ValidationError } from '../../errors/index.js';
 
 export interface CreatePaymentProps {
   id?: string;
-  projectId: string;
+  projectId?: string;
   amount: number;
   currency: string;
   description?: string;
   callbackUrl?: string;
-  gateway: string;
+  gateway?: string;
   status?: PaymentStatus;
   metadata?: Record<string, unknown>;
   idempotencyKey?: string;
@@ -18,12 +18,12 @@ export interface CreatePaymentProps {
 
 export class Payment {
   public readonly id: string;
-  public readonly projectId: string;
+  public readonly projectId?: string;
   public readonly amount: number;
   public readonly currency: string;
   public readonly description?: string;
   public readonly callbackUrl?: string;
-  public readonly gateway: string;
+  public readonly gateway?: string;
   private _status: PaymentStatus;
   public readonly metadata: Record<string, unknown>;
   public readonly idempotencyKey?: string;
@@ -31,17 +31,11 @@ export class Payment {
   private _updatedAt: Date;
 
   constructor(props: CreatePaymentProps) {
-    if (!props.projectId) {
-      throw new ValidationError('Payment projectId is required');
-    }
-    if (props.amount <= 0) {
+    if (props.amount === undefined || props.amount === null || props.amount <= 0) {
       throw new ValidationError('Payment amount must be greater than 0');
     }
     if (!props.currency) {
       throw new ValidationError('Payment currency is required');
-    }
-    if (!props.gateway) {
-      throw new ValidationError('Payment gateway is required');
     }
 
     this.id = props.id || Payment.generateId();
@@ -68,7 +62,7 @@ export class Payment {
 
   public transitionTo(newStatus: PaymentStatus): void {
     if (!PaymentStateMachine.canTransition(this._status, newStatus)) {
-      throw new InvalidStateTransitionError(this._status, newStatus);
+      throw new InvalidPaymentStateError(this._status, newStatus);
     }
     this._status = newStatus;
     this._updatedAt = new Date();

@@ -21,10 +21,10 @@ import {
   ParsedCallbackResult,
   WebhookRequest,
   ParsedWebhookResult,
-} from '../core/contracts/payment-gateway.interface.js';
-import { GatewayCapability } from '../core/domain/capabilities/gateway-capability.enum.js';
-import { PaymentStatus } from '../core/domain/payment/payment-status.enum.js';
-import { GatewayError } from '../core/errors/index.js';
+} from '../../src/core/contracts/payment-gateway.interface.js';
+import { GatewayCapability } from '../../src/core/domain/capabilities/gateway-capability.enum.js';
+import { PaymentStatus } from '../../src/core/domain/payment/payment-status.enum.js';
+import { GatewayError } from '../../src/core/errors/index.js';
 
 export interface MockGatewayOptions {
   id?: string;
@@ -67,6 +67,7 @@ export class MockGateway
       GatewayCapability.INQUIRY,
       GatewayCapability.REFUND,
       GatewayCapability.REVERSE,
+      GatewayCapability.CALLBACK,
       GatewayCapability.WEBHOOK,
     ]);
   }
