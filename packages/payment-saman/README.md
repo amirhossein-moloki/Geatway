@@ -46,6 +46,15 @@ console.log(result.gatewayTransactionId); // Token
 - `REVERSE`
 - `CALLBACK`
 
+## Sandbox / Test Environment
+
+- **Sandbox Availability**: Unknown / Not Documented in Postman collection specification (`Saman.json`).
+- **Endpoint**: `https://sep.shaparak.ir/OnlinePG/OnlinePG` (Production endpoint).
+- **Environment Selection**: Set `environment: "sandbox"` in `SamanConfig`.
+- **Required Configuration for Sandbox**: Custom `tokenUrl` and `verifyUrl` test endpoints must be supplied when using sandbox mode.
+- **Production Safety**: Initializing with `environment: "sandbox"` without providing custom test URLs throws `ConfigurationError`.
+- **Supported Test Operations**: Token Request (`GetToken`), `VerifyTranscation`, `ReverseTranscation`, Callback parsing.
+
 ## تست‌ها
 
 ```bash

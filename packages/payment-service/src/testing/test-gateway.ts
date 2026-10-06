@@ -35,6 +35,25 @@ import {
   GatewayError,
 } from '@company/payment-core';
 
+export type MockGatewayScenario =
+  | 'success'
+  | 'declined'
+  | 'timeout'
+  | 'network-error'
+  | 'provider-error'
+  | 'invalid-state'
+  | 'customer-action-required'
+  | 'pending';
+
+export interface TestGatewayOptions {
+  id?: string;
+  displayName?: string;
+  scenario?: MockGatewayScenario;
+  shouldFail?: boolean;
+  failureMessage?: string;
+  simulatedDelayMs?: number;
+}
+
 export class TestGateway
   implements
     PaymentGateway,
@@ -54,13 +73,28 @@ export class TestGateway
   public isEnabled: boolean;
   public capabilities: Set<GatewayCapability>;
 
+  public scenario: MockGatewayScenario = 'success';
   public shouldFail = false;
   public failureMessage = 'Simulated Gateway Error';
+  public simulatedDelayMs = 0;
   public callCount: Record<string, number> = {};
 
-  constructor(id = 'test-gateway', displayName = 'Test Payment Gateway') {
-    this.id = id;
-    this.displayName = displayName;
+  constructor(
+    idOrOptions: string | TestGatewayOptions = 'test-gateway',
+    displayName = 'Test Payment Gateway',
+  ) {
+    if (typeof idOrOptions === 'object') {
+      this.id = idOrOptions.id || 'test-gateway';
+      this.displayName = idOrOptions.displayName || 'Test Payment Gateway';
+      this.scenario = idOrOptions.scenario || 'success';
+      this.shouldFail = idOrOptions.shouldFail ?? false;
+      this.failureMessage = idOrOptions.failureMessage || 'Simulated Gateway Error';
+      this.simulatedDelayMs = idOrOptions.simulatedDelayMs || 0;
+    } else {
+      this.id = idOrOptions;
+      this.displayName = displayName;
+    }
+
     this.isEnabled = true;
     this.capabilities = new Set([
       GatewayCapability.CREATE_PAYMENT,
@@ -80,15 +114,59 @@ export class TestGateway
     return this.capabilities.has(capability);
   }
 
-  private recordCall(method: string): void {
+  private async handleSimulation(method: string): Promise<void> {
     this.callCount[method] = (this.callCount[method] || 0) + 1;
+
+    if (this.simulatedDelayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, this.simulatedDelayMs));
+    }
+
+    if (this.shouldFail) {
+      throw new GatewayError(this.failureMessage, this.id, 'SIMULATED_FAILURE');
+    }
+
+    switch (this.scenario) {
+      case 'declined':
+        throw new GatewayError('Card declined by issuer', this.id, 'CARD_DECLINED');
+      case 'timeout':
+        throw new GatewayError('Gateway request timed out', this.id, 'REQUEST_TIMEOUT');
+      case 'network-error':
+        throw new GatewayError('Network connection failed', this.id, 'ECONNREFUSED');
+      case 'provider-error':
+        throw new GatewayError('Internal provider error', this.id, 'PROVIDER_ERROR');
+      case 'invalid-state':
+        throw new GatewayError('Operation invalid for current state', this.id, 'INVALID_STATE');
+      case 'success':
+      case 'customer-action-required':
+      case 'pending':
+      default:
+        break;
+    }
   }
 
   public async createPayment(request: CreatePaymentRequest): Promise<CreatePaymentResponse> {
-    this.recordCall('createPayment');
-    if (this.shouldFail) {
-      throw new GatewayError(this.failureMessage, this.id);
+    await this.handleSimulation('createPayment');
+
+    if (this.scenario === 'customer-action-required') {
+      return {
+        success: true,
+        status: PaymentStatus.PENDING,
+        redirectUrl: `https://test-gateway.com/action/${request.payment.id}`,
+        gatewayTransactionId: `gtx_${request.payment.id}`,
+        reference: `ref_${request.payment.id}`,
+      };
     }
+
+    if (this.scenario === 'pending') {
+      return {
+        success: true,
+        status: PaymentStatus.PENDING,
+        redirectUrl: `https://test-gateway.com/pay/${request.payment.id}`,
+        gatewayTransactionId: `gtx_${request.payment.id}`,
+        reference: `ref_${request.payment.id}`,
+      };
+    }
+
     return {
       success: true,
       status: PaymentStatus.PENDING,
@@ -99,10 +177,7 @@ export class TestGateway
   }
 
   public async authorize(request: AuthorizePaymentRequest): Promise<AuthorizePaymentResponse> {
-    this.recordCall('authorize');
-    if (this.shouldFail) {
-      throw new GatewayError(this.failureMessage, this.id);
-    }
+    await this.handleSimulation('authorize');
     return {
       success: true,
       status: PaymentStatus.AUTHORIZED,
@@ -112,10 +187,7 @@ export class TestGateway
   }
 
   public async capture(request: CapturePaymentRequest): Promise<CapturePaymentResponse> {
-    this.recordCall('capture');
-    if (this.shouldFail) {
-      throw new GatewayError(this.failureMessage, this.id);
-    }
+    await this.handleSimulation('capture');
     return {
       success: true,
       status: PaymentStatus.SUCCESS,
@@ -125,10 +197,7 @@ export class TestGateway
   }
 
   public async cancel(request: CancelPaymentRequest): Promise<CancelPaymentResponse> {
-    this.recordCall('cancel');
-    if (this.shouldFail) {
-      throw new GatewayError(this.failureMessage, this.id);
-    }
+    await this.handleSimulation('cancel');
     return {
       success: true,
       cancelTransactionId: `cnl_${request.paymentId}`,
@@ -136,10 +205,17 @@ export class TestGateway
   }
 
   public async verify(request: VerifyPaymentRequest): Promise<VerifyPaymentResponse> {
-    this.recordCall('verify');
-    if (this.shouldFail) {
-      throw new GatewayError(this.failureMessage, this.id);
+    await this.handleSimulation('verify');
+
+    if (this.scenario === 'pending') {
+      return {
+        success: false,
+        status: PaymentStatus.PENDING,
+        reference: request.reference || `ref_v_${request.paymentId}`,
+        gatewayTransactionId: request.gatewayTransactionId || `gtx_v_${request.paymentId}`,
+      };
     }
+
     return {
       success: true,
       status: PaymentStatus.SUCCESS,
@@ -150,10 +226,17 @@ export class TestGateway
   }
 
   public async inquiry(request: InquiryPaymentRequest): Promise<InquiryPaymentResponse> {
-    this.recordCall('inquiry');
-    if (this.shouldFail) {
-      throw new GatewayError(this.failureMessage, this.id);
+    await this.handleSimulation('inquiry');
+
+    if (this.scenario === 'pending') {
+      return {
+        success: true,
+        status: PaymentStatus.PENDING,
+        gatewayTransactionId: request.gatewayTransactionId || `gtx_inq_${request.paymentId}`,
+        reference: request.reference || `ref_inq_${request.paymentId}`,
+      };
     }
+
     return {
       success: true,
       status: PaymentStatus.SUCCESS,
@@ -163,10 +246,7 @@ export class TestGateway
   }
 
   public async refund(request: RefundPaymentRequest): Promise<RefundPaymentResponse> {
-    this.recordCall('refund');
-    if (this.shouldFail) {
-      throw new GatewayError(this.failureMessage, this.id);
-    }
+    await this.handleSimulation('refund');
     return {
       success: true,
       amountRefunded: request.amount,
@@ -175,10 +255,7 @@ export class TestGateway
   }
 
   public async reverse(request: ReversePaymentRequest): Promise<ReversePaymentResponse> {
-    this.recordCall('reverse');
-    if (this.shouldFail) {
-      throw new GatewayError(this.failureMessage, this.id);
-    }
+    await this.handleSimulation('reverse');
     return {
       success: true,
       reverseTransactionId: `rev_tx_${request.paymentId}`,
@@ -186,10 +263,13 @@ export class TestGateway
   }
 
   public async parseCallback(request: CallbackRequest): Promise<ParsedCallbackResult> {
-    this.recordCall('parseCallback');
+    this.callCount['parseCallback'] = (this.callCount['parseCallback'] || 0) + 1;
     const paymentId =
       (request.query['paymentId'] as string) || (request.body['paymentId'] as string);
-    const success = request.query['status'] === 'OK' || request.body['status'] === 'OK';
+    const success =
+      this.scenario === 'declined'
+        ? false
+        : request.query['status'] === 'OK' || request.body['status'] === 'OK';
     return {
       paymentId,
       gatewayTransactionId: (request.query['gtx'] as string) || (request.body['gtx'] as string),
@@ -200,7 +280,7 @@ export class TestGateway
   }
 
   public async parseWebhook(request: WebhookRequest): Promise<ParsedWebhookResult> {
-    this.recordCall('parseWebhook');
+    this.callCount['parseWebhook'] = (this.callCount['parseWebhook'] || 0) + 1;
     const body = request.body || {};
     return {
       eventType: (body['event'] as string) || 'payment.succeeded',
@@ -211,3 +291,5 @@ export class TestGateway
     };
   }
 }
+
+export class MockGateway extends TestGateway {}

@@ -1,6 +1,11 @@
-import { GatewayCapability, Payment, PaymentStatus } from '@company/payment-core';
+import {
+  ConfigurationError,
+  GatewayCapability,
+  Payment,
+  PaymentStatus,
+} from '@company/payment-core';
 import { describe, expect, it } from 'vitest';
-import { HttpTransport, ZarinpalGateway } from '../src/index.js';
+import { HttpTransport, ZarinpalGateway, validateZarinpalConfig } from '../src/index.js';
 
 class MockHttpTransport implements HttpTransport {
   public response: unknown = null;
@@ -82,6 +87,16 @@ describe('ZarinpalGateway', () => {
     expect(res.status).toBe(PaymentStatus.SUCCESS);
     expect(res.reference).toBe('12345678');
     expect(res.cardMask).toBe('603799******1234');
+  });
+
+  it('should throw ConfigurationError in sandbox environment if custom baseUrl is missing', () => {
+    expect(() =>
+      validateZarinpalConfig({
+        accessToken: 'test_token',
+        callbackUrl: 'https://merchant.example.com/callback',
+        environment: 'sandbox',
+      }),
+    ).toThrow(ConfigurationError);
   });
 
   it('should parse callback query correctly', async () => {
