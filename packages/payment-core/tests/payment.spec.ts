@@ -51,6 +51,38 @@ describe('Payment Domain', () => {
     expect(() => payment.transitionTo(PaymentStatus.SUCCESS)).toThrow(InvalidPaymentStateError);
   });
 
+  it('should prevent unlawful transitions from terminal states', () => {
+    const failedPayment = new Payment({
+      amount: 1000,
+      currency: 'USD',
+      gateway: 'mock',
+      status: PaymentStatus.FAILED,
+    });
+    expect(() => failedPayment.transitionTo(PaymentStatus.SUCCESS)).toThrow(
+      InvalidPaymentStateError,
+    );
+
+    const refundedPayment = new Payment({
+      amount: 1000,
+      currency: 'USD',
+      gateway: 'mock',
+      status: PaymentStatus.REFUNDED,
+    });
+    expect(() => refundedPayment.transitionTo(PaymentStatus.SUCCESS)).toThrow(
+      InvalidPaymentStateError,
+    );
+
+    const cancelledPayment = new Payment({
+      amount: 1000,
+      currency: 'USD',
+      gateway: 'mock',
+      status: PaymentStatus.CANCELLED,
+    });
+    expect(() => cancelledPayment.transitionTo(PaymentStatus.AUTHORIZED)).toThrow(
+      InvalidPaymentStateError,
+    );
+  });
+
   it('should create a valid transaction entity', () => {
     const tx = new Transaction({
       paymentId: 'pay_123',
