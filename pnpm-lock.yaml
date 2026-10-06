@@ -87,6 +87,16 @@ importers:
         specifier: ^1.6.0
         version: 1.6.1(@types/node@20.19.43)
 
+  packages/payment-service:
+    dependencies:
+      '@company/payment-core':
+        specifier: workspace:*
+        version: link:../payment-core
+    devDependencies:
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.43
+
   packages/payment-zarinpal:
     dependencies:
       '@company/payment-core':
