@@ -1,0 +1,151 @@
+openapi: 3.0.3
+info:
+  title: Main Application Payment REST API
+  description: Public REST API contract for consuming application payment endpoints.
+  version: 1.0.0
+paths:
+  /api/v1/payments:
+    post:
+      summary: Create a new payment session
+      description: Initiates a payment session with the requested gateway provider.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - gateway
+                - amount
+                - currency
+              properties:
+                gateway:
+                  type: string
+                  example: zibal
+                amount:
+                  type: integer
+                  example: 100000
+                currency:
+                  type: string
+                  example: IRR
+                description:
+                  type: string
+                  example: "Order #1001 payment"
+                idempotencyKey:
+                  type: string
+                  example: "checkout_session_1001"
+      responses:
+        '201':
+          description: Payment session created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  paymentId:
+                    type: string
+                  status:
+                    type: string
+                  redirectUrl:
+                    type: string
+                  actionUrl:
+                    type: string
+                  gatewayTransactionId:
+                    type: string
+        '400':
+          description: Validation or gateway error
+
+  /api/v1/payments/{id}:
+    get:
+      summary: Get payment details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment entity details
+        '404':
+          description: Payment not found
+
+  /api/v1/payments/callback/{gateway}:
+    post:
+      summary: Gateway callback handler endpoint
+      description: Endpoint posted to by payment gateway after user payment attempt.
+      parameters:
+        - name: gateway
+          in: path
+          required: true
+          schema:
+            type: string
+            example: zibal
+      responses:
+        '302':
+          description: Redirect user to application success or failure frontend page
+        '400':
+          description: Invalid callback payload
+
+  /api/v1/payments/{id}/verify:
+    post:
+      summary: Verify payment with gateway provider
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                gatewayTransactionId:
+                  type: string
+                reference:
+                  type: string
+      responses:
+        '200':
+          description: Verification completed successfully
+        '400':
+          description: Verification failed or invalid state
+
+  /api/v1/payments/{id}/inquiry:
+    post:
+      summary: Inquire payment status remotely
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Remote status inquired successfully
+
+  /api/v1/payments/{id}/refund:
+    post:
+      summary: Refund payment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: integer
+                  example: 50000
+                reason:
+                  type: string
+                  example: "Customer return request"
+      responses:
+        '200':
+          description: Refund processed successfully

@@ -61,10 +61,11 @@ export class ZarinpalGateway
       });
 
       if (response.errors && response.errors.length > 0) {
+        const firstError = response.errors[0];
         throw ZarinpalErrorMapper.mapCodeToError(
           -52,
           this.id,
-          response.errors[0].message || 'GraphQL Error',
+          firstError?.message || 'GraphQL Error',
         );
       }
 
@@ -105,10 +106,11 @@ export class ZarinpalGateway
       });
 
       if (response.errors && response.errors.length > 0) {
+        const firstError = response.errors[0];
         throw ZarinpalErrorMapper.mapCodeToError(
           -52,
           this.id,
-          response.errors[0].message || 'GraphQL Error',
+          firstError?.message || 'GraphQL Error',
         );
       }
 

@@ -6,3 +6,12 @@ coverage
 .env
 .env.local
 .env.*.local
+*.tsbuildinfo
+packages/**/*.js
+packages/**/*.d.ts
+packages/**/*.d.ts.map
+packages/**/*.js.map
+examples/**/*.js
+examples/**/*.d.ts
+examples/**/*.d.ts.map
+examples/**/*.js.map

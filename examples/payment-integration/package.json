@@ -1,0 +1,22 @@
+{
+  "name": "payment-integration-example",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@company/payment-core": "workspace:*",
+    "@company/payment-service": "workspace:*",
+    "@company/payment-mellat": "workspace:*",
+    "@company/payment-zibal": "workspace:*",
+    "@company/payment-zarinpal": "workspace:*",
+    "@company/payment-saman": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  }
+}
