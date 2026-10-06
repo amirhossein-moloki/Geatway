@@ -12,6 +12,7 @@ export interface CreatePaymentProps {
   status?: PaymentStatus;
   metadata?: Record<string, unknown>;
   idempotencyKey?: string;
+  version?: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -27,6 +28,7 @@ export class Payment {
   private _status: PaymentStatus;
   public readonly metadata: Record<string, unknown>;
   public readonly idempotencyKey?: string;
+  public readonly version: number;
   public readonly createdAt: Date;
   private _updatedAt: Date;
 
@@ -48,6 +50,7 @@ export class Payment {
     this._status = props.status || PaymentStatus.CREATED;
     this.metadata = props.metadata || {};
     this.idempotencyKey = props.idempotencyKey;
+    this.version = props.version !== undefined ? props.version : 1;
     this.createdAt = props.createdAt || new Date();
     this._updatedAt = props.updatedAt || new Date();
   }
@@ -80,6 +83,7 @@ export class Payment {
       status: this.status,
       metadata: this.metadata,
       idempotencyKey: this.idempotencyKey,
+      version: this.version,
       createdAt: this.createdAt.toISOString(),
       updatedAt: this.updatedAt.toISOString(),
     };

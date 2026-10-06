@@ -153,3 +153,66 @@ export class ConfigurationError extends PaymentPlatformError {
     super(message, 500, details, cause);
   }
 }
+
+export class PersistenceError extends PaymentPlatformError {
+  public override readonly code: string = 'PERSISTENCE_ERROR';
+
+  constructor(
+    message: string,
+    statusCode = 500,
+    details?: Record<string, unknown>,
+    cause?: Error | unknown,
+  ) {
+    super(message, statusCode, details, cause);
+  }
+}
+
+export class PersistenceConflictError extends PersistenceError {
+  public override readonly code: string = 'PERSISTENCE_CONFLICT_ERROR';
+
+  constructor(message: string, details?: Record<string, unknown>, cause?: Error | unknown) {
+    super(message, 409, details, cause);
+  }
+}
+
+export class RepositoryNotFoundError extends PersistenceError {
+  public override readonly code: string = 'REPOSITORY_NOT_FOUND_ERROR';
+
+  constructor(
+    entityName: string,
+    id: string,
+    details?: Record<string, unknown>,
+    cause?: Error | unknown,
+  ) {
+    super(
+      `${entityName} with id '${id}' was not found`,
+      404,
+      { ...details, entityName, id },
+      cause,
+    );
+  }
+}
+
+export class ConcurrencyError extends PersistenceError {
+  public override readonly code: string = 'CONCURRENCY_ERROR';
+
+  constructor(
+    message = 'Optimistic concurrency check failed: entity was modified concurrently',
+    details?: Record<string, unknown>,
+    cause?: Error | unknown,
+  ) {
+    super(message, 409, details, cause);
+  }
+}
+
+export class PersistenceUnavailableError extends PersistenceError {
+  public override readonly code: string = 'PERSISTENCE_UNAVAILABLE_ERROR';
+
+  constructor(
+    message = 'Database or persistence service is currently unavailable',
+    details?: Record<string, unknown>,
+    cause?: Error | unknown,
+  ) {
+    super(message, 503, details, cause);
+  }
+}
