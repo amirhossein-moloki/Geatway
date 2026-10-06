@@ -11,16 +11,18 @@
 This Payment Package Ecosystem is a modular, provider-agnostic payment orchestrator and gateway integration library built for Node.js and TypeScript applications.
 
 Key characteristics:
-* **Provider Agnostic:** Provides uniform domain interfaces (`Payment`, `Transaction`, `PaymentGateway`, `GatewayRegistry`) so consumer applications interact with standard contracts regardless of the underlying Iranian Payment Service Provider (PSP) or gateway.
-* **Capability-Driven:** Payment operations are gated by explicit capability interfaces (`CanCreatePayment`, `CanVerify`, `CanInquire`, `CanRefund`, `CanReverse`, `CanAuthorize`, `CanCapture`, `CanCancel`, `CanHandleCallback`, `CanHandleWebhook`).
-* **Library, Not Application:** The ecosystem consists of headless library packages. It does **not** expose public HTTP servers, REST controllers, or persistent databases on its own; those responsibilities belong to the consumer target application.
-* **Opt-In Persistence:** Core persistence contracts are database-agnostic. A production PostgreSQL implementation is provided in `@company/payment-persistence-postgres`, while memory-backed repositories exist in `@company/payment-service/testing`.
+
+- **Provider Agnostic:** Provides uniform domain interfaces (`Payment`, `Transaction`, `PaymentGateway`, `GatewayRegistry`) so consumer applications interact with standard contracts regardless of the underlying Iranian Payment Service Provider (PSP) or gateway.
+- **Capability-Driven:** Payment operations are gated by explicit capability interfaces (`CanCreatePayment`, `CanVerify`, `CanInquire`, `CanRefund`, `CanReverse`, `CanAuthorize`, `CanCapture`, `CanCancel`, `CanHandleCallback`, `CanHandleWebhook`).
+- **Library, Not Application:** The ecosystem consists of headless library packages. It does **not** expose public HTTP servers, REST controllers, or persistent databases on its own; those responsibilities belong to the consumer target application.
+- **Opt-In Persistence:** Core persistence contracts are database-agnostic. A production PostgreSQL implementation is provided in `@company/payment-persistence-postgres`, while memory-backed repositories exist in `@company/payment-service/testing`.
 
 ---
 
 ## 2. Source of Truth & Verification Hierarchy
 
 When integrating or resolving questions about package behavior, follow this strict hierarchy:
+
 1. **Actual Source Code** (`packages/*/src/...`)
 2. **Public TypeScript Package Exports** (`src/index.ts` and `package.json` `exports`)
 3. **Automated Unit & Integration Test Suites** (`packages/*/tests/...`)
@@ -29,7 +31,7 @@ When integrating or resolving questions about package behavior, follow this stri
 6. **Provider Specifications & Documentation** (`Mellat.md`, `ziball.json`, `zarinpall.md`, `Saman.json`)
 7. **Existing Human Documentation** (`docs/...`)
 
-*Rule:* Existing human documentation cannot authorize or validate an API signature or feature claim that actual source code or public exports do not confirm.
+_Rule:_ Existing human documentation cannot authorize or validate an API signature or feature claim that actual source code or public exports do not confirm.
 
 ---
 
@@ -51,6 +53,7 @@ Target Application (REST Controllers / DTOs / Business Rules / Database)
 ```
 
 ### Persistence Architecture
+
 ```text
 Target Application
         │
@@ -69,19 +72,19 @@ Database / Storage
 
 ### Layer Responsibilities
 
-* **`@company/payment-core`**: Defines domain entities (`Payment`, `Transaction`, `IdempotencyRecord`, `WebhookEvent`), contracts (`PaymentGateway`, capabilities), errors (`PaymentPlatformError` hierarchy), and the `GatewayRegistry`. Zero external payment dependencies.
-* **Provider Packages** (`@company/payment-mellat`, `@company/payment-zibal`, `@company/payment-zarinpal`, `@company/payment-saman`): Implement provider client, request/response mappers, error mappers, callback parsers, and capabilities. Depend **only** on `@company/payment-core`. Provider packages NEVER depend on each other.
-* **`@company/payment-service`**: Application orchestration service (`PaymentApplicationService` / `PaymentService`), idempotency protection (`IdempotencyOrchestrator`), retry & timeout policies, and testing utilities (`MockGateway`, `TestGateway`, `InMemory*` repositories). Depends on `@company/payment-core`.
-* **`@company/payment-persistence-postgres`**: PostgreSQL implementations of `PaymentRepository`, `TransactionRepository`, `IdempotencyRepository`, and `WebhookEventRepository`, along with schema migrations (`DatabaseMigrator`). Depends on `@company/payment-core` and `pg`.
-* **Target Application**: Implements HTTP controllers, REST routes, DTOs, request validation, authentication, authorization, business rules, OpenAPI specs, and wiring.
+- **`@company/payment-core`**: Defines domain entities (`Payment`, `Transaction`, `IdempotencyRecord`, `WebhookEvent`), contracts (`PaymentGateway`, capabilities), errors (`PaymentPlatformError` hierarchy), and the `GatewayRegistry`. Zero external payment dependencies.
+- **Provider Packages** (`@company/payment-mellat`, `@company/payment-zibal`, `@company/payment-zarinpal`, `@company/payment-saman`): Implement provider client, request/response mappers, error mappers, callback parsers, and capabilities. Depend **only** on `@company/payment-core`. Provider packages NEVER depend on each other.
+- **`@company/payment-service`**: Application orchestration service (`PaymentApplicationService` / `PaymentService`), idempotency protection (`IdempotencyOrchestrator`), retry & timeout policies, and testing utilities (`MockGateway`, `TestGateway`, `InMemory*` repositories). Depends on `@company/payment-core`.
+- **`@company/payment-persistence-postgres`**: PostgreSQL implementations of `PaymentRepository`, `TransactionRepository`, `IdempotencyRepository`, and `WebhookEventRepository`, along with schema migrations (`DatabaseMigrator`). Depends on `@company/payment-core` and `pg`.
+- **Target Application**: Implements HTTP controllers, REST routes, DTOs, request validation, authentication, authorization, business rules, OpenAPI specs, and wiring.
 
 ---
 
 ## 4. Dependency Rules
 
-* **No Circular Dependencies:** Core has no provider dependencies. Providers depend only on Core.
-* **No Gateway Dependencies Between Providers:** `@company/payment-mellat` never imports from `@company/payment-zibal`, etc.
-* **Public Imports Only:** Target applications must import from top-level package exports (e.g., `import { GatewayRegistry } from '@company/payment-core'`). Subpath imports are allowed **only** where explicitly exported in `package.json` (such as `import { MockGateway } from '@company/payment-service/testing'`). Never import internal source paths like `@company/payment-mellat/src/...`.
+- **No Circular Dependencies:** Core has no provider dependencies. Providers depend only on Core.
+- **No Gateway Dependencies Between Providers:** `@company/payment-mellat` never imports from `@company/payment-zibal`, etc.
+- **Public Imports Only:** Target applications must import from top-level package exports (e.g., `import { GatewayRegistry } from '@company/payment-core'`). Subpath imports are allowed **only** where explicitly exported in `package.json` (such as `import { MockGateway } from '@company/payment-service/testing'`). Never import internal source paths like `@company/payment-mellat/src/...`.
 
 ---
 
@@ -89,21 +92,43 @@ Database / Storage
 
 Target applications should install only the packages required for their specific implementation:
 
-| Package Name | Required | Purpose / Responsibility | Dependencies |
-| :--- | :---: | :--- | :--- |
-| `@company/payment-core` | **Required** | Core domain entities, capability contracts, error hierarchy, and GatewayRegistry. | None |
-| `@company/payment-service` | Optional | Higher-level application orchestration service, retry policies, idempotency, and test utilities. | `@company/payment-core` |
-| `@company/payment-mellat` | Optional | Mellat (Behpardazht) PSP gateway implementation. | `@company/payment-core` |
-| `@company/payment-zibal` | Optional | Zibal IPG gateway implementation. | `@company/payment-core` |
-| `@company/payment-zarinpal` | Optional | Zarinpal GraphQL v4 gateway implementation. | `@company/payment-core` |
-| `@company/payment-saman` | Optional | Saman (SEP) gateway implementation. | `@company/payment-core` |
-| `@company/payment-persistence-postgres` | Optional | PostgreSQL persistence repositories and SQL migrations. | `@company/payment-core`, `pg` |
+| Package Name                            |   Required   | Purpose / Responsibility                                                                         | Dependencies                  |
+| :-------------------------------------- | :----------: | :----------------------------------------------------------------------------------------------- | :---------------------------- |
+| `@company/payment-core`                 | **Required** | Core domain entities, capability contracts, error hierarchy, and GatewayRegistry.                | None                          |
+| `@company/payment-service`              |   Optional   | Higher-level application orchestration service, retry policies, idempotency, and test utilities. | `@company/payment-core`       |
+| `@company/payment-mellat`               |   Optional   | Mellat (Behpardazht) PSP gateway implementation.                                                 | `@company/payment-core`       |
+| `@company/payment-zibal`                |   Optional   | Zibal IPG gateway implementation.                                                                | `@company/payment-core`       |
+| `@company/payment-zarinpal`             |   Optional   | Zarinpal GraphQL v4 gateway implementation.                                                      | `@company/payment-core`       |
+| `@company/payment-saman`                |   Optional   | Saman (SEP) gateway implementation.                                                              | `@company/payment-core`       |
+| `@company/payment-persistence-postgres` |   Optional   | PostgreSQL persistence repositories and SQL migrations.                                          | `@company/payment-core`, `pg` |
 
 ---
 
-## 6. Installation
+## 6. Installation & Package Registries
 
-Install required packages via your package manager (e.g., `pnpm`):
+Target applications consume packages published to private registries. The GitHub source repository is the single source of truth, while packages are published to **npm Private Registry** and **GitHub Packages**.
+
+### Consumer `.npmrc` Configuration
+
+Consumer projects configure `.npmrc` depending on their designated private registry:
+
+#### Option A: npm Private Registry
+
+```ini
+@company:registry=https://registry.npmjs.org/
+//registry.npmjs.org/:_authToken=${NPM_TOKEN}
+```
+
+#### Option B: GitHub Packages
+
+```ini
+@company:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```
+
+### Installation Commands
+
+Install required scoped packages via your package manager (e.g., `pnpm` or `npm`):
 
 ```bash
 # Core orchestrator and selected provider packages
@@ -113,16 +138,16 @@ pnpm add @company/payment-core @company/payment-service @company/payment-mellat 
 pnpm add @company/payment-persistence-postgres pg
 ```
 
-*Note: If a provider package is not installed and registered, it is not available at runtime. Do not install unneeded provider packages.*
+_Note: If a provider package is not installed and registered, it is not available at runtime. Do not install unneeded provider packages._
 
 ---
 
 ## 7. Runtime & TypeScript Requirements
 
-* **Node.js:** `>=18.0.0`
-* **TypeScript:** `>=5.0.0` (Target `ES2022` or later, `moduleResolution: "nodenext"` or `"node16"`)
-* **Peer Dependencies:**
-  * `pg` (`^8.11.5`) if using `@company/payment-persistence-postgres`.
+- **Node.js:** `>=18.0.0`
+- **TypeScript:** `>=5.0.0` (Target `ES2022` or later, `moduleResolution: "nodenext"` or `"node16"`)
+- **Peer Dependencies:**
+  - `pg` (`^8.11.5`) if using `@company/payment-persistence-postgres`.
 
 ---
 
@@ -131,6 +156,7 @@ pnpm add @company/payment-persistence-postgres pg
 Each provider package exports a typed configuration interface and validation function (`validateMellatConfig`, `validateZibalConfig`, `validateZarinpalConfig`, `validateSamanConfig`).
 
 ### Mellat Configuration (`MellatConfig`)
+
 ```ts
 export interface MellatConfig extends GatewayConfig {
   readonly environment?: PaymentEnvironment; // 'production' | 'sandbox' | 'test'
@@ -140,12 +166,13 @@ export interface MellatConfig extends GatewayConfig {
   readonly callbackUrl: string;
   readonly requestTimeoutMs?: number;
   readonly portalUrl?: string; // Required if environment is sandbox or isSandbox is true
-  readonly wsdlUrl?: string;   // Required if environment is sandbox or isSandbox is true
+  readonly wsdlUrl?: string; // Required if environment is sandbox or isSandbox is true
   readonly subServiceId?: string | number;
 }
 ```
 
 ### Zibal Configuration (`ZibalConfig`)
+
 ```ts
 export interface ZibalConfig extends GatewayConfig {
   merchant: string; // Set to 'zibal' for test mode in sandbox
@@ -155,32 +182,35 @@ export interface ZibalConfig extends GatewayConfig {
   gatewayId?: string; // Defaults to 'zibal'
 }
 ```
-*Validation Note:* `validateZibalConfig` throws a `ConfigurationError` if `environment === 'production'` and `merchant === 'zibal'`.
+
+_Validation Note:_ `validateZibalConfig` throws a `ConfigurationError` if `environment === 'production'` and `merchant === 'zibal'`.
 
 ### Zarinpal Configuration (`ZarinpalConfig`)
+
 ```ts
 export interface ZarinpalConfig extends GatewayConfig {
   accessToken: string;
   callbackUrl: string;
   environment?: PaymentEnvironment;
   merchantId?: string;
-  baseUrl?: string;     // Required if environment is sandbox or isSandbox is true
+  baseUrl?: string; // Required if environment is sandbox or isSandbox is true
   startPayUrl?: string;
-  gatewayId?: string;  // Defaults to 'zarinpal'
+  gatewayId?: string; // Defaults to 'zarinpal'
 }
 ```
 
 ### Saman Configuration (`SamanConfig`)
+
 ```ts
 export interface SamanConfig extends GatewayConfig {
   terminalId: string;
   redirectUrl: string;
   environment?: PaymentEnvironment;
-  tokenUrl?: string;     // Required if environment is sandbox or isSandbox is true
-  verifyUrl?: string;    // Required if environment is sandbox or isSandbox is true
+  tokenUrl?: string; // Required if environment is sandbox or isSandbox is true
+  verifyUrl?: string; // Required if environment is sandbox or isSandbox is true
   reverseUrl?: string;
   paymentFormUrl?: string;
-  gatewayId?: string;    // Defaults to 'saman'
+  gatewayId?: string; // Defaults to 'saman'
 }
 ```
 
@@ -190,21 +220,21 @@ export interface SamanConfig extends GatewayConfig {
 
 Store credentials securely in environment variables.
 
-| Environment Variable | Required / Optional | Consumer Package | Purpose | Secret? | Validation Rule |
-| :--- | :---: | :--- | :--- | :---: | :--- |
-| `PAYMENT_ENV` | Optional | `@company/payment-core` | Global environment (`production`, `sandbox`, `test`) | No | Must be `'production'`, `'sandbox'`, or `'test'` |
-| `MELLAT_TERMINAL_ID` | Required for Mellat | `@company/payment-mellat` | Numeric or string terminal ID | No | Non-empty |
-| `MELLAT_USERNAME` | Required for Mellat | `@company/payment-mellat` | Gateway username | Yes | Non-empty string |
-| `MELLAT_PASSWORD` | Required for Mellat | `@company/payment-mellat` | Gateway password | Yes | Non-empty string |
-| `MELLAT_CALLBACK_URL` | Required for Mellat | `@company/payment-mellat` | Application callback URL | No | Non-empty URL string |
-| `ZIBAL_MERCHANT` | Required for Zibal | `@company/payment-zibal` | Merchant ID (`zibal` for sandbox) | Yes | Non-empty string; cannot be `'zibal'` in production |
-| `ZIBAL_CALLBACK_URL` | Required for Zibal | `@company/payment-zibal` | Application callback URL | No | Non-empty URL string |
-| `ZARINPAL_ACCESS_TOKEN` | Required for Zarinpal | `@company/payment-zarinpal` | Personal Access Token | Yes | Non-empty string |
-| `ZARINPAL_MERCHANT_ID` | Optional for Zarinpal | `@company/payment-zarinpal` | Merchant UUID | No | String |
-| `ZARINPAL_CALLBACK_URL` | Required for Zarinpal | `@company/payment-zarinpal` | Application callback URL | No | Non-empty URL string |
-| `SAMAN_TERMINAL_ID` | Required for Saman | `@company/payment-saman` | Terminal ID | No | Non-empty string |
-| `SAMAN_CALLBACK_URL` | Required for Saman | `@company/payment-saman` | Application redirect/callback URL | No | Non-empty URL string |
-| `DATABASE_URL` | Required if Postgres | `@company/payment-persistence-postgres` | PostgreSQL connection string | Yes | Valid Postgres URL |
+| Environment Variable    |  Required / Optional  | Consumer Package                        | Purpose                                              | Secret? | Validation Rule                                     |
+| :---------------------- | :-------------------: | :-------------------------------------- | :--------------------------------------------------- | :-----: | :-------------------------------------------------- |
+| `PAYMENT_ENV`           |       Optional        | `@company/payment-core`                 | Global environment (`production`, `sandbox`, `test`) |   No    | Must be `'production'`, `'sandbox'`, or `'test'`    |
+| `MELLAT_TERMINAL_ID`    |  Required for Mellat  | `@company/payment-mellat`               | Numeric or string terminal ID                        |   No    | Non-empty                                           |
+| `MELLAT_USERNAME`       |  Required for Mellat  | `@company/payment-mellat`               | Gateway username                                     |   Yes   | Non-empty string                                    |
+| `MELLAT_PASSWORD`       |  Required for Mellat  | `@company/payment-mellat`               | Gateway password                                     |   Yes   | Non-empty string                                    |
+| `MELLAT_CALLBACK_URL`   |  Required for Mellat  | `@company/payment-mellat`               | Application callback URL                             |   No    | Non-empty URL string                                |
+| `ZIBAL_MERCHANT`        |  Required for Zibal   | `@company/payment-zibal`                | Merchant ID (`zibal` for sandbox)                    |   Yes   | Non-empty string; cannot be `'zibal'` in production |
+| `ZIBAL_CALLBACK_URL`    |  Required for Zibal   | `@company/payment-zibal`                | Application callback URL                             |   No    | Non-empty URL string                                |
+| `ZARINPAL_ACCESS_TOKEN` | Required for Zarinpal | `@company/payment-zarinpal`             | Personal Access Token                                |   Yes   | Non-empty string                                    |
+| `ZARINPAL_MERCHANT_ID`  | Optional for Zarinpal | `@company/payment-zarinpal`             | Merchant UUID                                        |   No    | String                                              |
+| `ZARINPAL_CALLBACK_URL` | Required for Zarinpal | `@company/payment-zarinpal`             | Application callback URL                             |   No    | Non-empty URL string                                |
+| `SAMAN_TERMINAL_ID`     |  Required for Saman   | `@company/payment-saman`                | Terminal ID                                          |   No    | Non-empty string                                    |
+| `SAMAN_CALLBACK_URL`    |  Required for Saman   | `@company/payment-saman`                | Application redirect/callback URL                    |   No    | Non-empty URL string                                |
+| `DATABASE_URL`          | Required if Postgres  | `@company/payment-persistence-postgres` | PostgreSQL connection string                         |   Yes   | Valid Postgres URL                                  |
 
 ---
 
@@ -244,9 +274,10 @@ export function configureGatewayRegistry(): GatewayRegistry {
 ```
 
 ### Registry Behavior
-* `register(gateway)`: Registers gateway. Throws `ConfigurationError` if gateway ID is already registered.
-* `getGateway(id)`: Returns gateway or throws `GatewayNotFoundError`.
-* `getActiveGateway(id, capability?)`: Returns enabled gateway or throws `GatewayNotFoundError`, `GatewayDisabledError`, or `UnsupportedCapabilityError`.
+
+- `register(gateway)`: Registers gateway. Throws `ConfigurationError` if gateway ID is already registered.
+- `getGateway(id)`: Returns gateway or throws `GatewayNotFoundError`.
+- `getActiveGateway(id, capability?)`: Returns enabled gateway or throws `GatewayNotFoundError`, `GatewayDisabledError`, or `UnsupportedCapabilityError`.
 
 ---
 
@@ -255,6 +286,7 @@ export function configureGatewayRegistry(): GatewayRegistry {
 Payment creation initiates a session with the PSP gateway and generates redirect or POST form parameters.
 
 ### Execution Flow
+
 ```text
 Target Application Endpoint
         │
@@ -272,6 +304,7 @@ Returns CreatePaymentOutput { payment, transaction, status, redirectUrl, actionU
 ```
 
 ### Code Example
+
 ```ts
 import { PaymentApplicationService } from '@company/payment-service';
 
@@ -283,11 +316,11 @@ const result = await paymentAppService.createPayment({
   idempotencyKey: 'checkout_order_1002',
 });
 
-console.log(result.payment.id);           // Internal UUID (e.g. 'pay_...')
-console.log(result.status);               // PaymentStatus (e.g. 'PENDING')
-console.log(result.redirectUrl);          // Optional HTTP GET redirect URL
-console.log(result.actionUrl);            // Optional HTTP POST action URL
-console.log(result.action);               // Form parameters object for POST form
+console.log(result.payment.id); // Internal UUID (e.g. 'pay_...')
+console.log(result.status); // PaymentStatus (e.g. 'PENDING')
+console.log(result.redirectUrl); // Optional HTTP GET redirect URL
+console.log(result.actionUrl); // Optional HTTP POST action URL
+console.log(result.action); // Form parameters object for POST form
 console.log(result.gatewayTransactionId); // Gateway authority / track ID / RefNum
 ```
 
@@ -347,8 +380,8 @@ if (verifyResult.status === 'SUCCESS') {
 }
 ```
 
-* **Supported by:** `@company/payment-mellat`, `@company/payment-zibal`, `@company/payment-zarinpal`, `@company/payment-saman`.
-* **Behavior on Repeated Verification:** `PaymentApplicationService.verifyPayment` short-circuits and returns existing success details if payment status is already `SUCCESS`.
+- **Supported by:** `@company/payment-mellat`, `@company/payment-zibal`, `@company/payment-zarinpal`, `@company/payment-saman`.
+- **Behavior on Repeated Verification:** `PaymentApplicationService.verifyPayment` short-circuits and returns existing success details if payment status is already `SUCCESS`.
 
 ---
 
@@ -361,8 +394,8 @@ const inquiryResult = await paymentAppService.inquirePayment('pay_123456789');
 console.log(inquiryResult.status);
 ```
 
-* **Supported by:** `@company/payment-mellat`, `@company/payment-zibal`.
-* **Not Supported by:** `@company/payment-zarinpal`, `@company/payment-saman` (calling inquiry on these throws `UnsupportedCapabilityError`).
+- **Supported by:** `@company/payment-mellat`, `@company/payment-zibal`.
+- **Not Supported by:** `@company/payment-zarinpal`, `@company/payment-saman` (calling inquiry on these throws `UnsupportedCapabilityError`).
 
 ---
 
@@ -378,8 +411,8 @@ const refundResult = await paymentAppService.refundPayment({
 });
 ```
 
-* **Supported by:** `@company/payment-mellat`.
-* **Not Supported by:** `@company/payment-zibal`, `@company/payment-zarinpal`, `@company/payment-saman` (throws `UnsupportedCapabilityError`).
+- **Supported by:** `@company/payment-mellat`.
+- **Not Supported by:** `@company/payment-zibal`, `@company/payment-zarinpal`, `@company/payment-saman` (throws `UnsupportedCapabilityError`).
 
 ---
 
@@ -394,8 +427,8 @@ const reverseResult = await paymentAppService.reversePayment({
 });
 ```
 
-* **Supported by:** `@company/payment-mellat`, `@company/payment-saman`.
-* **Not Supported by:** `@company/payment-zibal`, `@company/payment-zarinpal` (throws `UnsupportedCapabilityError`).
+- **Supported by:** `@company/payment-mellat`, `@company/payment-saman`.
+- **Not Supported by:** `@company/payment-zibal`, `@company/payment-zarinpal` (throws `UnsupportedCapabilityError`).
 
 ---
 
@@ -403,8 +436,8 @@ const reverseResult = await paymentAppService.reversePayment({
 
 Webhooks handle asynchronous server-to-server notifications sent by gateways.
 
-* **Current Gateway Support Status:** `— NOT SUPPORTED BY CURRENT PROVIDERS`
-* Interfaces and data structures (`CanHandleWebhook`, `WebhookEvent`, `WebhookEventRepository`, `handleWebhook`) exist in Core and Service, but no current PSP provider sends webhooks.
+- **Current Gateway Support Status:** `— NOT SUPPORTED BY CURRENT PROVIDERS`
+- Interfaces and data structures (`CanHandleWebhook`, `WebhookEvent`, `WebhookEventRepository`, `handleWebhook`) exist in Core and Service, but no current PSP provider sends webhooks.
 
 ---
 
@@ -412,10 +445,10 @@ Webhooks handle asynchronous server-to-server notifications sent by gateways.
 
 `PaymentApplicationService` uses `IdempotencyOrchestrator` to protect sensitive financial operations (`createPayment`, `verifyPayment`, `authorizePayment`, `capturePayment`, `refundPayment`, `cancelPayment`, `reversePayment`).
 
-* **Scope & Key Format:** Scope is formatted as `<method>:<gateway_or_paymentId>` (e.g., `create_payment:zibal`, `verify_payment:pay_123`).
-* **Storage & Scope:**
-  * **With `IdempotencyRepository`:** Database-backed persistence. SHA-256 hash of payload is validated. Same key + matching payload returning completed status returns cached result without invoking PSP gateway again. If payload differs, throws `PersistenceConflictError`. If request is pending, throws `ConcurrencyError`.
-  * **Without `IdempotencyRepository`:** Memory-only execution pass-through within `PaymentApplicationService`.
+- **Scope & Key Format:** Scope is formatted as `<method>:<gateway_or_paymentId>` (e.g., `create_payment:zibal`, `verify_payment:pay_123`).
+- **Storage & Scope:**
+  - **With `IdempotencyRepository`:** Database-backed persistence. SHA-256 hash of payload is validated. Same key + matching payload returning completed status returns cached result without invoking PSP gateway again. If payload differs, throws `PersistenceConflictError`. If request is pending, throws `ConcurrencyError`.
+  - **Without `IdempotencyRepository`:** Memory-only execution pass-through within `PaymentApplicationService`.
 
 ---
 
@@ -424,14 +457,16 @@ Webhooks handle asynchronous server-to-server notifications sent by gateways.
 Applications must persist payment entities across HTTP requests.
 
 ### Core Domain Entities & Interfaces
-* **`Payment`:** `id`, `projectId`, `amount`, `currency`, `description`, `callbackUrl`, `gateway`, `status` (`CREATED`, `PENDING`, `AUTHORIZED`, `SUCCESS`, `FAILED`, `CANCELLED`, `REFUNDED`, `PARTIALLY_REFUNDED`, `REVERSED`, `CALLBACK_RECEIVED`), `metadata`, `idempotencyKey`, `version`, `createdAt`, `updatedAt`. Supports optimistic concurrency via `version`.
-* **`Transaction`:** `id`, `paymentId`, `gateway`, `type` (`PAYMENT`, `AUTHORIZATION`, `CAPTURE`, `CANCEL`, `VERIFY`, `REFUND`, `REVERSE`, `INQUIRY`), `status` (`SUCCESS`, `FAILED`, `PENDING`), `amount`, `reference`, `gatewayTransactionId`, `metadata`, `createdAt`, `updatedAt`.
-* **`IdempotencyRecord`:** Stores idempotency key, scope, request hash, status (`PENDING`, `COMPLETED`, `FAILED`), result, and expiration.
-* **`WebhookEvent`:** Stores provider, eventId, eventType, status (`RECEIVED`, `PROCESSING`, `PROCESSED`, `FAILED`), payload, attempts, and error.
+
+- **`Payment`:** `id`, `projectId`, `amount`, `currency`, `description`, `callbackUrl`, `gateway`, `status` (`CREATED`, `PENDING`, `AUTHORIZED`, `SUCCESS`, `FAILED`, `CANCELLED`, `REFUNDED`, `PARTIALLY_REFUNDED`, `REVERSED`, `CALLBACK_RECEIVED`), `metadata`, `idempotencyKey`, `version`, `createdAt`, `updatedAt`. Supports optimistic concurrency via `version`.
+- **`Transaction`:** `id`, `paymentId`, `gateway`, `type` (`PAYMENT`, `AUTHORIZATION`, `CAPTURE`, `CANCEL`, `VERIFY`, `REFUND`, `REVERSE`, `INQUIRY`), `status` (`SUCCESS`, `FAILED`, `PENDING`), `amount`, `reference`, `gatewayTransactionId`, `metadata`, `createdAt`, `updatedAt`.
+- **`IdempotencyRecord`:** Stores idempotency key, scope, request hash, status (`PENDING`, `COMPLETED`, `FAILED`), result, and expiration.
+- **`WebhookEvent`:** Stores provider, eventId, eventType, status (`RECEIVED`, `PROCESSING`, `PROCESSED`, `FAILED`), payload, attempts, and error.
 
 ### Repositories
-* **PostgreSQL (`@company/payment-persistence-postgres`):** `PostgresPaymentRepository`, `PostgresTransactionRepository`, `PostgresIdempotencyRepository`, `PostgresWebhookEventRepository`.
-* **In-Memory (`@company/payment-service/testing`):** `InMemoryPaymentRepository`, `InMemoryTransactionRepository`, `InMemoryIdempotencyRepository`, `InMemoryWebhookEventRepository`.
+
+- **PostgreSQL (`@company/payment-persistence-postgres`):** `PostgresPaymentRepository`, `PostgresTransactionRepository`, `PostgresIdempotencyRepository`, `PostgresWebhookEventRepository`.
+- **In-Memory (`@company/payment-service/testing`):** `InMemoryPaymentRepository`, `InMemoryTransactionRepository`, `InMemoryIdempotencyRepository`, `InMemoryWebhookEventRepository`.
 
 ---
 
@@ -440,28 +475,31 @@ Applications must persist payment entities across HTTP requests.
 All ecosystem errors inherit from `PaymentPlatformError`.
 
 ### Error Hierarchy
-* `PaymentPlatformError` (Base class, statusCode defaults to 500)
-  * `ValidationError` (HTTP 400) - Invalid inputs or missing mandatory config fields.
-  * `GatewayError` (HTTP 502) - Gateway network failure or raw error response.
-  * `GatewayNotFoundError` (HTTP 404) - Gateway ID not registered in `GatewayRegistry`.
-  * `GatewayDisabledError` (HTTP 422) - Gateway `isEnabled` is false.
-  * `UnsupportedCapabilityError` (HTTP 422) - Requested capability not supported by gateway.
-  * `PaymentError` (HTTP 400) - Payment domain error.
-    * `InvalidPaymentStateError` / `InvalidStateTransitionError` (HTTP 400) - Invalid status transition.
-  * `TransactionError` (HTTP 400) - Invalid transaction operation.
-  * `ConfigurationError` (HTTP 500) - Misconfigured gateway or missing setup.
-  * `PersistenceError` (HTTP 500) - Database operation error.
-    * `PersistenceConflictError` (HTTP 409) - Idempotency payload mismatch or conflict.
-    * `RepositoryNotFoundError` (HTTP 404) - Entity missing in database.
-    * `ConcurrencyError` (HTTP 409) - Optimistic concurrency lock failure (`version` mismatch).
-    * `PersistenceUnavailableError` (HTTP 503) - Database connection unavailable.
+
+- `PaymentPlatformError` (Base class, statusCode defaults to 500)
+  - `ValidationError` (HTTP 400) - Invalid inputs or missing mandatory config fields.
+  - `GatewayError` (HTTP 502) - Gateway network failure or raw error response.
+  - `GatewayNotFoundError` (HTTP 404) - Gateway ID not registered in `GatewayRegistry`.
+  - `GatewayDisabledError` (HTTP 422) - Gateway `isEnabled` is false.
+  - `UnsupportedCapabilityError` (HTTP 422) - Requested capability not supported by gateway.
+  - `PaymentError` (HTTP 400) - Payment domain error.
+    - `InvalidPaymentStateError` / `InvalidStateTransitionError` (HTTP 400) - Invalid status transition.
+  - `TransactionError` (HTTP 400) - Invalid transaction operation.
+  - `ConfigurationError` (HTTP 500) - Misconfigured gateway or missing setup.
+  - `PersistenceError` (HTTP 500) - Database operation error.
+    - `PersistenceConflictError` (HTTP 409) - Idempotency payload mismatch or conflict.
+    - `RepositoryNotFoundError` (HTTP 404) - Entity missing in database.
+    - `ConcurrencyError` (HTTP 409) - Optimistic concurrency lock failure (`version` mismatch).
+    - `PersistenceUnavailableError` (HTTP 503) - Database connection unavailable.
 
 ### Provider Error Mappers
+
 Each provider package exports a public error mapper that translates raw provider codes into normalized `GatewayError` or `PaymentError`:
-* `MellatErrorMapper` (`@company/payment-mellat`)
-* `ZibalErrorMapper` (`@company/payment-zibal`)
-* `ZarinpalErrorMapper` (`@company/payment-zarinpal`)
-* `SamanErrorMapper` (`@company/payment-saman`)
+
+- `MellatErrorMapper` (`@company/payment-mellat`)
+- `ZibalErrorMapper` (`@company/payment-zibal`)
+- `ZarinpalErrorMapper` (`@company/payment-zarinpal`)
+- `SamanErrorMapper` (`@company/payment-saman`)
 
 ---
 
@@ -472,10 +510,11 @@ Each provider package exports a public error mapper that translates raw provider
 Target applications are fully responsible for HTTP controllers, routes, request validation, authentication, authorization, error handling, and DTO definitions.
 
 ### Reference Endpoint Pattern
-* `POST /api/v1/payments` - Create payment session
-* `POST /api/v1/payments/callback/:gateway` or `GET /api/v1/payments/callback/:gateway` - Receive browser redirect from PSP
-* `POST /api/v1/payments/:id/verify` - Trigger payment verification
-* `GET /api/v1/payments/:id` - Query local payment status
+
+- `POST /api/v1/payments` - Create payment session
+- `POST /api/v1/payments/callback/:gateway` or `GET /api/v1/payments/callback/:gateway` - Receive browser redirect from PSP
+- `POST /api/v1/payments/:id/verify` - Trigger payment verification
+- `GET /api/v1/payments/:id` - Query local payment status
 
 ---
 
@@ -485,19 +524,19 @@ Target applications are fully responsible for HTTP controllers, routes, request 
 
 When AI agents add or alter REST payment endpoints in a target project, they **MUST** update the application's `openapi.yml` or OpenAPI specification file accordingly.
 
-* Internal credentials (`userName`, `userPassword`, `accessToken`, `terminalId`) MUST NEVER be exposed in public OpenAPI endpoints or schemas.
+- Internal credentials (`userName`, `userPassword`, `accessToken`, `terminalId`) MUST NEVER be exposed in public OpenAPI endpoints or schemas.
 
 ---
 
 ## 24. Sandbox & Test Mode
 
-| Provider Package | Real PSP Sandbox | Test Mode / Merchant | Verified Source & Requirement |
-| :--- | :---: | :---: | :--- |
-| `@company/payment-mellat` | — | — | No public PSP sandbox URL documented in specification. Setting `environment: 'sandbox'` requires providing custom `wsdlUrl` and `portalUrl`. |
-| `@company/payment-zibal` | ✓ | `zibal` merchant | Supported. Set `merchant: 'zibal'` in sandbox/test mode. Blocked from production by `validateZibalConfig`. |
-| `@company/payment-zarinpal` | — | — | No public PSP sandbox GraphQL endpoint in v4 spec. Setting `environment: 'sandbox'` requires providing custom `baseUrl`. |
-| `@company/payment-saman` | — | — | No public PSP sandbox URL in spec. Setting `environment: 'sandbox'` requires providing custom `tokenUrl` and `verifyUrl`. |
-| `MockGateway` | N/A | Local Mock | Local in-memory mock gateway from `@company/payment-service/testing` for unit/integration tests. |
+| Provider Package            | Real PSP Sandbox | Test Mode / Merchant | Verified Source & Requirement                                                                                                                |
+| :-------------------------- | :--------------: | :------------------: | :------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@company/payment-mellat`   |        —         |          —           | No public PSP sandbox URL documented in specification. Setting `environment: 'sandbox'` requires providing custom `wsdlUrl` and `portalUrl`. |
+| `@company/payment-zibal`    |        ✓         |   `zibal` merchant   | Supported. Set `merchant: 'zibal'` in sandbox/test mode. Blocked from production by `validateZibalConfig`.                                   |
+| `@company/payment-zarinpal` |        —         |          —           | No public PSP sandbox GraphQL endpoint in v4 spec. Setting `environment: 'sandbox'` requires providing custom `baseUrl`.                     |
+| `@company/payment-saman`    |        —         |          —           | No public PSP sandbox URL in spec. Setting `environment: 'sandbox'` requires providing custom `tokenUrl` and `verifyUrl`.                    |
+| `MockGateway`               |       N/A        |      Local Mock      | Local in-memory mock gateway from `@company/payment-service/testing` for unit/integration tests.                                             |
 
 ---
 
@@ -514,6 +553,7 @@ When AI agents add or alter REST payment endpoints in a target project, they **M
 ## 26. Testing
 
 ### 1. Unit Testing with `MockGateway`
+
 Target applications should use `MockGateway` from `@company/payment-service/testing`:
 
 ```ts
@@ -525,14 +565,15 @@ registry.register(new MockGateway({ id: 'zibal', scenario: 'success' }));
 ```
 
 ### Supported Scenarios on `MockGateway`
-* `'success'` - Normal successful creation and verification
-* `'declined'` - Payment declined by bank
-* `'timeout'` - Gateway timeout
-* `'network-error'` - Communication failure
-* `'provider-error'` - Gateway error response
-* `'invalid-state'` - Invalid transition error
-* `'customer-action-required'` - Customer action pending
-* `'pending'` - Payment left in pending status
+
+- `'success'` - Normal successful creation and verification
+- `'declined'` - Payment declined by bank
+- `'timeout'` - Gateway timeout
+- `'network-error'` - Communication failure
+- `'provider-error'` - Gateway error response
+- `'invalid-state'` - Invalid transition error
+- `'customer-action-required'` - Customer action pending
+- `'pending'` - Payment left in pending status
 
 ---
 
@@ -551,7 +592,7 @@ registry.register(samanGateway);
 const gateway = registry.getActiveGateway(userSelectedGatewayId);
 ```
 
-*Note on Fallback / Load Balancing:* `GatewayRegistry` handles gateway lookup and capability checking. Automated gateway routing, load balancing, or automatic fallback retries across different providers are NOT built into the library and must be implemented at the application layer if required.
+_Note on Fallback / Load Balancing:_ `GatewayRegistry` handles gateway lookup and capability checking. Automated gateway routing, load balancing, or automatic fallback retries across different providers are NOT built into the library and must be implemented at the application layer if required.
 
 ---
 
@@ -559,15 +600,15 @@ const gateway = registry.getActiveGateway(userSelectedGatewayId);
 
 Capabilities verified directly from source code implementation:
 
-| Provider Package | `CREATE_PAYMENT` | `VERIFY` | `INQUIRY` | `REFUND` | `REVERSE` | `CALLBACK` | `WEBHOOK` | `AUTHORIZE` | `CAPTURE` | `CANCEL` |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| `@company/payment-mellat` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — | — | — | — |
-| `@company/payment-zibal` | ✓ | ✓ | ✓ | — | — | ✓ | — | — | — | — |
-| `@company/payment-zarinpal` | ✓ | ✓ | — | — | — | ✓ | — | — | — | — |
-| `@company/payment-saman` | ✓ | ✓ | — | — | ✓ | ✓ | — | — | — | — |
-| `MockGateway` (Testing) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Provider Package            | `CREATE_PAYMENT` | `VERIFY` | `INQUIRY` | `REFUND` | `REVERSE` | `CALLBACK` | `WEBHOOK` | `AUTHORIZE` | `CAPTURE` | `CANCEL` |
+| :-------------------------- | :--------------: | :------: | :-------: | :------: | :-------: | :--------: | :-------: | :---------: | :-------: | :------: |
+| `@company/payment-mellat`   |        ✓         |    ✓     |     ✓     |    ✓     |     ✓     |     ✓      |     —     |      —      |     —     |    —     |
+| `@company/payment-zibal`    |        ✓         |    ✓     |     ✓     |    —     |     —     |     ✓      |     —     |      —      |     —     |    —     |
+| `@company/payment-zarinpal` |        ✓         |    ✓     |     —     |    —     |     —     |     ✓      |     —     |      —      |     —     |    —     |
+| `@company/payment-saman`    |        ✓         |    ✓     |     —     |    —     |     ✓     |     ✓      |     —     |      —      |     —     |    —     |
+| `MockGateway` (Testing)     |        ✓         |    ✓     |     ✓     |    ✓     |     ✓     |     ✓      |     ✓     |      ✓      |     ✓     |    ✓     |
 
-*Legend: `✓` Verified Supported | `—` Verified Not Supported*
+_Legend: `✓` Verified Supported | `—` Verified Not Supported_
 
 ---
 
@@ -690,18 +731,18 @@ Execute Validation (Typecheck, Lint, Tests)
 
 ## 34. Documentation Verification & Audit Report Summary
 
-| Audit Aspect | Verified Status | Notes |
-| :--- | :---: | :--- |
-| **Packages Audited** | `VERIFIED` | All 7 workspace packages audited (`core`, `service`, `persistence-postgres`, `mellat`, `zibal`, `zarinpal`, `saman`). |
-| **Public Exports** | `VERIFIED` | Top-level package exports verified from `src/index.ts`. |
-| **Capabilities Matrix** | `VERIFIED` | Mellat (Create, Verify, Inquiry, Refund, Reverse, Callback), Zibal (Create, Verify, Inquiry, Callback), Zarinpal (Create, Verify, Callback), Saman (Create, Verify, Reverse, Callback). |
-| **Configuration Interfaces** | `VERIFIED` | `MellatConfig`, `ZibalConfig`, `ZarinpalConfig`, `SamanConfig` and their validation functions audited. |
-| **Environment Variables** | `VERIFIED` | Variable names, requirement rules, and consumer packages matched. |
-| **Idempotency Model** | `VERIFIED` | Scope formatting, SHA-256 payload hashing, pending concurrency handling, and cached result retrieval verified in `IdempotencyOrchestrator`. |
-| **Persistence Repositories** | `VERIFIED` | `Payment`, `Transaction`, `IdempotencyRecord`, `WebhookEvent` entities, postgres repositories, and optimistic concurrency (`version`) verified. |
-| **Sandbox Claims** | `VERIFIED` | Real PSP sandbox constraints (Zibal test merchant vs Mellat/Zarinpal/Saman custom endpoint requirements) verified. |
-| **Production Safety** | `VERIFIED` | Zibal merchant guard, HTTPS requirements, and credential separation verified. |
-| **Code Examples** | `VERIFIED` | All documentation code examples verified via TypeScript compiler (`tsc --noEmit`). |
+| Audit Aspect                 | Verified Status | Notes                                                                                                                                                                                   |
+| :--------------------------- | :-------------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Packages Audited**         |   `VERIFIED`    | All 7 workspace packages audited (`core`, `service`, `persistence-postgres`, `mellat`, `zibal`, `zarinpal`, `saman`).                                                                   |
+| **Public Exports**           |   `VERIFIED`    | Top-level package exports verified from `src/index.ts`.                                                                                                                                 |
+| **Capabilities Matrix**      |   `VERIFIED`    | Mellat (Create, Verify, Inquiry, Refund, Reverse, Callback), Zibal (Create, Verify, Inquiry, Callback), Zarinpal (Create, Verify, Callback), Saman (Create, Verify, Reverse, Callback). |
+| **Configuration Interfaces** |   `VERIFIED`    | `MellatConfig`, `ZibalConfig`, `ZarinpalConfig`, `SamanConfig` and their validation functions audited.                                                                                  |
+| **Environment Variables**    |   `VERIFIED`    | Variable names, requirement rules, and consumer packages matched.                                                                                                                       |
+| **Idempotency Model**        |   `VERIFIED`    | Scope formatting, SHA-256 payload hashing, pending concurrency handling, and cached result retrieval verified in `IdempotencyOrchestrator`.                                             |
+| **Persistence Repositories** |   `VERIFIED`    | `Payment`, `Transaction`, `IdempotencyRecord`, `WebhookEvent` entities, postgres repositories, and optimistic concurrency (`version`) verified.                                         |
+| **Sandbox Claims**           |   `VERIFIED`    | Real PSP sandbox constraints (Zibal test merchant vs Mellat/Zarinpal/Saman custom endpoint requirements) verified.                                                                      |
+| **Production Safety**        |   `VERIFIED`    | Zibal merchant guard, HTTPS requirements, and credential separation verified.                                                                                                           |
+| **Code Examples**            |   `VERIFIED`    | All documentation code examples verified via TypeScript compiler (`tsc --noEmit`).                                                                                                      |
 
 ---
 

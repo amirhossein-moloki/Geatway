@@ -4,48 +4,92 @@ Professional, modular, provider-agnostic multi-gateway payment orchestration pla
 
 ## Project Goal
 
-The Payment Platform ecosystem is designed to standardise payment processing across Iranian (Mellat, Zarinpal, Zibal, Saman, etc.) and international (Stripe, PayPal, Adyen, etc.) payment gateways.
+The Payment Platform ecosystem is designed to standardise payment processing across Iranian (Mellat, Zarinpal, Zibal, Saman, etc.) and international payment gateways.
 
-## Architecture & Monorepo Structure
+---
+
+## Source of Truth & Package Distribution
+
+The repository uses a single source of truth commercial release model:
+
+- **Source of Truth:** GitHub Private Repository
+- **Primary Distribution:** npm Private Registry (`https://registry.npmjs.org/`)
+- **Secondary Distribution:** GitHub Packages (`https://npm.pkg.github.com`)
 
 ```text
-payment-platform/
-├── packages/
-│   └── payment-core/        # Provider-agnostic domain models, gateway contracts, & registry
-├── examples/
-│   └── basic-usage.ts       # Example showing Core + Registry usage
-├── docs/
-│   └── architecture.md      # Detailed architectural specification
-├── package.json             # Workspace root config
-├── pnpm-workspace.yaml      # Monorepo workspace configuration
-├── tsconfig.json            # Base strict TypeScript config
-├── eslint.config.js         # Workspace ESLint rules
-└── prettier.config.js       # Workspace formatting config
+GitHub Private Repository (Source of Truth)
+        │
+        │ Validated source + Release Tag (e.g. v1.0.0)
+        ▼
+   CI/CD Pipeline (GitHub Actions)
+        │
+        ├──────────────► npm Private Registry
+        │
+        └──────────────► GitHub Packages
 ```
 
-### Dependency Direction Rules
+---
 
-1. **Core is Independent**: `@company/payment-core` does NOT depend on any payment provider or framework.
-2. **Providers depend on Core**: Future provider packages (e.g. `@company/payment-mellat`) will import contracts and domain interfaces from `@company/payment-core`.
-3. **Explicit Registration**: Core does not hardcode provider packages. Providers register explicitly via `GatewayRegistry`.
+## Monorepo Packages
 
-## Getting Started
+All packages belong to the `@company` scope and can be independently versioned and installed:
+
+| Package Name                            | Purpose                                                                                   |
+| :-------------------------------------- | :---------------------------------------------------------------------------------------- |
+| `@company/payment-core`                 | Core domain entities, gateway contracts, capability interfaces, and GatewayRegistry.      |
+| `@company/payment-service`              | Application integration service, retry/timeout policies, idempotency, and test utilities. |
+| `@company/payment-persistence-postgres` | PostgreSQL persistence repositories and schema migrations.                                |
+| `@company/payment-mellat`               | Mellat (Behpardazht) PSP gateway integration.                                             |
+| `@company/payment-zibal`                | Zibal IPG gateway integration.                                                            |
+| `@company/payment-zarinpal`             | Zarinpal GraphQL v4 gateway integration.                                                  |
+| `@company/payment-saman`                | Saman (SEP) gateway integration.                                                          |
+
+---
+
+## Consumer Package Installation
+
+Consumers configure their project's `.npmrc` to authenticate with their designated private registry (see `.npmrc.example`):
+
+### Option A: npm Private Registry
+
+```ini
+@company:registry=https://registry.npmjs.org/
+//registry.npmjs.org/:_authToken=${NPM_TOKEN}
+```
+
+### Option B: GitHub Packages
+
+```ini
+@company:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+```
+
+### Installation Command
+
+```bash
+# Install core and required provider packages only
+npm install @company/payment-core @company/payment-service @company/payment-mellat
+```
+
+---
+
+## Getting Started (Workspace Maintainers)
 
 ### Prerequisites
 
 - Node.js >= 18
 - pnpm >= 8
 
-### Installation & Commands
+### Maintenance Commands
 
 ```bash
 # Install workspace dependencies
 pnpm install
 
-# Build all packages
+# Build all workspace packages
 pnpm build
 
-# Run unit test suite across workspace
+# Run workspace unit test suite
 pnpm test
 
 # Run ESLint across workspace
@@ -53,16 +97,14 @@ pnpm lint
 
 # Check code formatting
 pnpm run format:check
+
+# Validate package packing & clean external consumer installation
+python3 scripts/validate-consumer-packages.py
 ```
 
-## Future Architecture Roadmap (Phase 2+)
+---
 
-```text
-packages/
-├── payment-core/
-├── payment-mellat/      # Phase 2
-├── payment-zarinpal/    # Phase 3
-├── payment-zibal/
-├── payment-stripe/
-└── ...
-```
+## Documentation
+
+- [AI Integration Guide (`AI-INTEGRATION.md`)](./AI-INTEGRATION.md) — Single source of truth for AI agents integrating payment packages into consumer applications.
+- [Release & Commercial Distribution Guide (`docs/release-and-distribution.md`)](./docs/release-and-distribution.md) — Maintainer guide for release management, semver versioning, dual publishing, and secrets safety.

@@ -17,6 +17,9 @@
     "migrations",
     "README.md"
   ],
+  "publishConfig": {
+    "access": "restricted"
+  },
   "scripts": {
     "build": "tsc",
     "clean": "rimraf dist",

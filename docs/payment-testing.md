@@ -30,6 +30,7 @@ Sandbox Provider Integration Tests (Network calls to PSP sandbox endpoints)
 - **`createTestPaymentService`**: Factory helper that wires up an in-memory test environment instantly.
 
 ### Unit Testing Example
+
 ```ts
 import { describe, it, expect } from 'vitest';
 import { createTestPaymentService, MockGateway } from '@company/payment-service/testing';
@@ -80,5 +81,6 @@ RUN_SANDBOX_TESTS=true pnpm test
 ```
 
 ### Sandbox Configuration Rules
+
 - **Zibal**: Merchant `'zibal'`, Environment `'sandbox'`.
 - **Zarinpal**: Merchant `'46018260-8c88-11e5-80c7-000c295eb8fc'`, Environment `'sandbox'`.

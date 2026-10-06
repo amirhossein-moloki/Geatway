@@ -44,6 +44,7 @@ Welcome to the Payment Package Ecosystem integration guide. This document provid
 The Payment Package Ecosystem is a modular set of TypeScript libraries for processing payment transactions across multiple payment service providers (PSPs).
 
 Key design principles:
+
 - **Provider Agnostic Core**: Core domain logic and gateway contracts are defined in `@company/payment-core`.
 - **Capability-Based Gateways**: Gateways explicitly declare supported capabilities (e.g., `CREATE_PAYMENT`, `VERIFY`, `INQUIRY`, `REFUND`, `REVERSE`, `CANCEL`, `CALLBACK`, `WEBHOOK`).
 - **Separation of Concerns**: Payment packages do **not** expose HTTP routes or REST APIs directly. Your application owns the REST endpoints, controllers, and OpenAPI contracts.
@@ -109,13 +110,14 @@ pnpm add @company/payment-mellat @company/payment-zibal
 pnpm add @company/payment-persistence-postgres
 ```
 
-*Note: Installing `@company/payment-core` alone does NOT automatically include gateway providers. Gateways must be installed and registered explicitly.*
+_Note: Installing `@company/payment-core` alone does NOT automatically include gateway providers. Gateways must be installed and registered explicitly._
 
 ---
 
 ## 4. Package Selection
 
 When selecting packages:
+
 - Installing `@company/payment-mellat` enables Mellat PSP support (`'mellat'`).
 - Installing `@company/payment-zibal` enables Zibal gateway support (`'zibal'`).
 - If your application calls a gateway that has not been registered, `PaymentApplicationService` will throw a `GatewayNotFoundError`.
@@ -128,6 +130,7 @@ When selecting packages:
 Configuration is structured per package.
 
 ### Application Service Configuration
+
 ```ts
 import { PaymentServiceConfig } from '@company/payment-service';
 
@@ -144,6 +147,7 @@ const serviceConfig: PaymentServiceConfig = {
 ### Provider Configuration Examples
 
 #### Mellat (`@company/payment-mellat`)
+
 ```ts
 import { MellatConfig } from '@company/payment-mellat';
 
@@ -158,6 +162,7 @@ const mellatConfig: MellatConfig = {
 ```
 
 #### Zibal (`@company/payment-zibal`)
+
 ```ts
 import { ZibalConfig } from '@company/payment-zibal';
 
@@ -170,6 +175,7 @@ const zibalConfig: ZibalConfig = {
 ```
 
 #### Zarinpal (`@company/payment-zarinpal`)
+
 ```ts
 import { ZarinpalConfig } from '@company/payment-zarinpal';
 
@@ -183,6 +189,7 @@ const zarinpalConfig: ZarinpalConfig = {
 ```
 
 #### Saman (`@company/payment-saman`)
+
 ```ts
 import { SamanConfig } from '@company/payment-saman';
 
@@ -201,6 +208,7 @@ const samanConfig: SamanConfig = {
 Store all credentials and configuration in environment variables.
 
 Example `.env` file:
+
 ```env
 PAYMENT_ENV=sandbox
 
@@ -295,6 +303,7 @@ Most Iranian PSPs require the customer's browser to be redirected or POSTed to a
 When the user completes payment on the PSP bank page, the PSP posts a callback request to your application's callback HTTP endpoint.
 
 ### Handling Callback in your Express/Fastify Controller
+
 ```ts
 app.post('/api/v1/payments/callback/:gateway', async (req, res) => {
   const { gateway } = req.params;
@@ -346,7 +355,7 @@ if (verifyResult.status === 'SUCCESS') {
 }
 ```
 
-*Short-Circuit Protection*: If a payment is already in `SUCCESS` state, `PaymentApplicationService.verifyPayment` safely short-circuits and returns the existing successful verification transaction without re-querying the bank.
+_Short-Circuit Protection_: If a payment is already in `SUCCESS` state, `PaymentApplicationService.verifyPayment` safely short-circuits and returns the existing successful verification transaction without re-querying the bank.
 
 ---
 
@@ -377,13 +386,14 @@ console.log('Refund status:', refundResult.status); // REFUNDED or PARTIALLY_REF
 console.log('Amount refunded:', refundResult.amountRefunded);
 ```
 
-*Capability check*: If attempted on a provider without `REFUND` capability (e.g. Zarinpal, Zibal), an `UnsupportedCapabilityError` is thrown.
+_Capability check_: If attempted on a provider without `REFUND` capability (e.g. Zarinpal, Zibal), an `UnsupportedCapabilityError` is thrown.
 
 ---
 
 ## 14. Reverse / Cancel
 
 - **Reverse**: Cancels an un-verified transaction on gateways supporting reversal (e.g., Mellat, Saman).
+
 ```ts
 const reverseResult = await paymentService.reversePayment({
   paymentId: 'pmt_123456',
@@ -392,6 +402,7 @@ const reverseResult = await paymentService.reversePayment({
 ```
 
 - **Cancel**: Cancels an active payment pre-authorization (where `AUTHORIZE` capability is used).
+
 ```ts
 const cancelResult = await paymentService.cancelPayment({
   paymentId: 'pmt_123456',
@@ -492,6 +503,7 @@ try {
 ## 18. Transactions
 
 Each payment lifecycle event generates an immutable `Transaction` domain entity recording details:
+
 - `TransactionType.PAYMENT` (Initial request)
 - `TransactionType.VERIFY` (Verification)
 - `TransactionType.INQUIRY` (Status check)
@@ -508,6 +520,7 @@ Transactions are persisted via `TransactionRepository`.
 For production, use `@company/payment-persistence-postgres` or implement the core repository interfaces (`PaymentRepository`, `TransactionRepository`, `IdempotencyRepository`, `WebhookEventRepository`).
 
 ### Example with PostgreSQL Repositories:
+
 ```ts
 import { Pool } from 'pg';
 import {
@@ -561,6 +574,7 @@ Gateways support sandbox environments for development and staging:
 Your main application exposes HTTP routes using its web framework (Express, Fastify, NestJS).
 
 Recommended REST API structure:
+
 - `POST /api/v1/payments` — Create payment
 - `GET /api/v1/payments/:id` — Get payment status
 - `POST /api/v1/payments/callback/:gateway` — Callback entry point
@@ -621,12 +635,12 @@ const result = await service.createPayment({
 
 ## 26. Troubleshooting
 
-| Symptom | Cause | Solution |
-|---------|-------|----------|
-| `GatewayNotFoundError` | Gateway not registered in `GatewayRegistry` | Call `registry.register(gateway)` during application bootstrap. |
-| `UnsupportedCapabilityError` | Attempting capability not offered by PSP | Check `provider-capabilities.md` or `gateway.supportsCapability()`. |
-| `InvalidPaymentStateError` | Illegal state transition (e.g. verifying non-pending payment) | Check payment status before triggering action. |
-| Callback verification failure | Callback parameters mismatched or altered | Verify query/body parameters passed to `handleCallback` / `verifyPayment`. |
+| Symptom                       | Cause                                                         | Solution                                                                   |
+| ----------------------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `GatewayNotFoundError`        | Gateway not registered in `GatewayRegistry`                   | Call `registry.register(gateway)` during application bootstrap.            |
+| `UnsupportedCapabilityError`  | Attempting capability not offered by PSP                      | Check `provider-capabilities.md` or `gateway.supportsCapability()`.        |
+| `InvalidPaymentStateError`    | Illegal state transition (e.g. verifying non-pending payment) | Check payment status before triggering action.                             |
+| Callback verification failure | Callback parameters mismatched or altered                     | Verify query/body parameters passed to `handleCallback` / `verifyPayment`. |
 
 ---
 
@@ -649,6 +663,7 @@ const result = await service.createPayment({
 ## 29. Upgrade Strategy
 
 When upgrading package versions:
+
 1. Update `package.json` version dependencies for `@company/payment-core` and providers together.
 2. Run database migrations using `DatabaseMigrator` if `@company/payment-persistence-postgres` was updated.
 3. Execute unit tests (`pnpm test`).
@@ -660,7 +675,10 @@ When upgrading package versions:
 ```ts
 import { GatewayRegistry } from '@company/payment-core';
 import { PaymentApplicationService } from '@company/payment-service';
-import { InMemoryPaymentRepository, InMemoryTransactionRepository } from '@company/payment-service/testing';
+import {
+  InMemoryPaymentRepository,
+  InMemoryTransactionRepository,
+} from '@company/payment-service/testing';
 import { ZibalGateway } from '@company/payment-zibal';
 
 async function run() {

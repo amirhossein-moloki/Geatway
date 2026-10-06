@@ -3,6 +3,7 @@ import json
 import shutil
 import subprocess
 import sys
+import tarfile
 
 def main():
     repo_root = os.path.abspath(os.curdir)
@@ -10,7 +11,13 @@ def main():
     test_dir = "/tmp/consumer_package_validation"
     tarball_tmp_dir = "/tmp/payment_platform_tarballs"
 
-    print("=== Step 0: Building All Workspace Packages via tsc ===")
+    print("=== Step 0: Building All Workspace Packages via pnpm build ===")
+    res_workspace_build = subprocess.run(["pnpm", "build"], cwd=repo_root, capture_output=True, text=True)
+    if res_workspace_build.returncode != 0:
+        print(f"Workspace build failed: {res_workspace_build.stderr}")
+        sys.exit(1)
+    print("  Workspace build succeeded.")
+
     pkgs = [
         "payment-core",
         "payment-mellat",
@@ -23,7 +30,7 @@ def main():
 
     for p in pkgs:
         pkg_path = os.path.join(packages_dir, p)
-        res_bld = subprocess.run(["npx", "tsc"], cwd=pkg_path, capture_output=True, text=True)
+        res_bld = subprocess.run(["pnpm", "exec", "tsc"], cwd=pkg_path, capture_output=True, text=True)
         if res_bld.returncode != 0:
             print(f"Build failed for {p}: {res_bld.stderr}")
             sys.exit(1)
@@ -37,7 +44,7 @@ def main():
         shutil.rmtree(tarball_tmp_dir)
     os.makedirs(tarball_tmp_dir)
 
-    print("\n=== Step 1: Packing Workspace Packages ===")
+    print("\n=== Step 1: Packing Workspace Packages & Auditing Tarballs ===")
     tarballs = {}
     for p in pkgs:
         pkg_path = os.path.join(packages_dir, p)
@@ -46,7 +53,6 @@ def main():
             print(f"Failed to pack {p}: {res.stderr}")
             sys.exit(1)
 
-        # Read package.json to get actual package name
         with open(os.path.join(pkg_path, "package.json")) as f:
             data = json.load(f)
         pkg_name = data["name"]
@@ -59,8 +65,34 @@ def main():
             print(f"Expected tarball not found at {found_tgz}")
             sys.exit(1)
 
+        # Audit Tarball
+        with tarfile.open(found_tgz, "r:gz") as tar:
+            members = tar.getnames()
+            for member in members:
+                if member.endswith(".env") or member.endswith(".log"):
+                    print(f"Forbidden file in tarball {found_tgz}: {member}")
+                    sys.exit(1)
+                if member.startswith("package/src/"):
+                    print(f"Uncompiled source in tarball {found_tgz}: {member}")
+                    sys.exit(1)
+
+            # Check workspace dependency resolution in extracted package.json
+            extracted_pj = tar.extractfile("package/package.json")
+            if not extracted_pj:
+                print(f"Missing package.json in tarball {found_tgz}")
+                sys.exit(1)
+            pj_json = json.load(extracted_pj)
+            deps = pj_json.get("dependencies", {})
+            for d, v in deps.items():
+                if "workspace:" in v:
+                    print(f"Unresolved workspace dependency in {found_tgz}: {d} -> {v}")
+                    sys.exit(1)
+                if v.startswith(".") or ("/" in v and not v.startswith("@")):
+                    print(f"Relative dependency path in {found_tgz}: {d} -> {v}")
+                    sys.exit(1)
+
         tarballs[pkg_name] = found_tgz
-        print(f"  Packed {pkg_name} -> {found_tgz}")
+        print(f"  Packed & Verified {pkg_name} -> {found_tgz}")
 
     print("\n=== Step 2: Creating External Consumer Project ===")
     consumer_pj = {

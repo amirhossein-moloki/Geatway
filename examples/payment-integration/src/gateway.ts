@@ -22,7 +22,8 @@ export function setupGatewayRegistry(): GatewayRegistry {
     terminalId: Number(process.env.MELLAT_TERMINAL_ID || '1234567'),
     userName: process.env.MELLAT_USERNAME || 'test_user',
     userPassword: process.env.MELLAT_PASSWORD || 'test_pass',
-    callbackUrl: process.env.MELLAT_CALLBACK_URL || 'http://localhost:3000/api/v1/payments/callback/mellat',
+    callbackUrl:
+      process.env.MELLAT_CALLBACK_URL || 'http://localhost:3000/api/v1/payments/callback/mellat',
     environment: (process.env.PAYMENT_ENV as 'sandbox' | 'production') || 'production',
   });
   registry.register(mellatGateway);
@@ -31,7 +32,8 @@ export function setupGatewayRegistry(): GatewayRegistry {
   const zibalGateway = new ZibalGateway({
     gatewayId: 'zibal',
     merchant: process.env.ZIBAL_MERCHANT || 'zibal',
-    callbackUrl: process.env.ZIBAL_CALLBACK_URL || 'http://localhost:3000/api/v1/payments/callback/zibal',
+    callbackUrl:
+      process.env.ZIBAL_CALLBACK_URL || 'http://localhost:3000/api/v1/payments/callback/zibal',
     environment: (process.env.PAYMENT_ENV as 'sandbox' | 'production') || 'sandbox',
   });
   registry.register(zibalGateway);
@@ -41,7 +43,9 @@ export function setupGatewayRegistry(): GatewayRegistry {
     gatewayId: 'zarinpal',
     accessToken: process.env.ZARINPAL_ACCESS_TOKEN || 'test_token',
     merchantId: process.env.ZARINPAL_MERCHANT_ID || '46018260-8c88-11e5-80c7-000c295eb8fc',
-    callbackUrl: process.env.ZARINPAL_CALLBACK_URL || 'http://localhost:3000/api/v1/payments/callback/zarinpal',
+    callbackUrl:
+      process.env.ZARINPAL_CALLBACK_URL ||
+      'http://localhost:3000/api/v1/payments/callback/zarinpal',
     environment: (process.env.PAYMENT_ENV as 'sandbox' | 'production') || 'production',
   });
   registry.register(zarinpalGateway);
@@ -50,7 +54,8 @@ export function setupGatewayRegistry(): GatewayRegistry {
   const samanGateway = new SamanGateway({
     gatewayId: 'saman',
     terminalId: process.env.SAMAN_TERMINAL_ID || '10293847',
-    redirectUrl: process.env.SAMAN_CALLBACK_URL || 'http://localhost:3000/api/v1/payments/callback/saman',
+    redirectUrl:
+      process.env.SAMAN_CALLBACK_URL || 'http://localhost:3000/api/v1/payments/callback/saman',
     environment: (process.env.PAYMENT_ENV as 'sandbox' | 'production') || 'production',
   });
   registry.register(samanGateway);

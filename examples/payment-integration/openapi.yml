@@ -30,10 +30,10 @@ paths:
                   example: IRR
                 description:
                   type: string
-                  example: "Order #1001 payment"
+                  example: 'Order #1001 payment'
                 idempotencyKey:
                   type: string
-                  example: "checkout_session_1001"
+                  example: 'checkout_session_1001'
       responses:
         '201':
           description: Payment session created successfully
@@ -145,7 +145,7 @@ paths:
                   example: 50000
                 reason:
                   type: string
-                  example: "Customer return request"
+                  example: 'Customer return request'
       responses:
         '200':
           description: Refund processed successfully

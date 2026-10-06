@@ -7,6 +7,7 @@ This guide describes versioning policies, breaking change handling, and upgrade 
 ## 1. Versioning Strategy
 
 All packages in the monorepo follow [Semantic Versioning 2.0.0](https://semver.org/):
+
 - **Major (X.0.0)**: Breaking changes to public interfaces, domain entity schemas, repository interfaces, or error structures.
 - **Minor (1.X.0)**: Backward-compatible additions (e.g. new capability interfaces, new provider packages, optional fields on DTOs).
 - **Patch (1.0.X)**: Backward-compatible bug fixes and performance improvements.
@@ -22,7 +23,7 @@ When updating payment packages in your application's `package.json`:
 pnpm update @company/payment-core @company/payment-service @company/payment-mellat @company/payment-zibal
 ```
 
-*Rule*: Always keep `@company/payment-core` and `@company/payment-service` version numbers compatible.
+_Rule_: Always keep `@company/payment-core` and `@company/payment-service` version numbers compatible.
 
 ---
 
