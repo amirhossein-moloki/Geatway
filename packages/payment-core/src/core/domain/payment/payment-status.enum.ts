@@ -51,10 +51,7 @@ const VALID_TRANSITIONS: Record<PaymentStatus, readonly PaymentStatus[]> = {
     PaymentStatus.PARTIALLY_REFUNDED,
     PaymentStatus.REVERSED,
   ],
-  [PaymentStatus.PARTIALLY_REFUNDED]: [
-    PaymentStatus.REFUNDED,
-    PaymentStatus.PARTIALLY_REFUNDED,
-  ],
+  [PaymentStatus.PARTIALLY_REFUNDED]: [PaymentStatus.REFUNDED, PaymentStatus.PARTIALLY_REFUNDED],
   [PaymentStatus.FAILED]: [],
   [PaymentStatus.CANCELLED]: [],
   [PaymentStatus.REVERSED]: [],

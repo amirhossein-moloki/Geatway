@@ -218,7 +218,9 @@ export class PaymentService {
 
   public async capturePayment(
     payment: Payment,
-    request?: Omit<CapturePaymentRequest, 'paymentId' | 'amount' | 'currency'> & { amount?: number },
+    request?: Omit<CapturePaymentRequest, 'paymentId' | 'amount' | 'currency'> & {
+      amount?: number;
+    },
   ): Promise<{ payment: Payment; response: CapturePaymentResponse; transaction: Transaction }> {
     if (!payment.gateway) {
       throw new ValidationError('Gateway must be specified on payment entity');
@@ -351,10 +353,7 @@ export class PaymentService {
     gatewayId: string,
     request: CallbackRequest,
   ): Promise<ParsedCallbackResult> {
-    const gateway = this.gatewayRegistry.getActiveGateway(
-      gatewayId,
-      GatewayCapability.CALLBACK,
-    );
+    const gateway = this.gatewayRegistry.getActiveGateway(gatewayId, GatewayCapability.CALLBACK);
 
     const callbackCapableGateway = gateway as unknown as CanHandleCallback;
     if (typeof callbackCapableGateway.parseCallback !== 'function') {
@@ -368,10 +367,7 @@ export class PaymentService {
     gatewayId: string,
     request: WebhookRequest,
   ): Promise<ParsedWebhookResult> {
-    const gateway = this.gatewayRegistry.getActiveGateway(
-      gatewayId,
-      GatewayCapability.WEBHOOK,
-    );
+    const gateway = this.gatewayRegistry.getActiveGateway(gatewayId, GatewayCapability.WEBHOOK);
 
     const webhookCapableGateway = gateway as unknown as CanHandleWebhook;
     if (typeof webhookCapableGateway.parseWebhook !== 'function') {
