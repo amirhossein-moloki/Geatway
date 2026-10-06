@@ -8,6 +8,7 @@ import {
   TransactionType,
   TransactionStatus,
 } from '../src/core/domain/transaction/transaction.entity.js';
+import { ValidationError } from '../src/core/errors/index.js';
 
 describe('PaymentService', () => {
   let registry: GatewayRegistry;
@@ -141,5 +142,10 @@ describe('PaymentService', () => {
     });
     expect(whResult.eventType).toBe('payment.succeeded');
     expect(whResult.paymentId).toBe('pay_123');
+  });
+
+  it('should throw ValidationError if gateway is not specified on payment entity', async () => {
+    const payment = new Payment({ amount: 1000, currency: 'USD' });
+    await expect(service.createPayment(payment)).rejects.toThrow(ValidationError);
   });
 });
