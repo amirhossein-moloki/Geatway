@@ -1,0 +1,22 @@
+# .npmrc.example - Configuration Template for Private Package Registries
+# Copy this file to .npmrc in your consumer project or home directory.
+# DO NOT commit files containing actual tokens or passwords to version control!
+
+# ==============================================================================
+# Option A: npm Private Registry (npmjs.com)
+# ==============================================================================
+# Direct all @company scoped packages to npm Private Registry
+# @company:registry=https://registry.npmjs.org/
+# //registry.npmjs.org/:_authToken=${NPM_TOKEN}
+
+# ==============================================================================
+# Option B: GitHub Packages (npm-compatible)
+# ==============================================================================
+# Direct all @company scoped packages to GitHub Packages
+@company:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+
+# ==============================================================================
+# Default Registry for non-scoped packages (Public npm)
+# ==============================================================================
+registry=https://registry.npmjs.org/

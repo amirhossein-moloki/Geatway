@@ -42,6 +42,7 @@ pnpm test
 See `openapi.yml` in this directory for the full REST API specification.
 
 Exposed routes demonstrated:
+
 - `POST /api/v1/payments` — Create payment session
 - `GET /api/v1/payments/:id` — Get payment details
 - `POST /api/v1/payments/callback/:gateway` — Process gateway bank callback

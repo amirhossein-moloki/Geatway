@@ -15,7 +15,9 @@
     "paths": {
       "@company/payment-core": ["../../packages/payment-core/dist/index.d.ts"],
       "@company/payment-service": ["../../packages/payment-service/dist/payment-service.d.ts"],
-      "@company/payment-service/testing": ["../../packages/payment-service/dist/testing/index.d.ts"],
+      "@company/payment-service/testing": [
+        "../../packages/payment-service/dist/testing/index.d.ts"
+      ],
       "@company/payment-mellat": ["../../packages/payment-mellat/dist/index.d.ts"],
       "@company/payment-zibal": ["../../packages/payment-zibal/dist/index.d.ts"],
       "@company/payment-zarinpal": ["../../packages/payment-zarinpal/dist/index.d.ts"],

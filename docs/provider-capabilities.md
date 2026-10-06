@@ -6,18 +6,19 @@ This document provides an exhaustive specification of supported capabilities, co
 
 ## 1. Provider Capability Matrix
 
-| Gateway ID | Display Name | Create Payment | Verify | Inquiry | Refund | Reverse | Cancel | Callback | Webhook |
-|------------|--------------|:--------------:|:------:|:-------:|:------:|:-------:|:------:|:--------:|:-------:|
-| `mellat`   | به پرداخت ملت (Mellat) | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✗ |
-| `zibal`    | زیبال (Zibal) | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✓ | ✗ |
-| `zarinpal` | زرین‌پال (Zarinpal) | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✓ | ✗ |
-| `saman`    | سامان کیش / SEP | ✓ | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ |
+| Gateway ID | Display Name           | Create Payment | Verify | Inquiry | Refund | Reverse | Cancel | Callback | Webhook |
+| ---------- | ---------------------- | :------------: | :----: | :-----: | :----: | :-----: | :----: | :------: | :-----: |
+| `mellat`   | به پرداخت ملت (Mellat) |       ✓        |   ✓    |    ✓    |   ✓    |    ✓    |   ✗    |    ✓     |    ✗    |
+| `zibal`    | زیبال (Zibal)          |       ✓        |   ✓    |    ✓    |   ✗    |    ✗    |   ✗    |    ✓     |    ✗    |
+| `zarinpal` | زرین‌پال (Zarinpal)    |       ✓        |   ✓    |    ✗    |   ✗    |    ✗    |   ✗    |    ✓     |    ✗    |
+| `saman`    | سامان کیش / SEP        |       ✓        |   ✓    |    ✗    |   ✗    |    ✓    |   ✗    |    ✓     |    ✗    |
 
 ---
 
 ## 2. Provider Detailed Specifications
 
 ### 2.1. Mellat (`@company/payment-mellat`)
+
 - **Package**: `@company/payment-mellat`
 - **Gateway ID**: `mellat`
 - **Supported Capabilities**:
@@ -43,6 +44,7 @@ This document provides an exhaustive specification of supported capabilities, co
 ---
 
 ### 2.2. Zibal (`@company/payment-zibal`)
+
 - **Package**: `@company/payment-zibal`
 - **Gateway ID**: `zibal`
 - **Supported Capabilities**:
@@ -64,6 +66,7 @@ This document provides an exhaustive specification of supported capabilities, co
 ---
 
 ### 2.3. Zarinpal (`@company/payment-zarinpal`)
+
 - **Package**: `@company/payment-zarinpal`
 - **Gateway ID**: `zarinpal`
 - **Supported Capabilities**:
@@ -85,6 +88,7 @@ This document provides an exhaustive specification of supported capabilities, co
 ---
 
 ### 2.4. Saman (`@company/payment-saman`)
+
 - **Package**: `@company/payment-saman`
 - **Gateway ID**: `saman`
 - **Supported Capabilities**:

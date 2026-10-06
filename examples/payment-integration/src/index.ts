@@ -171,7 +171,10 @@ export class AppController {
       return { statusCode: 409, body: { error: 'InvalidPaymentState', message: err.message } };
     }
     if (err instanceof GatewayError) {
-      return { statusCode: 502, body: { error: 'GatewayError', code: err.code, message: err.message } };
+      return {
+        statusCode: 502,
+        body: { error: 'GatewayError', code: err.code, message: err.message },
+      };
     }
     if (err instanceof PaymentPlatformError) {
       return { statusCode: 500, body: { error: 'PaymentError', message: err.message } };
