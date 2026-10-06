@@ -6,6 +6,9 @@
   "scripts": {
     "build": "pnpm --recursive run build",
     "test": "pnpm --recursive run test",
+    "test:unit": "pnpm --recursive run test",
+    "test:integration": "pnpm --recursive run test",
+    "test:sandbox": "RUN_SANDBOX_TESTS=true pnpm --recursive run test",
     "lint": "pnpm --recursive run lint",
     "lint:fix": "pnpm --recursive run lint:fix",
     "format": "prettier --write .",

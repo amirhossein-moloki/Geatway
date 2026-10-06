@@ -1,6 +1,11 @@
-import { GatewayCapability, Payment, PaymentStatus } from '@company/payment-core';
+import {
+  ConfigurationError,
+  GatewayCapability,
+  Payment,
+  PaymentStatus,
+} from '@company/payment-core';
 import { describe, expect, it } from 'vitest';
-import { HttpTransport, SamanGateway } from '../src/index.js';
+import { HttpTransport, SamanGateway, validateSamanConfig } from '../src/index.js';
 
 class MockHttpTransport implements HttpTransport {
   public postResponses: Map<string, unknown> = new Map();
@@ -94,6 +99,16 @@ describe('SamanGateway', () => {
     });
 
     expect(res.success).toBe(true);
+  });
+
+  it('should throw ConfigurationError in sandbox environment if custom URLs are missing', () => {
+    expect(() =>
+      validateSamanConfig({
+        terminalId: '12571198',
+        redirectUrl: 'https://merchant.example.com/return',
+        environment: 'sandbox',
+      }),
+    ).toThrow(ConfigurationError);
   });
 
   it('should parse callback body correctly', async () => {

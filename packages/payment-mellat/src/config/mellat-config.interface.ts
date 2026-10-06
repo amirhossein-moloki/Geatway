@@ -1,6 +1,7 @@
-import { GatewayConfig } from '@company/payment-core';
+import { ConfigurationError, GatewayConfig, PaymentEnvironment } from '@company/payment-core';
 
 export interface MellatConfig extends GatewayConfig {
+  readonly environment?: PaymentEnvironment;
   readonly terminalId: string | number;
   readonly userName: string;
   readonly userPassword: string;
@@ -13,15 +14,15 @@ export interface MellatConfig extends GatewayConfig {
 
 export function validateMellatConfig(config: MellatConfig): void {
   if (!config) {
-    throw new Error('Mellat configuration must be provided');
+    throw new ConfigurationError('Mellat configuration must be provided');
   }
 
   if (config.terminalId === undefined || config.terminalId === null || config.terminalId === '') {
-    throw new Error('Mellat configuration missing required field: terminalId');
+    throw new ConfigurationError('Mellat configuration missing required field: terminalId');
   }
 
   if (!config.userName || typeof config.userName !== 'string' || config.userName.trim() === '') {
-    throw new Error('Mellat configuration missing required field: userName');
+    throw new ConfigurationError('Mellat configuration missing required field: userName');
   }
 
   if (
@@ -29,7 +30,7 @@ export function validateMellatConfig(config: MellatConfig): void {
     typeof config.userPassword !== 'string' ||
     config.userPassword.trim() === ''
   ) {
-    throw new Error('Mellat configuration missing required field: userPassword');
+    throw new ConfigurationError('Mellat configuration missing required field: userPassword');
   }
 
   if (
@@ -37,6 +38,13 @@ export function validateMellatConfig(config: MellatConfig): void {
     typeof config.callbackUrl !== 'string' ||
     config.callbackUrl.trim() === ''
   ) {
-    throw new Error('Mellat configuration missing required field: callbackUrl');
+    throw new ConfigurationError('Mellat configuration missing required field: callbackUrl');
+  }
+
+  const isSandboxMode = config.environment === 'sandbox' || config.isSandbox === true;
+  if (isSandboxMode && (!config.wsdlUrl || !config.portalUrl)) {
+    throw new ConfigurationError(
+      'Mellat v1.29 specification does not document an official public sandbox URL. A custom wsdlUrl and portalUrl must be provided in MellatConfig for sandbox mode.',
+    );
   }
 }

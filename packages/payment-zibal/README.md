@@ -55,8 +55,24 @@ const verifyResult = await zibalGateway.verify({
 - `INQUIRY`
 - `CALLBACK`
 
+## Sandbox / Test Environment
+
+- **Sandbox Availability**: Yes (Test Mode).
+- **Endpoint**: `https://gateway.zibal.ir` (Production endpoint configured in test mode).
+- **Sandbox Credentials**: `merchant: "zibal"`.
+- **Environment Selection**: Set `environment: "sandbox"` in `ZibalConfig`.
+- **Production Safety**: Attempting to use test merchant `"zibal"` when `environment: "production"` throws `ConfigurationError`.
+- **Supported Test Operations**: Payment Request (`/v1/request`), Redirect (`/start/{trackId}`), Verify (`/v1/verify`), Inquiry (`/v1/inquiry`), Callback parsing.
+- **Unsupported Test Operations**: Refunds and Webhooks are not part of the Zibal IPG API specification (`ziball.json`).
+
 ## تست‌ها
 
 ```bash
 pnpm --filter @company/payment-zibal test
+```
+
+Opt-in sandbox integration tests:
+
+```bash
+RUN_SANDBOX_TESTS=true pnpm --filter @company/payment-zibal test
 ```

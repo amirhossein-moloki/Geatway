@@ -77,6 +77,15 @@ Mellat numeric response codes (e.g., `11` invalid card, `21` invalid merchant, `
 
 ---
 
+## Sandbox / Test Environment
+
+- **Sandbox Availability**: Partial. Historical documentation mentions test servers, but official specification v1.29 does not document current public test WSDL or payment page URLs.
+- **Environment Selection**: Set `environment: "sandbox"` in `MellatConfig`.
+- **Required Configuration for Sandbox**: A custom test `wsdlUrl` and `portalUrl` provided by Mellat/Behpardakht must be supplied in `MellatConfig`.
+- **Production Safety**: Initializing with `environment: "sandbox"` without providing custom test URLs throws `ConfigurationError` to prevent accidental production calls.
+- **Supported Test Operations**: `bpPayRequest`, `bpVerifyRequest`, `bpInquiryRequest`, `bpReversalRequest`, `bpRefundRequest`, `parseCallback`.
+- **Known Limitations**: Webhooks are not supported by Mellat PSP specification.
+
 ## Testing
 
 Run unit tests:

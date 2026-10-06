@@ -1,6 +1,11 @@
-import { GatewayCapability, Payment, PaymentStatus } from '@company/payment-core';
+import {
+  ConfigurationError,
+  GatewayCapability,
+  Payment,
+  PaymentStatus,
+} from '@company/payment-core';
 import { describe, expect, it } from 'vitest';
-import { HttpTransport, ZibalGateway } from '../src/index.js';
+import { HttpTransport, ZibalGateway, validateZibalConfig } from '../src/index.js';
 
 class MockHttpTransport implements HttpTransport {
   public postResponses: Map<string, unknown> = new Map();
@@ -134,6 +139,16 @@ describe('ZibalGateway', () => {
     expect(res.status).toBe(PaymentStatus.SUCCESS);
     expect(res.amount).toBe(100000);
     expect(res.reference).toBe('12312');
+  });
+
+  it('should validate configuration and throw ConfigurationError when using merchant zibal in production', () => {
+    expect(() =>
+      validateZibalConfig({
+        merchant: 'zibal',
+        callbackUrl: 'https://merchant.example.com/callback',
+        environment: 'production',
+      }),
+    ).toThrow(ConfigurationError);
   });
 
   it('should parse callback parameters correctly', async () => {

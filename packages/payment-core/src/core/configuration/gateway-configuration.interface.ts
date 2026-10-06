@@ -1,5 +1,8 @@
+export type PaymentEnvironment = 'production' | 'sandbox' | 'test';
+
 export interface GatewayConfig {
-  readonly gatewayId: string;
+  readonly gatewayId?: string;
+  readonly environment?: PaymentEnvironment;
   readonly isSandbox?: boolean;
   readonly options?: Record<string, unknown>;
 }
