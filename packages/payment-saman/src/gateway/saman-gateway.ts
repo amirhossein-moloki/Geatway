@@ -33,12 +33,10 @@ export class SamanGateway
     GatewayCapability.CALLBACK,
   ]);
 
-  private readonly config: SamanConfig;
   private readonly client: SamanClient;
 
   constructor(config: SamanConfig, transport?: HttpTransport) {
     validateSamanConfig(config);
-    this.config = config;
     this.id = config.gatewayId || 'saman';
     this.client = new SamanClient(config, transport);
   }
