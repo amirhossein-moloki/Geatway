@@ -17,6 +17,11 @@
     "migrations",
     "README.md"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amirhossein-moloki/Geatway.git",
+    "directory": "packages/payment-persistence-postgres"
+  },
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com"

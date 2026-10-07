@@ -16,6 +16,11 @@
     "dist",
     "README.md"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amirhossein-moloki/Geatway.git",
+    "directory": "packages/payment-zibal"
+  },
   "publishConfig": {
     "access": "restricted",
     "registry": "https://npm.pkg.github.com"

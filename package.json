@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "description": "Payment Platform Monorepo Ecosystem",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amirhossein-moloki/Geatway.git"
+  },
   "scripts": {
     "build": "pnpm --recursive run build",
     "test": "pnpm --recursive run test",
