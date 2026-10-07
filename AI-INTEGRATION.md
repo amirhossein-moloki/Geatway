@@ -92,9 +92,9 @@ Database / Storage
 
 Target applications should install only the packages required for their specific implementation:
 
-| Package Name                            |   Required   | Purpose / Responsibility                                                                         | Dependencies                             |
-| :-------------------------------------- | :----------: | :----------------------------------------------------------------------------------------------- | :--------------------------------------- |
-| `@amirhossein-moloki/payment-core`      | **Required** | Core domain entities, capability contracts, error hierarchy, and GatewayRegistry.                | None                                     |
+| Package Name                                       |   Required   | Purpose / Responsibility                                                                         | Dependencies                             |
+| :------------------------------------------------- | :----------: | :----------------------------------------------------------------------------------------------- | :--------------------------------------- |
+| `@amirhossein-moloki/payment-core`                 | **Required** | Core domain entities, capability contracts, error hierarchy, and GatewayRegistry.                | None                                     |
 | `@amirhossein-moloki/payment-service`              |   Optional   | Higher-level application orchestration service, retry policies, idempotency, and test utilities. | `@amirhossein-moloki/payment-core`       |
 | `@amirhossein-moloki/payment-mellat`               |   Optional   | Mellat (Behpardazht) PSP gateway implementation.                                                 | `@amirhossein-moloki/payment-core`       |
 | `@amirhossein-moloki/payment-zibal`                |   Optional   | Zibal IPG gateway implementation.                                                                | `@amirhossein-moloki/payment-core`       |
@@ -211,9 +211,9 @@ export interface SamanConfig extends GatewayConfig {
 
 Store credentials securely in environment variables.
 
-| Environment Variable    |  Required / Optional  | Consumer Package                        | Purpose                                              | Secret? | Validation Rule                                     |
-| :---------------------- | :-------------------: | :-------------------------------------- | :--------------------------------------------------- | :-----: | :-------------------------------------------------- |
-| `PAYMENT_ENV`           |       Optional        | `@amirhossein-moloki/payment-core`      | Global environment (`production`, `sandbox`, `test`) |   No    | Must be `'production'`, `'sandbox'`, or `'test'`    |
+| Environment Variable    |  Required / Optional  | Consumer Package                                   | Purpose                                              | Secret? | Validation Rule                                     |
+| :---------------------- | :-------------------: | :------------------------------------------------- | :--------------------------------------------------- | :-----: | :-------------------------------------------------- |
+| `PAYMENT_ENV`           |       Optional        | `@amirhossein-moloki/payment-core`                 | Global environment (`production`, `sandbox`, `test`) |   No    | Must be `'production'`, `'sandbox'`, or `'test'`    |
 | `MELLAT_TERMINAL_ID`    |  Required for Mellat  | `@amirhossein-moloki/payment-mellat`               | Numeric or string terminal ID                        |   No    | Non-empty                                           |
 | `MELLAT_USERNAME`       |  Required for Mellat  | `@amirhossein-moloki/payment-mellat`               | Gateway username                                     |   Yes   | Non-empty string                                    |
 | `MELLAT_PASSWORD`       |  Required for Mellat  | `@amirhossein-moloki/payment-mellat`               | Gateway password                                     |   Yes   | Non-empty string                                    |
@@ -521,13 +521,13 @@ When AI agents add or alter REST payment endpoints in a target project, they **M
 
 ## 24. Sandbox & Test Mode
 
-| Provider Package            | Real PSP Sandbox | Test Mode / Merchant | Verified Source & Requirement                                                                                                                |
-| :-------------------------- | :--------------: | :------------------: | :------------------------------------------------------------------------------------------------------------------------------------------- |
+| Provider Package                       | Real PSP Sandbox | Test Mode / Merchant | Verified Source & Requirement                                                                                                                |
+| :------------------------------------- | :--------------: | :------------------: | :------------------------------------------------------------------------------------------------------------------------------------------- |
 | `@amirhossein-moloki/payment-mellat`   |        —         |          —           | No public PSP sandbox URL documented in specification. Setting `environment: 'sandbox'` requires providing custom `wsdlUrl` and `portalUrl`. |
 | `@amirhossein-moloki/payment-zibal`    |        ✓         |   `zibal` merchant   | Supported. Set `merchant: 'zibal'` in sandbox/test mode. Blocked from production by `validateZibalConfig`.                                   |
 | `@amirhossein-moloki/payment-zarinpal` |        —         |          —           | No public PSP sandbox GraphQL endpoint in v4 spec. Setting `environment: 'sandbox'` requires providing custom `baseUrl`.                     |
 | `@amirhossein-moloki/payment-saman`    |        —         |          —           | No public PSP sandbox URL in spec. Setting `environment: 'sandbox'` requires providing custom `tokenUrl` and `verifyUrl`.                    |
-| `MockGateway`               |       N/A        |      Local Mock      | Local in-memory mock gateway from `@amirhossein-moloki/payment-service/testing` for unit/integration tests.                                             |
+| `MockGateway`                          |       N/A        |      Local Mock      | Local in-memory mock gateway from `@amirhossein-moloki/payment-service/testing` for unit/integration tests.                                  |
 
 ---
 
@@ -591,13 +591,13 @@ _Note on Fallback / Load Balancing:_ `GatewayRegistry` handles gateway lookup an
 
 Capabilities verified directly from source code implementation:
 
-| Provider Package            | `CREATE_PAYMENT` | `VERIFY` | `INQUIRY` | `REFUND` | `REVERSE` | `CALLBACK` | `WEBHOOK` | `AUTHORIZE` | `CAPTURE` | `CANCEL` |
-| :-------------------------- | :--------------: | :------: | :-------: | :------: | :-------: | :--------: | :-------: | :---------: | :-------: | :------: |
+| Provider Package                       | `CREATE_PAYMENT` | `VERIFY` | `INQUIRY` | `REFUND` | `REVERSE` | `CALLBACK` | `WEBHOOK` | `AUTHORIZE` | `CAPTURE` | `CANCEL` |
+| :------------------------------------- | :--------------: | :------: | :-------: | :------: | :-------: | :--------: | :-------: | :---------: | :-------: | :------: |
 | `@amirhossein-moloki/payment-mellat`   |        ✓         |    ✓     |     ✓     |    ✓     |     ✓     |     ✓      |     —     |      —      |     —     |    —     |
 | `@amirhossein-moloki/payment-zibal`    |        ✓         |    ✓     |     ✓     |    —     |     —     |     ✓      |     —     |      —      |     —     |    —     |
 | `@amirhossein-moloki/payment-zarinpal` |        ✓         |    ✓     |     —     |    —     |     —     |     ✓      |     —     |      —      |     —     |    —     |
 | `@amirhossein-moloki/payment-saman`    |        ✓         |    ✓     |     —     |    —     |     ✓     |     ✓      |     —     |      —      |     —     |    —     |
-| `MockGateway` (Testing)     |        ✓         |    ✓     |     ✓     |    ✓     |     ✓     |     ✓      |     ✓     |      ✓      |     ✓     |    ✓     |
+| `MockGateway` (Testing)                |        ✓         |    ✓     |     ✓     |    ✓     |     ✓     |     ✓      |     ✓     |      ✓      |     ✓     |    ✓     |
 
 _Legend: `✓` Verified Supported | `—` Verified Not Supported_
 

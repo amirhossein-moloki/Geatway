@@ -14,7 +14,9 @@
     "baseUrl": ".",
     "paths": {
       "@amirhossein-moloki/payment-core": ["../../packages/payment-core/dist/index.d.ts"],
-      "@amirhossein-moloki/payment-service": ["../../packages/payment-service/dist/payment-service.d.ts"],
+      "@amirhossein-moloki/payment-service": [
+        "../../packages/payment-service/dist/payment-service.d.ts"
+      ],
       "@amirhossein-moloki/payment-service/testing": [
         "../../packages/payment-service/dist/testing/index.d.ts"
       ],

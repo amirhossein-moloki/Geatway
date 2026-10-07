@@ -32,9 +32,9 @@ GitHub Private Repository (Source of Truth)
 
 Packages belong to the `@amirhossein-moloki` scope and are configured as private (`"publishConfig": { "access": "restricted", "registry": "https://npm.pkg.github.com" }`):
 
-| Package Name                            | Directory                               | Distributable Target | Description                                                                                             |
-| :-------------------------------------- | :-------------------------------------- | :------------------- | :------------------------------------------------------------------------------------------------------ |
-| `@amirhossein-moloki/payment-core`      | `packages/payment-core`                 | Standard Library     | Provider-agnostic domain entities, gateway contracts, registry, and standard errors.                    |
+| Package Name                                       | Directory                               | Distributable Target | Description                                                                                             |
+| :------------------------------------------------- | :-------------------------------------- | :------------------- | :------------------------------------------------------------------------------------------------------ |
+| `@amirhossein-moloki/payment-core`                 | `packages/payment-core`                 | Standard Library     | Provider-agnostic domain entities, gateway contracts, registry, and standard errors.                    |
 | `@amirhossein-moloki/payment-service`              | `packages/payment-service`              | Standard Library     | Higher-level application service, retry/timeout policies, idempotency orchestrator, and test utilities. |
 | `@amirhossein-moloki/payment-persistence-postgres` | `packages/payment-persistence-postgres` | Adapter              | PostgreSQL persistence repositories and SQL schema migrations.                                          |
 | `@amirhossein-moloki/payment-mellat`               | `packages/payment-mellat`               | PSP Provider         | Mellat (Behpardazht) payment gateway provider implementation.                                           |

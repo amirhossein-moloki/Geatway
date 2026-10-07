@@ -31,9 +31,9 @@ GitHub Private Repository (Source of Truth)
 
 All packages belong to the `@amirhossein-moloki` scope and can be independently versioned and installed:
 
-| Package Name                            | Purpose                                                                                   |
-| :-------------------------------------- | :---------------------------------------------------------------------------------------- |
-| `@amirhossein-moloki/payment-core`      | Core domain entities, gateway contracts, capability interfaces, and GatewayRegistry.      |
+| Package Name                                       | Purpose                                                                                   |
+| :------------------------------------------------- | :---------------------------------------------------------------------------------------- |
+| `@amirhossein-moloki/payment-core`                 | Core domain entities, gateway contracts, capability interfaces, and GatewayRegistry.      |
 | `@amirhossein-moloki/payment-service`              | Application integration service, retry/timeout policies, idempotency, and test utilities. |
 | `@amirhossein-moloki/payment-persistence-postgres` | PostgreSQL persistence repositories and schema migrations.                                |
 | `@amirhossein-moloki/payment-mellat`               | Mellat (Behpardazht) PSP gateway integration.                                             |
