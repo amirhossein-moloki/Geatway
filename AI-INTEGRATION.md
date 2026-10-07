@@ -106,20 +106,11 @@ Target applications should install only the packages required for their specific
 
 ## 6. Installation & Package Registries
 
-Target applications consume packages published to private registries. The GitHub source repository is the single source of truth, while packages are published to **npm Private Registry** and **GitHub Packages**.
+Target applications consume packages published to GitHub Packages. The GitHub source repository is the single source of truth, while packages are distributed exclusively through **GitHub Packages**.
 
 ### Consumer `.npmrc` Configuration
 
-Consumer projects configure `.npmrc` depending on their designated private registry:
-
-#### Option A: npm Private Registry
-
-```ini
-@company:registry=https://registry.npmjs.org/
-//registry.npmjs.org/:_authToken=${NPM_TOKEN}
-```
-
-#### Option B: GitHub Packages
+Consumer projects configure `.npmrc` to authenticate with GitHub Packages:
 
 ```ini
 @company:registry=https://npm.pkg.github.com

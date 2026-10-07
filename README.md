@@ -13,8 +13,7 @@ The Payment Platform ecosystem is designed to standardise payment processing acr
 The repository uses a single source of truth commercial release model:
 
 - **Source of Truth:** GitHub Private Repository
-- **Primary Distribution:** npm Private Registry (`https://registry.npmjs.org/`)
-- **Secondary Distribution:** GitHub Packages (`https://npm.pkg.github.com`)
+- **Package Distribution:** GitHub Packages (`https://npm.pkg.github.com`)
 
 ```text
 GitHub Private Repository (Source of Truth)
@@ -22,8 +21,6 @@ GitHub Private Repository (Source of Truth)
         │ Validated source + Release Tag (e.g. v1.0.0)
         ▼
    CI/CD Pipeline (GitHub Actions)
-        │
-        ├──────────────► npm Private Registry
         │
         └──────────────► GitHub Packages
 ```
@@ -48,16 +45,7 @@ All packages belong to the `@company` scope and can be independently versioned a
 
 ## Consumer Package Installation
 
-Consumers configure their project's `.npmrc` to authenticate with their designated private registry (see `.npmrc.example`):
-
-### Option A: npm Private Registry
-
-```ini
-@company:registry=https://registry.npmjs.org/
-//registry.npmjs.org/:_authToken=${NPM_TOKEN}
-```
-
-### Option B: GitHub Packages
+Consumers configure their project's `.npmrc` to authenticate with GitHub Packages (see `.npmrc.example`):
 
 ```ini
 @company:registry=https://npm.pkg.github.com
@@ -107,4 +95,4 @@ python3 scripts/validate-consumer-packages.py
 ## Documentation
 
 - [AI Integration Guide (`AI-INTEGRATION.md`)](./AI-INTEGRATION.md) — Single source of truth for AI agents integrating payment packages into consumer applications.
-- [Release & Commercial Distribution Guide (`docs/release-and-distribution.md`)](./docs/release-and-distribution.md) — Maintainer guide for release management, semver versioning, dual publishing, and secrets safety.
+- [Release & Commercial Distribution Guide (`docs/release-and-distribution.md`)](./docs/release-and-distribution.md) — Maintainer guide for release management, semver versioning, GitHub Packages publishing, and secrets safety.

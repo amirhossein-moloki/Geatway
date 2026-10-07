@@ -15,16 +15,14 @@ GitHub Private Repository (Source of Truth)
         ▼
    CI/CD Pipeline (GitHub Actions)
         │
-        ├──────────────► npm Private Registry (https://registry.npmjs.org/)
-        │
         └──────────────► GitHub Packages (https://npm.pkg.github.com)
 ```
 
 ### Key Principles
 
 1. **GitHub Repository as Single Source of Truth:** Code changes, features, and version tags originate solely from the private GitHub source repository.
-2. **Dual-Registry Distribution:** Validated release builds are published simultaneously to both **npm Private Registry** and **GitHub Packages**.
-3. **No Code Forks:** The same published package build artifact (tarball) is distributed to both registries without maintaining separate source trees or provider-specific forks.
+2. **GitHub Packages Distribution:** Validated release builds are published exclusively to **GitHub Packages**.
+3. **No Code Forks:** The published package build artifact (tarball) is distributed without maintaining separate source trees or provider-specific forks.
 4. **Independent Package Granularity:** Consumers install only the scoped packages they are entitled or required to use (e.g. `@company/payment-core`, `@company/payment-service`, `@company/payment-mellat`).
 
 ---
@@ -47,28 +45,20 @@ All packages belong to the `@company` scope and are configured as private (`"pub
 
 ## 3. Registry Configuration for Consumers
 
-Consumers can choose either **npm Private Registry** or **GitHub Packages** as their distribution channel.
+Consumers configure their projects to use **GitHub Packages** as their distribution registry.
 
 ### Safe Template (`.npmrc.example`)
 
 A sample template is provided at root `.npmrc.example`:
 
 ```ini
-# .npmrc.example - Registry Configuration Template
+# .npmrc.example - GitHub Packages Registry Configuration Template
 
-# Option A: npm Private Registry
-# @company:registry=https://registry.npmjs.org/
-# //registry.npmjs.org/:_authToken=${NPM_TOKEN}
-
-# Option B: GitHub Packages
 @company:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
-
-# Default Registry for public dependencies
-registry=https://registry.npmjs.org/
 ```
 
-> **SECURITY WARNING:** Never commit an `.npmrc` file containing raw access tokens to version control. Use environment variable expansion (`${NPM_TOKEN}` or `${GITHUB_TOKEN}`) or store tokens in local developer user configs (`~/.npmrc`).
+> **SECURITY WARNING:** Never commit an `.npmrc` file containing raw access tokens to version control. Use environment variable expansion (`${GITHUB_TOKEN}`) or store tokens in local developer user configs (`~/.npmrc`).
 
 ---
 
@@ -104,15 +94,13 @@ Package validation and dual-registry publishing are automated via GitHub Actions
 - **Publishing Steps:**
   1. Full validation suite execution.
   2. Tarball verification & workspace protocol resolution audit.
-  3. Publish to **npm Private Registry** using `NPM_TOKEN`.
-  4. Publish to **GitHub Packages** using `GITHUB_TOKEN`.
-  5. Post-publish cleanup of authentication tokens.
+  3. Publish to **GitHub Packages** using `GITHUB_TOKEN`.
+  4. Post-publish cleanup of authentication tokens.
 
 ---
 
 ## 6. Secrets Management & Security
 
-- **`NPM_TOKEN`**: Granular automation token for the `@company` scope on npmjs.com.
 - **`GITHUB_TOKEN`**: Standard GitHub Actions secret with `packages: write` permissions for GitHub Packages.
 - **Log Sanitization:** Publishing scripts do not print complete environment variables or authentication tokens.
 - **Tarball Audit:** Pre-pack audits verify that sensitive files (`.env`, `.log`, private keys, internal uncompiled `src/`, or test fixtures) are excluded from published package artifacts.
@@ -121,18 +109,16 @@ Package validation and dual-registry publishing are automated via GitHub Actions
 
 ## 7. Rollback & Failed Release Procedures
 
-npm and GitHub Packages enforce package immutability; published versions cannot be silently overwritten or modified.
+GitHub Packages enforces package immutability; published versions cannot be silently overwritten or modified.
 
 ### Failed Publish Handling
 
-1. **Partial Registry Success (Dual-Registry Desync):**
-   - If publishing succeeds on npm Private but fails on GitHub Packages (e.g. network timeout):
-   - Do NOT unpublish or alter the published npm version.
-   - Re-run the GitHub Packages publish step using `workflow_dispatch` or fix the network condition and push a patch release tag (e.g., `v1.0.1`).
+1. **Failed Publish Step:**
+   - If publishing fails on GitHub Packages (e.g. network timeout or missing permissions):
+   - Re-run the release workflow using `workflow_dispatch` or fix the condition and push a patch release tag (e.g., `v1.0.1`).
 
 2. **Defective Release Version:**
    - If a published package contains a critical defect or security vulnerability:
-   - Deprecate the affected version using `npm deprecate @company/payment-package@1.0.0 "Defective build - upgrade to 1.0.1"`.
    - Immediately publish a corrected patch version (e.g., `1.0.1`).
 
 ---
@@ -141,12 +127,12 @@ npm and GitHub Packages enforce package immutability; published versions cannot 
 
 Before completing a release, all matrix criteria must be verified:
 
-| Check Item                            | npm Private Registry | GitHub Packages | Verification Command / Script                                  |
-| :------------------------------------ | :------------------: | :-------------: | :------------------------------------------------------------- |
-| **Authentication**                    |       Verified       |    Verified     | GitHub Actions Secret Injection (`NPM_TOKEN` / `GITHUB_TOKEN`) |
-| **Package Tarball Integrity**         |       Verified       |    Verified     | `python3 scripts/validate-consumer-packages.py`                |
-| **Workspace Protocol Conversion**     |       Verified       |    Verified     | Pre-pack audit verifies `workspace:*` -> `1.0.0`               |
-| **Package Exports Resolution**        |       Verified       |    Verified     | TypeScript compiler check in external consumer app             |
-| **TypeScript Declarations (`.d.ts`)** |       Verified       |    Verified     | `dist/index.d.ts` verified in unpacked tarballs                |
-| **Private Access Controls**           |       Verified       |    Verified     | `"publishConfig": { "access": "restricted" }`                  |
-| **External Consumer Installation**    |       Verified       |    Verified     | Clean `npm install` and Node execution test                    |
+| Check Item                            | GitHub Packages | Verification Command / Script                    |
+| :------------------------------------ | :-------------: | :----------------------------------------------- |
+| **Authentication**                    |    Verified     | GitHub Actions `GITHUB_TOKEN` Injection          |
+| **Package Tarball Integrity**         |    Verified     | `python3 scripts/validate-consumer-packages.py`  |
+| **Workspace Protocol Conversion**     |    Verified     | Pre-pack audit verifies `workspace:*` -> `1.0.0` |
+| **Package Exports Resolution**        |    Verified     | TypeScript compiler check in external consumer   |
+| **TypeScript Declarations (`.d.ts`)** |    Verified     | `dist/index.d.ts` verified in unpacked tarballs  |
+| **Private Access Controls**           |    Verified     | `"publishConfig": { "access": "restricted" }`    |
+| **External Consumer Installation**    |    Verified     | Clean `npm install` and Node execution test      |
