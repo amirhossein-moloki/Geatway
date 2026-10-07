@@ -5,7 +5,7 @@ import {
   PaymentStatus,
   ConcurrencyError,
   RepositoryNotFoundError,
-} from '@company/payment-core';
+} from '@amirhossein-moloki/payment-core';
 import { PgExecutor } from '../migrator.js';
 import { mapPgError } from '../error-mapper.js';
 

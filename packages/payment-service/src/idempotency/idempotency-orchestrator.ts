@@ -5,7 +5,7 @@ import {
   IdempotencyStatus,
   PersistenceConflictError,
   ConcurrencyError,
-} from '@company/payment-core';
+} from '@amirhossein-moloki/payment-core';
 
 export class IdempotencyOrchestrator {
   constructor(private readonly repository?: IdempotencyRepository) {}

@@ -1,4 +1,4 @@
-import { GatewayRegistry } from '@company/payment-core';
+import { GatewayRegistry } from '@amirhossein-moloki/payment-core';
 import { MellatGateway } from '@company/payment-mellat';
 import { ZibalGateway } from '@company/payment-zibal';
 import { ZarinpalGateway } from '@company/payment-zarinpal';

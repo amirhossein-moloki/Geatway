@@ -9,7 +9,7 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@company/payment-core": ["../../packages/payment-core/dist/index.d.ts"],
+      "@amirhossein-moloki/payment-core": ["../../packages/payment-core/dist/index.d.ts"],
       "@company/payment-mellat": ["../../packages/payment-mellat/dist/index.d.ts"]
     }
   },

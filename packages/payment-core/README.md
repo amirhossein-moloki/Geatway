@@ -1,6 +1,6 @@
-# @company/payment-core
+# @amirhossein-moloki/payment-core
 
-`@company/payment-core` is the foundation of the Payment Platform. It provides a provider-agnostic domain layer, gateway capability contracts, lifecycle state machine, error hierarchy, and in-memory gateway registry.
+`@amirhossein-moloki/payment-core` is the foundation of the Payment Platform. It provides a provider-agnostic domain layer, gateway capability contracts, lifecycle state machine, error hierarchy, and in-memory gateway registry.
 
 ## Key Concepts
 
@@ -28,7 +28,7 @@ Gateways declare capabilities via `GatewayCapability` flags:
 `GatewayRegistry` manages active gateways without hardcoding provider classes:
 
 ```ts
-import { GatewayRegistry } from '@company/payment-core';
+import { GatewayRegistry } from '@amirhossein-moloki/payment-core';
 
 const registry = new GatewayRegistry();
 registry.register(mellatGateway);
@@ -54,7 +54,12 @@ Abstract `IdempotencyStore` interface with built-in `InMemoryIdempotencyStore` f
 ## Usage Example
 
 ```ts
-import { Payment, PaymentService, GatewayRegistry, PaymentStatus } from '@company/payment-core';
+import {
+  Payment,
+  PaymentService,
+  GatewayRegistry,
+  PaymentStatus,
+} from '@amirhossein-moloki/payment-core';
 
 const registry = new GatewayRegistry();
 // register provider gateway instance...

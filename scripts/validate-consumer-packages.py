@@ -57,8 +57,11 @@ def main():
             data = json.load(f)
         pkg_name = data["name"]
 
-        suffix = pkg_name.replace("@company/", "").replace("/", "-")
-        expected_filename = f"company-{suffix}-{data['version']}.tgz"
+        if pkg_name.startswith("@"):
+            clean_name = pkg_name[1:].replace("/", "-")
+        else:
+            clean_name = pkg_name
+        expected_filename = f"{clean_name}-{data['version']}.tgz"
         found_tgz = os.path.join(tarball_tmp_dir, expected_filename)
 
         if not os.path.exists(found_tgz):
@@ -101,7 +104,7 @@ def main():
         "private": True,
         "type": "module",
         "dependencies": {
-            "@company/payment-core": tarballs["@company/payment-core"],
+            "@amirhossein-moloki/payment-core": tarballs["@amirhossein-moloki/payment-core"],
             "@company/payment-mellat": tarballs["@company/payment-mellat"],
             "@company/payment-zibal": tarballs["@company/payment-zibal"],
             "@company/payment-service": tarballs["@company/payment-service"]
@@ -127,7 +130,7 @@ def main():
         json.dump(consumer_tsconfig, f, indent=2)
 
     consumer_code = """
-import { GatewayRegistry } from '@company/payment-core';
+import { GatewayRegistry } from '@amirhossein-moloki/payment-core';
 import { MellatGateway } from '@company/payment-mellat';
 import { ZibalGateway } from '@company/payment-zibal';
 import { PaymentApplicationService, InMemoryPaymentRepository, InMemoryTransactionRepository } from '@company/payment-service';

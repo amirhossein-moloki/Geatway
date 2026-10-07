@@ -33,7 +33,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@company/payment-core": "workspace:*"
+    "@amirhossein-moloki/payment-core": "workspace:*"
   },
   "keywords": [
     "payment",

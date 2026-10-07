@@ -45,7 +45,7 @@ The Payment Package Ecosystem is a modular set of TypeScript libraries for proce
 
 Key design principles:
 
-- **Provider Agnostic Core**: Core domain logic and gateway contracts are defined in `@company/payment-core`.
+- **Provider Agnostic Core**: Core domain logic and gateway contracts are defined in `@amirhossein-moloki/payment-core`.
 - **Capability-Based Gateways**: Gateways explicitly declare supported capabilities (e.g., `CREATE_PAYMENT`, `VERIFY`, `INQUIRY`, `REFUND`, `REVERSE`, `CANCEL`, `CALLBACK`, `WEBHOOK`).
 - **Separation of Concerns**: Payment packages do **not** expose HTTP routes or REST APIs directly. Your application owns the REST endpoints, controllers, and OpenAPI contracts.
 - **Application Integration Layer**: `@company/payment-service` provides orchestration, retry handling, timeout management, idempotency enforcement, and webhook deduplication.
@@ -73,7 +73,7 @@ The payment architecture separates responsibilities into clear layers:
 └──────────────┬──────────────────────────────┬───────────────┘
                │                              │
 ┌──────────────▼──────────────┐  ┌────────────▼──────────────┐
-│    @company/payment-core    │  │  Persistence Implementation│
+│    @amirhossein-moloki/payment-core    │  │  Persistence Implementation│
 │  - GatewayRegistry          │  │ @company/payment-        │
 │  - Entities & Contracts     │  │  persistence-postgres    │
 │  - Normalized Errors        │  │  (or In-Memory Repos)     │
@@ -89,7 +89,7 @@ payment-mellat payment-zibal payment-zarinpal payment-saman
 
 1. **Main Application**: Handles HTTP routing, request parsing, response mapping, authentication, and maintains `openapi.yml`.
 2. **Application Service (`@company/payment-service`)**: Orchestrates gateway execution, manages transactions, enforces idempotency, logs events, and interacts with repositories.
-3. **Core (`@company/payment-core`)**: Provides entities (`Payment`, `Transaction`, `IdempotencyRecord`, `WebhookEvent`), gateway interfaces (`PaymentGateway`, `CanCreatePayment`, etc.), error types, and `GatewayRegistry`.
+3. **Core (`@amirhossein-moloki/payment-core`)**: Provides entities (`Payment`, `Transaction`, `IdempotencyRecord`, `WebhookEvent`), gateway interfaces (`PaymentGateway`, `CanCreatePayment`, etc.), error types, and `GatewayRegistry`.
 4. **Provider Packages**: Implements PSP-specific HTTP communication and payload mappings (e.g., `@company/payment-mellat`).
 5. **Persistence (`@company/payment-persistence-postgres`)**: Implements database repositories for PostgreSQL or custom backends.
 
@@ -97,11 +97,11 @@ payment-mellat payment-zibal payment-zarinpal payment-saman
 
 ## 3. Package Installation
 
-Install only `@company/payment-core`, `@company/payment-service`, and the specific PSP packages your application requires:
+Install only `@amirhossein-moloki/payment-core`, `@company/payment-service`, and the specific PSP packages your application requires:
 
 ```bash
 # Core package and service orchestration
-pnpm add @company/payment-core @company/payment-service
+pnpm add @amirhossein-moloki/payment-core @company/payment-service
 
 # Install desired payment gateways
 pnpm add @company/payment-mellat @company/payment-zibal
@@ -110,7 +110,7 @@ pnpm add @company/payment-mellat @company/payment-zibal
 pnpm add @company/payment-persistence-postgres
 ```
 
-_Note: Installing `@company/payment-core` alone does NOT automatically include gateway providers. Gateways must be installed and registered explicitly._
+_Note: Installing `@amirhossein-moloki/payment-core` alone does NOT automatically include gateway providers. Gateways must be installed and registered explicitly._
 
 ---
 
@@ -236,10 +236,10 @@ SAMAN_CALLBACK_URL=https://api.example.com/api/v1/payments/callback/saman
 
 ## 7. Gateway Registration
 
-Gateways are registered in a `GatewayRegistry` instance from `@company/payment-core`:
+Gateways are registered in a `GatewayRegistry` instance from `@amirhossein-moloki/payment-core`:
 
 ```ts
-import { GatewayRegistry } from '@company/payment-core';
+import { GatewayRegistry } from '@amirhossein-moloki/payment-core';
 import { MellatGateway } from '@company/payment-mellat';
 import { ZibalGateway } from '@company/payment-zibal';
 
@@ -465,7 +465,7 @@ const result2 = await paymentService.createPayment({
 
 ## 17. Error Handling
 
-All core errors inherit from `PaymentPlatformError` in `@company/payment-core`.
+All core errors inherit from `PaymentPlatformError` in `@amirhossein-moloki/payment-core`.
 
 ```ts
 import {
@@ -476,7 +476,7 @@ import {
   UnsupportedCapabilityError,
   InvalidPaymentStateError,
   GatewayError,
-} from '@company/payment-core';
+} from '@amirhossein-moloki/payment-core';
 
 try {
   await paymentService.createPayment(...);
@@ -664,7 +664,7 @@ const result = await service.createPayment({
 
 When upgrading package versions:
 
-1. Update `package.json` version dependencies for `@company/payment-core` and providers together.
+1. Update `package.json` version dependencies for `@amirhossein-moloki/payment-core` and providers together.
 2. Run database migrations using `DatabaseMigrator` if `@company/payment-persistence-postgres` was updated.
 3. Execute unit tests (`pnpm test`).
 
@@ -673,7 +673,7 @@ When upgrading package versions:
 ## 30. Complete Integration Example
 
 ```ts
-import { GatewayRegistry } from '@company/payment-core';
+import { GatewayRegistry } from '@amirhossein-moloki/payment-core';
 import { PaymentApplicationService } from '@company/payment-service';
 import {
   InMemoryPaymentRepository,

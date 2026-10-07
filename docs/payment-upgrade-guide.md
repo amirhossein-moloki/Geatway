@@ -1,6 +1,6 @@
 # Payment Package Ecosystem — Upgrade Guide
 
-This guide describes versioning policies, breaking change handling, and upgrade procedures across `@company/payment-core`, `@company/payment-service`, persistence packages, and provider gateway packages.
+This guide describes versioning policies, breaking change handling, and upgrade procedures across `@amirhossein-moloki/payment-core`, `@company/payment-service`, persistence packages, and provider gateway packages.
 
 ---
 
@@ -20,10 +20,10 @@ When updating payment packages in your application's `package.json`:
 
 ```bash
 # Example: Upgrading core and provider packages
-pnpm update @company/payment-core @company/payment-service @company/payment-mellat @company/payment-zibal
+pnpm update @amirhossein-moloki/payment-core @company/payment-service @company/payment-mellat @company/payment-zibal
 ```
 
-_Rule_: Always keep `@company/payment-core` and `@company/payment-service` version numbers compatible.
+_Rule_: Always keep `@amirhossein-moloki/payment-core` and `@company/payment-service` version numbers compatible.
 
 ---
 

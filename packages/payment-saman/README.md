@@ -1,6 +1,6 @@
 # @company/payment-saman
 
-درگاه پرداخت سامان کیش (SEP) برای اکوسیستم `@company/payment-core`.
+درگاه پرداخت سامان کیش (SEP) برای اکوسیستم `@amirhossein-moloki/payment-core`.
 
 ## Source of Truth
 
@@ -9,13 +9,13 @@
 ## نصب
 
 ```bash
-pnpm add @company/payment-saman @company/payment-core
+pnpm add @company/payment-saman @amirhossein-moloki/payment-core
 ```
 
 ## نحوه استفاده
 
 ```ts
-import { GatewayRegistry, Payment } from '@company/payment-core';
+import { GatewayRegistry, Payment } from '@amirhossein-moloki/payment-core';
 import { SamanGateway } from '@company/payment-saman';
 
 const registry = new GatewayRegistry();

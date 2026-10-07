@@ -1,4 +1,4 @@
-import { Payment } from '@company/payment-core';
+import { Payment } from '@amirhossein-moloki/payment-core';
 import { ZarinpalGateway } from '@company/payment-zarinpal';
 
 async function main() {

@@ -8,7 +8,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@company/payment-core": "workspace:*",
+    "@amirhossein-moloki/payment-core": "workspace:*",
     "@company/payment-service": "workspace:*",
     "@company/payment-mellat": "workspace:*",
     "@company/payment-zibal": "workspace:*",

@@ -34,7 +34,7 @@ Sandbox Provider Integration Tests (Network calls to PSP sandbox endpoints)
 ```ts
 import { describe, it, expect } from 'vitest';
 import { createTestPaymentService, MockGateway } from '@company/payment-service/testing';
-import { PaymentStatus } from '@company/payment-core';
+import { PaymentStatus } from '@amirhossein-moloki/payment-core';
 
 describe('Payment Flow Unit Test', () => {
   it('creates and verifies payment using MockGateway', async () => {

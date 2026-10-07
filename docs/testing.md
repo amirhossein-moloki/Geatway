@@ -89,7 +89,7 @@ For unit testing and local application service development, use `MockGateway` (o
 `MockGateway` is NEVER automatically registered in production. It must be registered explicitly:
 
 ```ts
-import { GatewayRegistry } from '@company/payment-core';
+import { GatewayRegistry } from '@amirhossein-moloki/payment-core';
 import { MockGateway } from '@company/payment-service/testing';
 
 const registry = new GatewayRegistry();

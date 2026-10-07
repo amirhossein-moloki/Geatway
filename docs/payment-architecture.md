@@ -22,7 +22,7 @@ The payment ecosystem is designed around strict separation between core orchestr
 └───────────────┬─────────────────────────┬───────────────┘
                 │                         │
 ┌───────────────▼───────────────┐ ┌───────▼──────────────┐
-│     @company/payment-core     │ │ Persistence Layer    │
+│     @amirhossein-moloki/payment-core     │ │ Persistence Layer    │
 │  - Domain Entities            │ │ @company/payment-    │
 │  - Gateway Registry & Contracts│ │  persistence-postgres│
 │  - Normalized Errors          │ │ (or Custom Repos)    │
@@ -35,7 +35,7 @@ payment-mellat payment-zibal payment-zarinpal payment-saman
 
 ## Architectural Boundaries
 
-### 1. `@company/payment-core`
+### 1. `@amirhossein-moloki/payment-core`
 
 - Defines core payment entities (`Payment`, `Transaction`, `IdempotencyRecord`, `WebhookEvent`).
 - Defines capability-based contracts (`CanCreatePayment`, `CanVerify`, `CanInquire`, `CanRefund`, `CanReverse`, `CanCancel`, `CanHandleCallback`, `CanHandleWebhook`).

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { PersistenceConflictError, GatewayError } from '@company/payment-core';
+import { PersistenceConflictError, GatewayError } from '@amirhossein-moloki/payment-core';
 import { createTestPaymentService, TestEnvironment } from '../src/testing/index.js';
 import { RetryPolicy } from '../src/policies/retry-policy.js';
 import { TimeoutPolicy, OperationTimeoutError } from '../src/policies/timeout-policy.js';

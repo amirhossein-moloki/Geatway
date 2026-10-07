@@ -2,6 +2,6 @@
 # Copy this file to .npmrc in your consumer project or home directory.
 # DO NOT commit files containing actual tokens or passwords to version control!
 
-# Direct all @company scoped packages to GitHub Packages
-@company:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+# Direct @amirhossein-moloki scoped packages to GitHub Packages
+@amirhossein-moloki:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}

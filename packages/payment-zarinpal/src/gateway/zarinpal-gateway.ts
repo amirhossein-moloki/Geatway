@@ -10,7 +10,7 @@ import {
   PaymentGateway,
   VerifyPaymentRequest,
   VerifyPaymentResponse,
-} from '@company/payment-core';
+} from '@amirhossein-moloki/payment-core';
 import { HttpTransport, ZarinpalClient } from '../client/zarinpal-client.js';
 import { ZarinpalConfig, validateZarinpalConfig } from '../config/zarinpal-config.interface.js';
 import { ZarinpalErrorMapper } from '../errors/zarinpal-error-mapper.js';

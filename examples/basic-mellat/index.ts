@@ -1,4 +1,4 @@
-import { GatewayRegistry, Payment } from '@company/payment-core';
+import { GatewayRegistry, Payment } from '@amirhossein-moloki/payment-core';
 import { MellatConfig, MellatGateway } from '@company/payment-mellat';
 
 async function main() {

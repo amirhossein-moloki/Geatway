@@ -6,7 +6,7 @@ Application Integration Layer and Payment Service Orchestrator for the Payment P
 
 `@company/payment-service` provides a production-grade, application-facing payment service (`PaymentApplicationService` / `PaymentService`) that orchestrates core domain entities, provider gateways, repositories, policies, idempotency, callback/webhook handling, and observability.
 
-It keeps `@company/payment-core` completely provider-agnostic and database-agnostic while presenting developers with a clean, strongly typed API.
+It keeps `@amirhossein-moloki/payment-core` completely provider-agnostic and database-agnostic while presenting developers with a clean, strongly typed API.
 
 ## Features
 
@@ -20,13 +20,13 @@ It keeps `@company/payment-core` completely provider-agnostic and database-agnos
 ## Installation
 
 ```bash
-pnpm add @company/payment-service @company/payment-core
+pnpm add @company/payment-service @amirhossein-moloki/payment-core
 ```
 
 ## Quick Start Example
 
 ```typescript
-import { GatewayRegistry } from '@company/payment-core';
+import { GatewayRegistry } from '@amirhossein-moloki/payment-core';
 import { MellatGateway } from '@company/payment-mellat';
 import { PaymentApplicationService } from '@company/payment-service';
 import {

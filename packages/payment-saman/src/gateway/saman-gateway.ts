@@ -13,7 +13,7 @@ import {
   ReversePaymentResponse,
   VerifyPaymentRequest,
   VerifyPaymentResponse,
-} from '@company/payment-core';
+} from '@amirhossein-moloki/payment-core';
 import { HttpTransport, SamanClient } from '../client/saman-client.js';
 import { SamanConfig, validateSamanConfig } from '../config/saman-config.interface.js';
 import { SamanErrorMapper } from '../errors/saman-error-mapper.js';

@@ -3,7 +3,7 @@ import {
   IdempotencyRecord,
   IdempotencyStatus,
   PersistenceConflictError,
-} from '@company/payment-core';
+} from '@amirhossein-moloki/payment-core';
 import { PostgresIdempotencyRepository } from '../src/repositories/postgres-idempotency-repository.js';
 import { createTestDatabase } from './test-utils.js';
 import { PgExecutor } from '../src/migrator.js';

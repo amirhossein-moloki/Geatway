@@ -23,7 +23,7 @@ GitHub Private Repository (Source of Truth)
 1. **GitHub Repository as Single Source of Truth:** Code changes, features, and version tags originate solely from the private GitHub source repository.
 2. **GitHub Packages Distribution:** Validated release builds are published exclusively to **GitHub Packages**.
 3. **No Code Forks:** The published package build artifact (tarball) is distributed without maintaining separate source trees or provider-specific forks.
-4. **Independent Package Granularity:** Consumers install only the scoped packages they are entitled or required to use (e.g. `@company/payment-core`, `@company/payment-service`, `@company/payment-mellat`).
+4. **Independent Package Granularity:** Consumers install only the scoped packages they are entitled or required to use (e.g. `@amirhossein-moloki/payment-core`, `@company/payment-service`, `@company/payment-mellat`).
 
 ---
 
@@ -33,7 +33,7 @@ All packages belong to the `@company` scope and are configured as private (`"pub
 
 | Package Name                            | Distributable Target | Description                                                                                             |
 | :-------------------------------------- | :------------------- | :------------------------------------------------------------------------------------------------------ |
-| `@company/payment-core`                 | Standard Library     | Provider-agnostic domain entities, gateway contracts, registry, and standard errors.                    |
+| `@amirhossein-moloki/payment-core`      | Standard Library     | Provider-agnostic domain entities, gateway contracts, registry, and standard errors.                    |
 | `@company/payment-service`              | Standard Library     | Higher-level application service, retry/timeout policies, idempotency orchestrator, and test utilities. |
 | `@company/payment-persistence-postgres` | Adapter              | PostgreSQL persistence repositories and SQL schema migrations.                                          |
 | `@company/payment-mellat`               | PSP Provider         | Mellat (Behpardazht) payment gateway provider implementation.                                           |

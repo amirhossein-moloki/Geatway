@@ -4,10 +4,10 @@ import {
   PaymentStatus,
   ConcurrencyError,
   RepositoryNotFoundError,
-} from '@company/payment-core';
+} from '@amirhossein-moloki/payment-core';
 import { PostgresPaymentRepository } from '../src/repositories/postgres-payment-repository.js';
 import { PostgresTransactionRepository } from '../src/repositories/postgres-transaction-repository.js';
-import { Transaction, TransactionType, TransactionStatus } from '@company/payment-core';
+import { Transaction, TransactionType, TransactionStatus } from '@amirhossein-moloki/payment-core';
 import { createTestDatabase } from './test-utils.js';
 import { PgExecutor } from '../src/migrator.js';
 

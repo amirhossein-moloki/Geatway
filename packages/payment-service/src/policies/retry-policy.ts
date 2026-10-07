@@ -8,7 +8,7 @@ import {
   PersistenceConflictError,
   ConcurrencyError,
   PaymentPlatformError,
-} from '@company/payment-core';
+} from '@amirhossein-moloki/payment-core';
 
 export class RetryPolicy {
   private readonly maxAttempts: number;

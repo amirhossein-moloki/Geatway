@@ -5,7 +5,7 @@ import {
   GatewayCapability,
   PaymentStatus,
   InMemoryIdempotencyStore,
-} from '@company/payment-core';
+} from '@amirhossein-moloki/payment-core';
 
 async function main() {
   const registry = new GatewayRegistry();

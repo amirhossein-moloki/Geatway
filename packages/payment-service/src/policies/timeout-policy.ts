@@ -1,4 +1,4 @@
-import { PaymentPlatformError } from '@company/payment-core';
+import { PaymentPlatformError } from '@amirhossein-moloki/payment-core';
 
 export class OperationTimeoutError extends PaymentPlatformError {
   public override readonly code: string = 'OPERATION_TIMEOUT_ERROR';

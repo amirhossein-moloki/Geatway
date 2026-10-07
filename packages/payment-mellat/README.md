@@ -1,6 +1,6 @@
 # @company/payment-mellat
 
-A production-ready Mellat Payment Service Provider (PSP / به پرداخت ملت) integration package for Node.js & TypeScript, built for `@company/payment-core`.
+A production-ready Mellat Payment Service Provider (PSP / به پرداخت ملت) integration package for Node.js & TypeScript, built for `@amirhossein-moloki/payment-core`.
 
 ## Reference / Source of Truth
 
@@ -24,7 +24,7 @@ This package implementation is strictly derived from and compliant with:
 ## Installation
 
 ```bash
-pnpm add @company/payment-core @company/payment-mellat
+pnpm add @amirhossein-moloki/payment-core @company/payment-mellat
 ```
 
 ---
@@ -48,7 +48,7 @@ const config: MellatConfig = {
 ## Registration & Usage
 
 ```ts
-import { GatewayRegistry, Payment } from '@company/payment-core';
+import { GatewayRegistry, Payment } from '@amirhossein-moloki/payment-core';
 import { MellatGateway } from '@company/payment-mellat';
 
 const registry = new GatewayRegistry();

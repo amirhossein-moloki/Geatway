@@ -1,4 +1,8 @@
-import { ConfigurationError, GatewayConfig, PaymentEnvironment } from '@company/payment-core';
+import {
+  ConfigurationError,
+  GatewayConfig,
+  PaymentEnvironment,
+} from '@amirhossein-moloki/payment-core';
 
 export interface MellatConfig extends GatewayConfig {
   readonly environment?: PaymentEnvironment;

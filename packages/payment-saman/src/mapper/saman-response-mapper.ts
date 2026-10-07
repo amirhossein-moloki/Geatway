@@ -4,7 +4,7 @@ import {
   PaymentStatus,
   ReversePaymentResponse,
   VerifyPaymentResponse,
-} from '@company/payment-core';
+} from '@amirhossein-moloki/payment-core';
 import {
   SamanCallbackPayload,
   SamanGetTokenResponse,
