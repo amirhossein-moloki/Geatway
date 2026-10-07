@@ -66,7 +66,7 @@ npm install @company/payment-core @company/payment-service @company/payment-mell
 ### Prerequisites
 
 - Node.js >= 18
-- pnpm >= 8
+- pnpm >= 9
 
 ### Maintenance Commands
 
