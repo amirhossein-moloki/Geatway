@@ -7,7 +7,7 @@ on:
       - 'packages/payment-zibal/**'
     tags:
       - 'payment-zibal-v*'
-      - '@company/payment-zibal@*'
+      - '@amirhossein-moloki/payment-zibal@*'
       - 'packages/payment-zibal/v*'
   workflow_dispatch:
 
@@ -44,18 +44,17 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Verify linter for payment-zibal
-        run: pnpm --filter @company/payment-zibal lint
+        run: pnpm --filter @amirhossein-moloki/payment-zibal lint
 
       - name: Build payment-zibal and required workspace dependencies
-        run: pnpm --filter @company/payment-zibal... build
+        run: pnpm --filter @amirhossein-moloki/payment-zibal... build
 
       - name: Run unit tests for payment-zibal
-        run: pnpm --filter @company/payment-zibal test
+        run: pnpm --filter @amirhossein-moloki/payment-zibal test
 
       - name: Setup release .npmrc
         run: |
           echo "@amirhossein-moloki:registry=https://npm.pkg.github.com" > .npmrc
-          echo "@company:registry=https://npm.pkg.github.com" >> .npmrc
           echo "//npm.pkg.github.com/:_authToken=\${NODE_AUTH_TOKEN}" >> .npmrc
           cp .npmrc packages/payment-zibal/.npmrc
           cp .npmrc ~/.npmrc

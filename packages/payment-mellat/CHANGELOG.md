@@ -1,6 +1,6 @@
-# Changelog - @company/payment-mellat
+# Changelog - @amirhossein-moloki/payment-mellat
 
-All notable changes to `@company/payment-mellat` will be documented in this file.
+All notable changes to `@amirhossein-moloki/payment-mellat` will be documented in this file.
 
 ## [1.0.0] - initial release
 

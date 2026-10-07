@@ -20,7 +20,7 @@ Sandbox Provider Integration Tests (Network calls to PSP sandbox endpoints)
 
 ## 2. In-Memory Test Utilities
 
-`@company/payment-service/testing` provides zero-dependency in-memory implementations and test helpers for rapid testing:
+`@amirhossein-moloki/payment-service/testing` provides zero-dependency in-memory implementations and test helpers for rapid testing:
 
 - **`InMemoryPaymentRepository`**: In-memory `PaymentRepository` with optimistic concurrency support.
 - **`InMemoryTransactionRepository`**: In-memory `TransactionRepository`.
@@ -33,7 +33,7 @@ Sandbox Provider Integration Tests (Network calls to PSP sandbox endpoints)
 
 ```ts
 import { describe, it, expect } from 'vitest';
-import { createTestPaymentService, MockGateway } from '@company/payment-service/testing';
+import { createTestPaymentService, MockGateway } from '@amirhossein-moloki/payment-service/testing';
 import { PaymentStatus } from '@amirhossein-moloki/payment-core';
 
 describe('Payment Flow Unit Test', () => {

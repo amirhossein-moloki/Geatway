@@ -29,17 +29,17 @@ GitHub Private Repository (Source of Truth)
 
 ## Monorepo Packages
 
-All packages belong to the `@company` scope and can be independently versioned and installed:
+All packages belong to the `@amirhossein-moloki` scope and can be independently versioned and installed:
 
-| Package Name                            | Purpose                                                                                   |
-| :-------------------------------------- | :---------------------------------------------------------------------------------------- |
-| `@amirhossein-moloki/payment-core`      | Core domain entities, gateway contracts, capability interfaces, and GatewayRegistry.      |
-| `@company/payment-service`              | Application integration service, retry/timeout policies, idempotency, and test utilities. |
-| `@company/payment-persistence-postgres` | PostgreSQL persistence repositories and schema migrations.                                |
-| `@company/payment-mellat`               | Mellat (Behpardazht) PSP gateway integration.                                             |
-| `@company/payment-zibal`                | Zibal IPG gateway integration.                                                            |
-| `@company/payment-zarinpal`             | Zarinpal GraphQL v4 gateway integration.                                                  |
-| `@company/payment-saman`                | Saman (SEP) gateway integration.                                                          |
+| Package Name                                       | Purpose                                                                                   |
+| :------------------------------------------------- | :---------------------------------------------------------------------------------------- |
+| `@amirhossein-moloki/payment-core`                 | Core domain entities, gateway contracts, capability interfaces, and GatewayRegistry.      |
+| `@amirhossein-moloki/payment-service`              | Application integration service, retry/timeout policies, idempotency, and test utilities. |
+| `@amirhossein-moloki/payment-persistence-postgres` | PostgreSQL persistence repositories and schema migrations.                                |
+| `@amirhossein-moloki/payment-mellat`               | Mellat (Behpardazht) PSP gateway integration.                                             |
+| `@amirhossein-moloki/payment-zibal`                | Zibal IPG gateway integration.                                                            |
+| `@amirhossein-moloki/payment-zarinpal`             | Zarinpal GraphQL v4 gateway integration.                                                  |
+| `@amirhossein-moloki/payment-saman`                | Saman (SEP) gateway integration.                                                          |
 
 ---
 
@@ -48,7 +48,7 @@ All packages belong to the `@company` scope and can be independently versioned a
 Consumers configure their project's `.npmrc` to authenticate with GitHub Packages (see `.npmrc.example`):
 
 ```ini
-@company:registry=https://npm.pkg.github.com
+@amirhossein-moloki:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
 ```
 
@@ -56,7 +56,7 @@ Consumers configure their project's `.npmrc` to authenticate with GitHub Package
 
 ```bash
 # Install core and required provider packages only
-npm install @amirhossein-moloki/payment-core @company/payment-service @company/payment-mellat
+npm install @amirhossein-moloki/payment-core @amirhossein-moloki/payment-service @amirhossein-moloki/payment-mellat
 ```
 
 ---

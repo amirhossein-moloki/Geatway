@@ -1,6 +1,6 @@
-# Changelog - @company/payment-zarinpal
+# Changelog - @amirhossein-moloki/payment-zarinpal
 
-All notable changes to `@company/payment-zarinpal` will be documented in this file.
+All notable changes to `@amirhossein-moloki/payment-zarinpal` will be documented in this file.
 
 ## [1.0.0] - initial release
 

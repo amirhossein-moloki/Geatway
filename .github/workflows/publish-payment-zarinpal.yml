@@ -7,7 +7,7 @@ on:
       - 'packages/payment-zarinpal/**'
     tags:
       - 'payment-zarinpal-v*'
-      - '@company/payment-zarinpal@*'
+      - '@amirhossein-moloki/payment-zarinpal@*'
       - 'packages/payment-zarinpal/v*'
   workflow_dispatch:
 
@@ -44,18 +44,17 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Verify linter for payment-zarinpal
-        run: pnpm --filter @company/payment-zarinpal lint
+        run: pnpm --filter @amirhossein-moloki/payment-zarinpal lint
 
       - name: Build payment-zarinpal and required workspace dependencies
-        run: pnpm --filter @company/payment-zarinpal... build
+        run: pnpm --filter @amirhossein-moloki/payment-zarinpal... build
 
       - name: Run unit tests for payment-zarinpal
-        run: pnpm --filter @company/payment-zarinpal test
+        run: pnpm --filter @amirhossein-moloki/payment-zarinpal test
 
       - name: Setup release .npmrc
         run: |
           echo "@amirhossein-moloki:registry=https://npm.pkg.github.com" > .npmrc
-          echo "@company:registry=https://npm.pkg.github.com" >> .npmrc
           echo "//npm.pkg.github.com/:_authToken=\${NODE_AUTH_TOKEN}" >> .npmrc
           cp .npmrc packages/payment-zarinpal/.npmrc
           cp .npmrc ~/.npmrc

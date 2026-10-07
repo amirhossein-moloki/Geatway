@@ -105,9 +105,9 @@ def main():
         "type": "module",
         "dependencies": {
             "@amirhossein-moloki/payment-core": tarballs["@amirhossein-moloki/payment-core"],
-            "@company/payment-mellat": tarballs["@company/payment-mellat"],
-            "@company/payment-zibal": tarballs["@company/payment-zibal"],
-            "@company/payment-service": tarballs["@company/payment-service"]
+            "@amirhossein-moloki/payment-mellat": tarballs["@amirhossein-moloki/payment-mellat"],
+            "@amirhossein-moloki/payment-zibal": tarballs["@amirhossein-moloki/payment-zibal"],
+            "@amirhossein-moloki/payment-service": tarballs["@amirhossein-moloki/payment-service"]
         },
         "devDependencies": {
             "typescript": "^5.4.5",
@@ -131,9 +131,9 @@ def main():
 
     consumer_code = """
 import { GatewayRegistry } from '@amirhossein-moloki/payment-core';
-import { MellatGateway } from '@company/payment-mellat';
-import { ZibalGateway } from '@company/payment-zibal';
-import { PaymentApplicationService, InMemoryPaymentRepository, InMemoryTransactionRepository } from '@company/payment-service';
+import { MellatGateway } from '@amirhossein-moloki/payment-mellat';
+import { ZibalGateway } from '@amirhossein-moloki/payment-zibal';
+import { PaymentApplicationService, InMemoryPaymentRepository, InMemoryTransactionRepository } from '@amirhossein-moloki/payment-service';
 
 const registry = new GatewayRegistry();
 const mellat = new MellatGateway({ terminalId: '123', userName: 'u', userPassword: 'p', callbackUrl: 'https://example.com/mellat' });

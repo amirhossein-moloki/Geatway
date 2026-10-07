@@ -1,5 +1,5 @@
 {
-  "name": "@company/payment-mellat",
+  "name": "@amirhossein-moloki/payment-mellat",
   "version": "1.0.0",
   "description": "Payment gateway implementation for Mellat PSP based on Mellat.md specification",
   "main": "./dist/index.js",

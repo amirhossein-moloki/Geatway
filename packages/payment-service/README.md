@@ -1,10 +1,10 @@
-# @company/payment-service
+# @amirhossein-moloki/payment-service
 
 Application Integration Layer and Payment Service Orchestrator for the Payment Platform Ecosystem.
 
 ## Overview
 
-`@company/payment-service` provides a production-grade, application-facing payment service (`PaymentApplicationService` / `PaymentService`) that orchestrates core domain entities, provider gateways, repositories, policies, idempotency, callback/webhook handling, and observability.
+`@amirhossein-moloki/payment-service` provides a production-grade, application-facing payment service (`PaymentApplicationService` / `PaymentService`) that orchestrates core domain entities, provider gateways, repositories, policies, idempotency, callback/webhook handling, and observability.
 
 It keeps `@amirhossein-moloki/payment-core` completely provider-agnostic and database-agnostic while presenting developers with a clean, strongly typed API.
 
@@ -20,19 +20,19 @@ It keeps `@amirhossein-moloki/payment-core` completely provider-agnostic and dat
 ## Installation
 
 ```bash
-pnpm add @company/payment-service @amirhossein-moloki/payment-core
+pnpm add @amirhossein-moloki/payment-service @amirhossein-moloki/payment-core
 ```
 
 ## Quick Start Example
 
 ```typescript
 import { GatewayRegistry } from '@amirhossein-moloki/payment-core';
-import { MellatGateway } from '@company/payment-mellat';
-import { PaymentApplicationService } from '@company/payment-service';
+import { MellatGateway } from '@amirhossein-moloki/payment-mellat';
+import { PaymentApplicationService } from '@amirhossein-moloki/payment-service';
 import {
   PostgresPaymentRepository,
   PostgresTransactionRepository,
-} from '@company/payment-persistence-postgres';
+} from '@amirhossein-moloki/payment-persistence-postgres';
 
 // 1. Initialize Gateway Registry & Gateways
 const registry = new GatewayRegistry();
@@ -65,10 +65,10 @@ console.log('Redirect user to:', result.redirectUrl);
 
 ## Testing Your Integrations
 
-`@company/payment-service` exposes testing utilities in `@company/payment-service/testing` or `@company/payment-service`:
+`@amirhossein-moloki/payment-service` exposes testing utilities in `@amirhossein-moloki/payment-service/testing` or `@amirhossein-moloki/payment-service`:
 
 ```typescript
-import { createTestPaymentService } from '@company/payment-service';
+import { createTestPaymentService } from '@amirhossein-moloki/payment-service';
 
 describe('My E-Commerce Checkout', () => {
   it('should process checkout successfully', async () => {

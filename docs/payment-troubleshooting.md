@@ -6,7 +6,7 @@ This guide provides diagnostic procedures for resolving errors, misconfiguration
 
 ## 1. Exception Hierarchy
 
-All payment errors thrown by `@amirhossein-moloki/payment-core` or `@company/payment-service` extend `PaymentPlatformError`.
+All payment errors thrown by `@amirhossein-moloki/payment-core` or `@amirhossein-moloki/payment-service` extend `PaymentPlatformError`.
 
 ```text
 PaymentPlatformError

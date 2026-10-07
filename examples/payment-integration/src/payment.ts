@@ -1,10 +1,10 @@
-import { PaymentApplicationService } from '@company/payment-service';
+import { PaymentApplicationService } from '@amirhossein-moloki/payment-service';
 import {
   InMemoryPaymentRepository,
   InMemoryTransactionRepository,
   InMemoryIdempotencyRepository,
   InMemoryWebhookEventRepository,
-} from '@company/payment-service/testing';
+} from '@amirhossein-moloki/payment-service/testing';
 import { setupGatewayRegistry } from './gateway.js';
 
 export function createPaymentApplication(): { service: PaymentApplicationService } {

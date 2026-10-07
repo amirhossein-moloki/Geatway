@@ -1,5 +1,5 @@
 {
-  "name": "@company/payment-zarinpal",
+  "name": "@amirhossein-moloki/payment-zarinpal",
   "version": "1.0.0",
   "description": "Zarinpal GraphQL payment provider implementation for Payment Core Orchestrator",
   "main": "./dist/index.js",

@@ -23,24 +23,24 @@ GitHub Private Repository (Source of Truth)
 1. **GitHub Repository as Single Source of Truth:** Code changes, features, and version tags originate solely from the private GitHub source repository.
 2. **GitHub Packages Distribution:** Validated release builds are published exclusively to **GitHub Packages**.
 3. **No Code Forks:** The published package build artifact (tarball) is distributed without maintaining separate source trees or provider-specific forks.
-4. **Independent Package Granularity:** Consumers install only the scoped packages they are entitled or required to use (e.g. `@amirhossein-moloki/payment-core`, `@company/payment-service`, `@company/payment-mellat`).
+4. **Independent Package Granularity:** Consumers install only the scoped packages they are entitled or required to use (e.g. `@amirhossein-moloki/payment-core`, `@amirhossein-moloki/payment-service`, `@amirhossein-moloki/payment-mellat`).
 5. **Independent Package Publishing:** Each package is published completely independently. Changes or releases for one package do not trigger publish jobs for other packages.
 
 ---
 
 ## 2. Package Scope & Distribution Architecture
 
-Packages belong to either `@amirhossein-moloki` or `@company` scopes and are configured as private (`"publishConfig": { "access": "restricted", "registry": "https://npm.pkg.github.com" }`):
+Packages belong to the `@amirhossein-moloki` scope and are configured as private (`"publishConfig": { "access": "restricted", "registry": "https://npm.pkg.github.com" }`):
 
-| Package Name                            | Directory                               | Distributable Target | Description                                                                                             |
-| :-------------------------------------- | :-------------------------------------- | :------------------- | :------------------------------------------------------------------------------------------------------ |
-| `@amirhossein-moloki/payment-core`      | `packages/payment-core`                 | Standard Library     | Provider-agnostic domain entities, gateway contracts, registry, and standard errors.                    |
-| `@company/payment-service`              | `packages/payment-service`              | Standard Library     | Higher-level application service, retry/timeout policies, idempotency orchestrator, and test utilities. |
-| `@company/payment-persistence-postgres` | `packages/payment-persistence-postgres` | Adapter              | PostgreSQL persistence repositories and SQL schema migrations.                                          |
-| `@company/payment-mellat`               | `packages/payment-mellat`               | PSP Provider         | Mellat (Behpardazht) payment gateway provider implementation.                                           |
-| `@company/payment-zibal`                | `packages/payment-zibal`                | IPG Provider         | Zibal payment gateway provider implementation.                                                          |
-| `@company/payment-zarinpal`             | `packages/payment-zarinpal`             | IPG Provider         | Zarinpal GraphQL v4 payment gateway provider implementation.                                            |
-| `@company/payment-saman`                | `packages/payment-saman`                | PSP Provider         | Saman (SEP) payment gateway provider implementation.                                                    |
+| Package Name                                       | Directory                               | Distributable Target | Description                                                                                             |
+| :------------------------------------------------- | :-------------------------------------- | :------------------- | :------------------------------------------------------------------------------------------------------ |
+| `@amirhossein-moloki/payment-core`                 | `packages/payment-core`                 | Standard Library     | Provider-agnostic domain entities, gateway contracts, registry, and standard errors.                    |
+| `@amirhossein-moloki/payment-service`              | `packages/payment-service`              | Standard Library     | Higher-level application service, retry/timeout policies, idempotency orchestrator, and test utilities. |
+| `@amirhossein-moloki/payment-persistence-postgres` | `packages/payment-persistence-postgres` | Adapter              | PostgreSQL persistence repositories and SQL schema migrations.                                          |
+| `@amirhossein-moloki/payment-mellat`               | `packages/payment-mellat`               | PSP Provider         | Mellat (Behpardazht) payment gateway provider implementation.                                           |
+| `@amirhossein-moloki/payment-zibal`                | `packages/payment-zibal`                | IPG Provider         | Zibal payment gateway provider implementation.                                                          |
+| `@amirhossein-moloki/payment-zarinpal`             | `packages/payment-zarinpal`             | IPG Provider         | Zarinpal GraphQL v4 payment gateway provider implementation.                                            |
+| `@amirhossein-moloki/payment-saman`                | `packages/payment-saman`                | PSP Provider         | Saman (SEP) payment gateway provider implementation.                                                    |
 
 ---
 
@@ -56,7 +56,7 @@ A sample template is provided at root `.npmrc.example`:
 # .npmrc.example - GitHub Packages Registry Configuration Template
 
 @amirhossein-moloki:registry=https://npm.pkg.github.com
-@company:registry=https://npm.pkg.github.com
+@amirhossein-moloki:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
 ```
 

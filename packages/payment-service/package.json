@@ -1,5 +1,5 @@
 {
-  "name": "@company/payment-service",
+  "name": "@amirhossein-moloki/payment-service",
   "version": "1.0.0",
   "description": "Application integration layer and payment service for the payment platform ecosystem",
   "main": "./dist/index.js",

@@ -1,6 +1,6 @@
-# Changelog - @company/payment-saman
+# Changelog - @amirhossein-moloki/payment-saman
 
-All notable changes to `@company/payment-saman` will be documented in this file.
+All notable changes to `@amirhossein-moloki/payment-saman` will be documented in this file.
 
 ## [1.0.0] - initial release
 

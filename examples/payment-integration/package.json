@@ -9,11 +9,11 @@
   },
   "dependencies": {
     "@amirhossein-moloki/payment-core": "workspace:*",
-    "@company/payment-service": "workspace:*",
-    "@company/payment-mellat": "workspace:*",
-    "@company/payment-zibal": "workspace:*",
-    "@company/payment-zarinpal": "workspace:*",
-    "@company/payment-saman": "workspace:*"
+    "@amirhossein-moloki/payment-service": "workspace:*",
+    "@amirhossein-moloki/payment-mellat": "workspace:*",
+    "@amirhossein-moloki/payment-zibal": "workspace:*",
+    "@amirhossein-moloki/payment-zarinpal": "workspace:*",
+    "@amirhossein-moloki/payment-saman": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.0.0",

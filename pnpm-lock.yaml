@@ -37,7 +37,7 @@ importers:
       '@amirhossein-moloki/payment-core':
         specifier: workspace:*
         version: link:../../packages/payment-core
-      '@company/payment-mellat':
+      '@amirhossein-moloki/payment-mellat':
         specifier: workspace:*
         version: link:../../packages/payment-mellat
 
@@ -46,19 +46,19 @@ importers:
       '@amirhossein-moloki/payment-core':
         specifier: workspace:*
         version: link:../../packages/payment-core
-      '@company/payment-mellat':
+      '@amirhossein-moloki/payment-mellat':
         specifier: workspace:*
         version: link:../../packages/payment-mellat
-      '@company/payment-saman':
+      '@amirhossein-moloki/payment-saman':
         specifier: workspace:*
         version: link:../../packages/payment-saman
-      '@company/payment-service':
+      '@amirhossein-moloki/payment-service':
         specifier: workspace:*
         version: link:../../packages/payment-service
-      '@company/payment-zarinpal':
+      '@amirhossein-moloki/payment-zarinpal':
         specifier: workspace:*
         version: link:../../packages/payment-zarinpal
-      '@company/payment-zibal':
+      '@amirhossein-moloki/payment-zibal':
         specifier: workspace:*
         version: link:../../packages/payment-zibal
     devDependencies:

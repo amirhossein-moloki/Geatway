@@ -1,6 +1,6 @@
-# Changelog - @company/payment-persistence-postgres
+# Changelog - @amirhossein-moloki/payment-persistence-postgres
 
-All notable changes to `@company/payment-persistence-postgres` will be documented in this file.
+All notable changes to `@amirhossein-moloki/payment-persistence-postgres` will be documented in this file.
 
 ## [1.0.0] - initial release
 

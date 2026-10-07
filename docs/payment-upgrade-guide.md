@@ -1,6 +1,6 @@
 # Payment Package Ecosystem — Upgrade Guide
 
-This guide describes versioning policies, breaking change handling, and upgrade procedures across `@amirhossein-moloki/payment-core`, `@company/payment-service`, persistence packages, and provider gateway packages.
+This guide describes versioning policies, breaking change handling, and upgrade procedures across `@amirhossein-moloki/payment-core`, `@amirhossein-moloki/payment-service`, persistence packages, and provider gateway packages.
 
 ---
 
@@ -20,22 +20,22 @@ When updating payment packages in your application's `package.json`:
 
 ```bash
 # Example: Upgrading core and provider packages
-pnpm update @amirhossein-moloki/payment-core @company/payment-service @company/payment-mellat @company/payment-zibal
+pnpm update @amirhossein-moloki/payment-core @amirhossein-moloki/payment-service @amirhossein-moloki/payment-mellat @amirhossein-moloki/payment-zibal
 ```
 
-_Rule_: Always keep `@amirhossein-moloki/payment-core` and `@company/payment-service` version numbers compatible.
+_Rule_: Always keep `@amirhossein-moloki/payment-core` and `@amirhossein-moloki/payment-service` version numbers compatible.
 
 ---
 
 ## 3. Database Migration Requirements
 
-If using `@company/payment-persistence-postgres`, package updates may include new SQL database migrations.
+If using `@amirhossein-moloki/payment-persistence-postgres`, package updates may include new SQL database migrations.
 
 Run `DatabaseMigrator` during application deployment:
 
 ```ts
 import { Pool } from 'pg';
-import { DatabaseMigrator } from '@company/payment-persistence-postgres';
+import { DatabaseMigrator } from '@amirhossein-moloki/payment-persistence-postgres';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const migrator = new DatabaseMigrator(pool);

@@ -1,5 +1,5 @@
 {
-  "name": "@company/payment-zibal",
+  "name": "@amirhossein-moloki/payment-zibal",
   "version": "1.0.0",
   "description": "Zibal IPG provider implementation for Payment Core Orchestrator",
   "main": "./dist/index.js",
