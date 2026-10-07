@@ -15,9 +15,11 @@ jobs:
   release:
     name: GitHub Packages Release
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       packages: write
+
     if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
 
     steps:
@@ -60,6 +62,7 @@ jobs:
           echo "@amirhossein-moloki:registry=https://npm.pkg.github.com" > .npmrc
           echo "@company:registry=https://npm.pkg.github.com" >> .npmrc
           echo "//npm.pkg.github.com/:_authToken=\${NODE_AUTH_TOKEN}" >> .npmrc
+
           cp .npmrc packages/payment-core/.npmrc
           cp .npmrc ~/.npmrc
 
@@ -67,8 +70,7 @@ jobs:
         working-directory: packages/payment-core
         run: npm publish --loglevel verbose
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN || secrets.GITHUB_TOKEN }}
-        continue-on-error: false
+          NODE_AUTH_TOKEN: ${{ github.token }}
 
       - name: Cleanup release .npmrc
         if: always()
