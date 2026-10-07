@@ -1,5 +1,5 @@
 {
-  "name": "@company/payment-persistence-postgres",
+  "name": "@amirhossein-moloki/payment-persistence-postgres",
   "version": "1.0.0",
   "description": "PostgreSQL persistence implementation for the payment platform",
   "main": "./dist/index.js",

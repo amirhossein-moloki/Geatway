@@ -1,4 +1,4 @@
-# @company/payment-zibal
+# @amirhossein-moloki/payment-zibal
 
 درگاه پرداخت زیبال برای اکوسیستم `@amirhossein-moloki/payment-core`.
 
@@ -9,14 +9,14 @@
 ## نصب
 
 ```bash
-pnpm add @company/payment-zibal @amirhossein-moloki/payment-core
+pnpm add @amirhossein-moloki/payment-zibal @amirhossein-moloki/payment-core
 ```
 
 ## نحوه استفاده
 
 ```ts
 import { GatewayRegistry, Payment } from '@amirhossein-moloki/payment-core';
-import { ZibalGateway } from '@company/payment-zibal';
+import { ZibalGateway } from '@amirhossein-moloki/payment-zibal';
 
 const registry = new GatewayRegistry();
 
@@ -68,11 +68,11 @@ const verifyResult = await zibalGateway.verify({
 ## تست‌ها
 
 ```bash
-pnpm --filter @company/payment-zibal test
+pnpm --filter @amirhossein-moloki/payment-zibal test
 ```
 
 Opt-in sandbox integration tests:
 
 ```bash
-RUN_SANDBOX_TESTS=true pnpm --filter @company/payment-zibal test
+RUN_SANDBOX_TESTS=true pnpm --filter @amirhossein-moloki/payment-zibal test
 ```

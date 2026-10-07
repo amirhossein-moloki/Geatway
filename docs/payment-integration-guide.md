@@ -48,7 +48,7 @@ Key design principles:
 - **Provider Agnostic Core**: Core domain logic and gateway contracts are defined in `@amirhossein-moloki/payment-core`.
 - **Capability-Based Gateways**: Gateways explicitly declare supported capabilities (e.g., `CREATE_PAYMENT`, `VERIFY`, `INQUIRY`, `REFUND`, `REVERSE`, `CANCEL`, `CALLBACK`, `WEBHOOK`).
 - **Separation of Concerns**: Payment packages do **not** expose HTTP routes or REST APIs directly. Your application owns the REST endpoints, controllers, and OpenAPI contracts.
-- **Application Integration Layer**: `@company/payment-service` provides orchestration, retry handling, timeout management, idempotency enforcement, and webhook deduplication.
+- **Application Integration Layer**: `@amirhossein-moloki/payment-service` provides orchestration, retry handling, timeout management, idempotency enforcement, and webhook deduplication.
 
 ---
 
@@ -66,7 +66,7 @@ The payment architecture separates responsibilities into clear layers:
                │                              │
 ┌──────────────▼──────────────────────────────▼───────────────┐
 │            Application Integration Layer                    │
-│             (@company/payment-service)                      │
+│             (@amirhossein-moloki/payment-service)                      │
 │   - PaymentApplicationService                               │
 │   - Idempotency & Retry Policies                            │
 │   - Webhook & Callback Processing                           │
@@ -74,7 +74,7 @@ The payment architecture separates responsibilities into clear layers:
                │                              │
 ┌──────────────▼──────────────┐  ┌────────────▼──────────────┐
 │    @amirhossein-moloki/payment-core    │  │  Persistence Implementation│
-│  - GatewayRegistry          │  │ @company/payment-        │
+│  - GatewayRegistry          │  │ @amirhossein-moloki/payment-        │
 │  - Entities & Contracts     │  │  persistence-postgres    │
 │  - Normalized Errors        │  │  (or In-Memory Repos)     │
 └──────────────┬──────────────┘  └──────────────────────────┘
@@ -88,26 +88,26 @@ payment-mellat payment-zibal payment-zarinpal payment-saman
 ### Layer Responsibilities
 
 1. **Main Application**: Handles HTTP routing, request parsing, response mapping, authentication, and maintains `openapi.yml`.
-2. **Application Service (`@company/payment-service`)**: Orchestrates gateway execution, manages transactions, enforces idempotency, logs events, and interacts with repositories.
+2. **Application Service (`@amirhossein-moloki/payment-service`)**: Orchestrates gateway execution, manages transactions, enforces idempotency, logs events, and interacts with repositories.
 3. **Core (`@amirhossein-moloki/payment-core`)**: Provides entities (`Payment`, `Transaction`, `IdempotencyRecord`, `WebhookEvent`), gateway interfaces (`PaymentGateway`, `CanCreatePayment`, etc.), error types, and `GatewayRegistry`.
-4. **Provider Packages**: Implements PSP-specific HTTP communication and payload mappings (e.g., `@company/payment-mellat`).
-5. **Persistence (`@company/payment-persistence-postgres`)**: Implements database repositories for PostgreSQL or custom backends.
+4. **Provider Packages**: Implements PSP-specific HTTP communication and payload mappings (e.g., `@amirhossein-moloki/payment-mellat`).
+5. **Persistence (`@amirhossein-moloki/payment-persistence-postgres`)**: Implements database repositories for PostgreSQL or custom backends.
 
 ---
 
 ## 3. Package Installation
 
-Install only `@amirhossein-moloki/payment-core`, `@company/payment-service`, and the specific PSP packages your application requires:
+Install only `@amirhossein-moloki/payment-core`, `@amirhossein-moloki/payment-service`, and the specific PSP packages your application requires:
 
 ```bash
 # Core package and service orchestration
-pnpm add @amirhossein-moloki/payment-core @company/payment-service
+pnpm add @amirhossein-moloki/payment-core @amirhossein-moloki/payment-service
 
 # Install desired payment gateways
-pnpm add @company/payment-mellat @company/payment-zibal
+pnpm add @amirhossein-moloki/payment-mellat @amirhossein-moloki/payment-zibal
 
 # Optional: PostgreSQL persistence package
-pnpm add @company/payment-persistence-postgres
+pnpm add @amirhossein-moloki/payment-persistence-postgres
 ```
 
 _Note: Installing `@amirhossein-moloki/payment-core` alone does NOT automatically include gateway providers. Gateways must be installed and registered explicitly._
@@ -118,8 +118,8 @@ _Note: Installing `@amirhossein-moloki/payment-core` alone does NOT automaticall
 
 When selecting packages:
 
-- Installing `@company/payment-mellat` enables Mellat PSP support (`'mellat'`).
-- Installing `@company/payment-zibal` enables Zibal gateway support (`'zibal'`).
+- Installing `@amirhossein-moloki/payment-mellat` enables Mellat PSP support (`'mellat'`).
+- Installing `@amirhossein-moloki/payment-zibal` enables Zibal gateway support (`'zibal'`).
 - If your application calls a gateway that has not been registered, `PaymentApplicationService` will throw a `GatewayNotFoundError`.
 - If an operation is attempted on a gateway that lacks the capability (e.g. attempting refund on Zibal), an `UnsupportedCapabilityError` is thrown.
 
@@ -132,7 +132,7 @@ Configuration is structured per package.
 ### Application Service Configuration
 
 ```ts
-import { PaymentServiceConfig } from '@company/payment-service';
+import { PaymentServiceConfig } from '@amirhossein-moloki/payment-service';
 
 const serviceConfig: PaymentServiceConfig = {
   defaultTimeoutMs: 10000,
@@ -146,10 +146,10 @@ const serviceConfig: PaymentServiceConfig = {
 
 ### Provider Configuration Examples
 
-#### Mellat (`@company/payment-mellat`)
+#### Mellat (`@amirhossein-moloki/payment-mellat`)
 
 ```ts
-import { MellatConfig } from '@company/payment-mellat';
+import { MellatConfig } from '@amirhossein-moloki/payment-mellat';
 
 const mellatConfig: MellatConfig = {
   gatewayId: 'mellat', // Default is 'mellat'
@@ -161,10 +161,10 @@ const mellatConfig: MellatConfig = {
 };
 ```
 
-#### Zibal (`@company/payment-zibal`)
+#### Zibal (`@amirhossein-moloki/payment-zibal`)
 
 ```ts
-import { ZibalConfig } from '@company/payment-zibal';
+import { ZibalConfig } from '@amirhossein-moloki/payment-zibal';
 
 const zibalConfig: ZibalConfig = {
   gatewayId: 'zibal',
@@ -174,10 +174,10 @@ const zibalConfig: ZibalConfig = {
 };
 ```
 
-#### Zarinpal (`@company/payment-zarinpal`)
+#### Zarinpal (`@amirhossein-moloki/payment-zarinpal`)
 
 ```ts
-import { ZarinpalConfig } from '@company/payment-zarinpal';
+import { ZarinpalConfig } from '@amirhossein-moloki/payment-zarinpal';
 
 const zarinpalConfig: ZarinpalConfig = {
   gatewayId: 'zarinpal',
@@ -188,10 +188,10 @@ const zarinpalConfig: ZarinpalConfig = {
 };
 ```
 
-#### Saman (`@company/payment-saman`)
+#### Saman (`@amirhossein-moloki/payment-saman`)
 
 ```ts
-import { SamanConfig } from '@company/payment-saman';
+import { SamanConfig } from '@amirhossein-moloki/payment-saman';
 
 const samanConfig: SamanConfig = {
   gatewayId: 'saman',
@@ -240,8 +240,8 @@ Gateways are registered in a `GatewayRegistry` instance from `@amirhossein-molok
 
 ```ts
 import { GatewayRegistry } from '@amirhossein-moloki/payment-core';
-import { MellatGateway } from '@company/payment-mellat';
-import { ZibalGateway } from '@company/payment-zibal';
+import { MellatGateway } from '@amirhossein-moloki/payment-mellat';
+import { ZibalGateway } from '@amirhossein-moloki/payment-zibal';
 
 const registry = new GatewayRegistry();
 
@@ -271,7 +271,7 @@ registry.register(zibalGateway);
 To initiate a payment, call `paymentService.createPayment`:
 
 ```ts
-import { PaymentApplicationService } from '@company/payment-service';
+import { PaymentApplicationService } from '@amirhossein-moloki/payment-service';
 
 const result = await paymentService.createPayment({
   gateway: 'mellat',
@@ -517,7 +517,7 @@ Transactions are persisted via `TransactionRepository`.
 
 ## 19. Persistence Integration
 
-For production, use `@company/payment-persistence-postgres` or implement the core repository interfaces (`PaymentRepository`, `TransactionRepository`, `IdempotencyRepository`, `WebhookEventRepository`).
+For production, use `@amirhossein-moloki/payment-persistence-postgres` or implement the core repository interfaces (`PaymentRepository`, `TransactionRepository`, `IdempotencyRepository`, `WebhookEventRepository`).
 
 ### Example with PostgreSQL Repositories:
 
@@ -529,7 +529,7 @@ import {
   PostgresIdempotencyRepository,
   PostgresWebhookEventRepository,
   DatabaseMigrator,
-} from '@company/payment-persistence-postgres';
+} from '@amirhossein-moloki/payment-persistence-postgres';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
@@ -553,7 +553,7 @@ Gateways support sandbox environments for development and staging:
 - **Zibal**: Set `merchant: 'zibal'` and `environment: 'sandbox'`.
 - **Zarinpal**: Set `environment: 'sandbox'`. Uses sandbox endpoint `https://sandbox.zarinpal.com`.
 - **Mellat / Saman**: Set `environment: 'sandbox'`.
-- **MockGateway**: `@company/payment-service/testing` provides `MockGateway` for zero-network testing.
+- **MockGateway**: `@amirhossein-moloki/payment-service/testing` provides `MockGateway` for zero-network testing.
 
 ---
 
@@ -616,10 +616,10 @@ const paymentService = new PaymentApplicationService({
 
 ## 25. Testing Strategy
 
-Use `InMemoryPaymentRepository`, `InMemoryTransactionRepository`, and `MockGateway` from `@company/payment-service/testing` for unit and integration testing without network calls:
+Use `InMemoryPaymentRepository`, `InMemoryTransactionRepository`, and `MockGateway` from `@amirhossein-moloki/payment-service/testing` for unit and integration testing without network calls:
 
 ```ts
-import { createTestPaymentService, MockGateway } from '@company/payment-service/testing';
+import { createTestPaymentService, MockGateway } from '@amirhossein-moloki/payment-service/testing';
 
 const mockGateway = new MockGateway({ id: 'test-gateway', scenario: 'success' });
 const { service } = createTestPaymentService({ gateways: [mockGateway] });
@@ -665,7 +665,7 @@ const result = await service.createPayment({
 When upgrading package versions:
 
 1. Update `package.json` version dependencies for `@amirhossein-moloki/payment-core` and providers together.
-2. Run database migrations using `DatabaseMigrator` if `@company/payment-persistence-postgres` was updated.
+2. Run database migrations using `DatabaseMigrator` if `@amirhossein-moloki/payment-persistence-postgres` was updated.
 3. Execute unit tests (`pnpm test`).
 
 ---
@@ -674,12 +674,12 @@ When upgrading package versions:
 
 ```ts
 import { GatewayRegistry } from '@amirhossein-moloki/payment-core';
-import { PaymentApplicationService } from '@company/payment-service';
+import { PaymentApplicationService } from '@amirhossein-moloki/payment-service';
 import {
   InMemoryPaymentRepository,
   InMemoryTransactionRepository,
-} from '@company/payment-service/testing';
-import { ZibalGateway } from '@company/payment-zibal';
+} from '@amirhossein-moloki/payment-service/testing';
+import { ZibalGateway } from '@amirhossein-moloki/payment-zibal';
 
 async function run() {
   // 1. Initialize registry and register provider

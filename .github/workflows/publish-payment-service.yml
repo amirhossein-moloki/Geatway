@@ -7,7 +7,7 @@ on:
       - 'packages/payment-service/**'
     tags:
       - 'payment-service-v*'
-      - '@company/payment-service@*'
+      - '@amirhossein-moloki/payment-service@*'
       - 'packages/payment-service/v*'
   workflow_dispatch:
 
@@ -44,18 +44,17 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Verify linter for payment-service
-        run: pnpm --filter @company/payment-service lint
+        run: pnpm --filter @amirhossein-moloki/payment-service lint
 
       - name: Build payment-service and required workspace dependencies
-        run: pnpm --filter @company/payment-service... build
+        run: pnpm --filter @amirhossein-moloki/payment-service... build
 
       - name: Run unit tests for payment-service
-        run: pnpm --filter @company/payment-service test
+        run: pnpm --filter @amirhossein-moloki/payment-service test
 
       - name: Setup release .npmrc
         run: |
           echo "@amirhossein-moloki:registry=https://npm.pkg.github.com" > .npmrc
-          echo "@company:registry=https://npm.pkg.github.com" >> .npmrc
           echo "//npm.pkg.github.com/:_authToken=\${NODE_AUTH_TOKEN}" >> .npmrc
           cp .npmrc packages/payment-service/.npmrc
           cp .npmrc ~/.npmrc

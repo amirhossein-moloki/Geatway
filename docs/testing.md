@@ -82,7 +82,7 @@ MELLAT_SANDBOX_CALLBACK_URL=https://example.com/callback
 
 ## 4. Local Deterministic Mock Gateway
 
-For unit testing and local application service development, use `MockGateway` (or `TestGateway` from `@company/payment-service/testing`).
+For unit testing and local application service development, use `MockGateway` (or `TestGateway` from `@amirhossein-moloki/payment-service/testing`).
 
 ### Explicit Registration
 
@@ -90,7 +90,7 @@ For unit testing and local application service development, use `MockGateway` (o
 
 ```ts
 import { GatewayRegistry } from '@amirhossein-moloki/payment-core';
-import { MockGateway } from '@company/payment-service/testing';
+import { MockGateway } from '@amirhossein-moloki/payment-service/testing';
 
 const registry = new GatewayRegistry();
 const mockGateway = new MockGateway('test-gateway');

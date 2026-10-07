@@ -7,7 +7,7 @@ on:
       - 'packages/payment-persistence-postgres/**'
     tags:
       - 'payment-persistence-postgres-v*'
-      - '@company/payment-persistence-postgres@*'
+      - '@amirhossein-moloki/payment-persistence-postgres@*'
       - 'packages/payment-persistence-postgres/v*'
   workflow_dispatch:
 
@@ -44,18 +44,17 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Verify linter for payment-persistence-postgres
-        run: pnpm --filter @company/payment-persistence-postgres lint
+        run: pnpm --filter @amirhossein-moloki/payment-persistence-postgres lint
 
       - name: Build payment-persistence-postgres and required workspace dependencies
-        run: pnpm --filter @company/payment-persistence-postgres... build
+        run: pnpm --filter @amirhossein-moloki/payment-persistence-postgres... build
 
       - name: Run unit tests for payment-persistence-postgres
-        run: pnpm --filter @company/payment-persistence-postgres test
+        run: pnpm --filter @amirhossein-moloki/payment-persistence-postgres test
 
       - name: Setup release .npmrc
         run: |
           echo "@amirhossein-moloki:registry=https://npm.pkg.github.com" > .npmrc
-          echo "@company:registry=https://npm.pkg.github.com" >> .npmrc
           echo "//npm.pkg.github.com/:_authToken=\${NODE_AUTH_TOKEN}" >> .npmrc
           cp .npmrc packages/payment-persistence-postgres/.npmrc
           cp .npmrc ~/.npmrc

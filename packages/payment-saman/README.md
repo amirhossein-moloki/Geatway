@@ -1,4 +1,4 @@
-# @company/payment-saman
+# @amirhossein-moloki/payment-saman
 
 درگاه پرداخت سامان کیش (SEP) برای اکوسیستم `@amirhossein-moloki/payment-core`.
 
@@ -9,14 +9,14 @@
 ## نصب
 
 ```bash
-pnpm add @company/payment-saman @amirhossein-moloki/payment-core
+pnpm add @amirhossein-moloki/payment-saman @amirhossein-moloki/payment-core
 ```
 
 ## نحوه استفاده
 
 ```ts
 import { GatewayRegistry, Payment } from '@amirhossein-moloki/payment-core';
-import { SamanGateway } from '@company/payment-saman';
+import { SamanGateway } from '@amirhossein-moloki/payment-saman';
 
 const registry = new GatewayRegistry();
 
@@ -58,5 +58,5 @@ console.log(result.gatewayTransactionId); // Token
 ## تست‌ها
 
 ```bash
-pnpm --filter @company/payment-saman test
+pnpm --filter @amirhossein-moloki/payment-saman test
 ```

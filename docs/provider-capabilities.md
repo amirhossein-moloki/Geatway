@@ -17,9 +17,9 @@ This document provides an exhaustive specification of supported capabilities, co
 
 ## 2. Provider Detailed Specifications
 
-### 2.1. Mellat (`@company/payment-mellat`)
+### 2.1. Mellat (`@amirhossein-moloki/payment-mellat`)
 
-- **Package**: `@company/payment-mellat`
+- **Package**: `@amirhossein-moloki/payment-mellat`
 - **Gateway ID**: `mellat`
 - **Supported Capabilities**:
   - `CREATE_PAYMENT` (Mellat `payRequest`)
@@ -43,9 +43,9 @@ This document provides an exhaustive specification of supported capabilities, co
 
 ---
 
-### 2.2. Zibal (`@company/payment-zibal`)
+### 2.2. Zibal (`@amirhossein-moloki/payment-zibal`)
 
-- **Package**: `@company/payment-zibal`
+- **Package**: `@amirhossein-moloki/payment-zibal`
 - **Gateway ID**: `zibal`
 - **Supported Capabilities**:
   - `CREATE_PAYMENT` (Zibal `/v1/request`)
@@ -65,9 +65,9 @@ This document provides an exhaustive specification of supported capabilities, co
 
 ---
 
-### 2.3. Zarinpal (`@company/payment-zarinpal`)
+### 2.3. Zarinpal (`@amirhossein-moloki/payment-zarinpal`)
 
-- **Package**: `@company/payment-zarinpal`
+- **Package**: `@amirhossein-moloki/payment-zarinpal`
 - **Gateway ID**: `zarinpal`
 - **Supported Capabilities**:
   - `CREATE_PAYMENT` (Zarinpal v4 `PaymentRequest`)
@@ -87,9 +87,9 @@ This document provides an exhaustive specification of supported capabilities, co
 
 ---
 
-### 2.4. Saman (`@company/payment-saman`)
+### 2.4. Saman (`@amirhossein-moloki/payment-saman`)
 
-- **Package**: `@company/payment-saman`
+- **Package**: `@amirhossein-moloki/payment-saman`
 - **Gateway ID**: `saman`
 - **Supported Capabilities**:
   - `CREATE_PAYMENT` (Saman token request)

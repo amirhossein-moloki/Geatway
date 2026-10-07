@@ -6,11 +6,11 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     alias: {
-      '@company/payment-service/testing': path.resolve(
+      '@amirhossein-moloki/payment-service/testing': path.resolve(
         __dirname,
         '../../packages/payment-service/src/testing/index.ts',
       ),
-      '@company/payment-service': path.resolve(
+      '@amirhossein-moloki/payment-service': path.resolve(
         __dirname,
         '../../packages/payment-service/src/index.ts',
       ),
@@ -18,19 +18,19 @@ export default defineConfig({
         __dirname,
         '../../packages/payment-core/src/index.ts',
       ),
-      '@company/payment-mellat': path.resolve(
+      '@amirhossein-moloki/payment-mellat': path.resolve(
         __dirname,
         '../../packages/payment-mellat/src/index.ts',
       ),
-      '@company/payment-zibal': path.resolve(
+      '@amirhossein-moloki/payment-zibal': path.resolve(
         __dirname,
         '../../packages/payment-zibal/src/index.ts',
       ),
-      '@company/payment-zarinpal': path.resolve(
+      '@amirhossein-moloki/payment-zarinpal': path.resolve(
         __dirname,
         '../../packages/payment-zarinpal/src/index.ts',
       ),
-      '@company/payment-saman': path.resolve(
+      '@amirhossein-moloki/payment-saman': path.resolve(
         __dirname,
         '../../packages/payment-saman/src/index.ts',
       ),

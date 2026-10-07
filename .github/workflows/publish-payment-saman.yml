@@ -7,7 +7,7 @@ on:
       - 'packages/payment-saman/**'
     tags:
       - 'payment-saman-v*'
-      - '@company/payment-saman@*'
+      - '@amirhossein-moloki/payment-saman@*'
       - 'packages/payment-saman/v*'
   workflow_dispatch:
 
@@ -44,18 +44,17 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Verify linter for payment-saman
-        run: pnpm --filter @company/payment-saman lint
+        run: pnpm --filter @amirhossein-moloki/payment-saman lint
 
       - name: Build payment-saman and required workspace dependencies
-        run: pnpm --filter @company/payment-saman... build
+        run: pnpm --filter @amirhossein-moloki/payment-saman... build
 
       - name: Run unit tests for payment-saman
-        run: pnpm --filter @company/payment-saman test
+        run: pnpm --filter @amirhossein-moloki/payment-saman test
 
       - name: Setup release .npmrc
         run: |
           echo "@amirhossein-moloki:registry=https://npm.pkg.github.com" > .npmrc
-          echo "@company:registry=https://npm.pkg.github.com" >> .npmrc
           echo "//npm.pkg.github.com/:_authToken=\${NODE_AUTH_TOKEN}" >> .npmrc
           cp .npmrc packages/payment-saman/.npmrc
           cp .npmrc ~/.npmrc

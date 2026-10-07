@@ -1,9 +1,9 @@
 import { GatewayRegistry } from '@amirhossein-moloki/payment-core';
-import { MellatGateway } from '@company/payment-mellat';
-import { ZibalGateway } from '@company/payment-zibal';
-import { ZarinpalGateway } from '@company/payment-zarinpal';
-import { SamanGateway } from '@company/payment-saman';
-import { MockGateway } from '@company/payment-service/testing';
+import { MellatGateway } from '@amirhossein-moloki/payment-mellat';
+import { ZibalGateway } from '@amirhossein-moloki/payment-zibal';
+import { ZarinpalGateway } from '@amirhossein-moloki/payment-zarinpal';
+import { SamanGateway } from '@amirhossein-moloki/payment-saman';
+import { MockGateway } from '@amirhossein-moloki/payment-service/testing';
 
 export function setupGatewayRegistry(): GatewayRegistry {
   const registry = new GatewayRegistry();

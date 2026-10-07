@@ -1,4 +1,4 @@
-# @company/payment-mellat
+# @amirhossein-moloki/payment-mellat
 
 A production-ready Mellat Payment Service Provider (PSP / به پرداخت ملت) integration package for Node.js & TypeScript, built for `@amirhossein-moloki/payment-core`.
 
@@ -24,7 +24,7 @@ This package implementation is strictly derived from and compliant with:
 ## Installation
 
 ```bash
-pnpm add @amirhossein-moloki/payment-core @company/payment-mellat
+pnpm add @amirhossein-moloki/payment-core @amirhossein-moloki/payment-mellat
 ```
 
 ---
@@ -32,7 +32,7 @@ pnpm add @amirhossein-moloki/payment-core @company/payment-mellat
 ## Configuration
 
 ```ts
-import { MellatConfig } from '@company/payment-mellat';
+import { MellatConfig } from '@amirhossein-moloki/payment-mellat';
 
 const config: MellatConfig = {
   gatewayId: 'mellat', // Unique gateway identifier
@@ -49,7 +49,7 @@ const config: MellatConfig = {
 
 ```ts
 import { GatewayRegistry, Payment } from '@amirhossein-moloki/payment-core';
-import { MellatGateway } from '@company/payment-mellat';
+import { MellatGateway } from '@amirhossein-moloki/payment-mellat';
 
 const registry = new GatewayRegistry();
 const mellatGateway = new MellatGateway(config);
@@ -91,11 +91,11 @@ Mellat numeric response codes (e.g., `11` invalid card, `21` invalid merchant, `
 Run unit tests:
 
 ```bash
-pnpm --filter @company/payment-mellat test
+pnpm --filter @amirhossein-moloki/payment-mellat test
 ```
 
 Opt-in live integration test:
 
 ```bash
-MELLAT_INTEGRATION_TEST=true pnpm --filter @company/payment-mellat test
+MELLAT_INTEGRATION_TEST=true pnpm --filter @amirhossein-moloki/payment-mellat test
 ```

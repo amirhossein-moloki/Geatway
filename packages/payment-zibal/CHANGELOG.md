@@ -1,6 +1,6 @@
-# Changelog - @company/payment-zibal
+# Changelog - @amirhossein-moloki/payment-zibal
 
-All notable changes to `@company/payment-zibal` will be documented in this file.
+All notable changes to `@amirhossein-moloki/payment-zibal` will be documented in this file.
 
 ## [1.0.0] - initial release
 

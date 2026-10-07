@@ -1,5 +1,5 @@
 import { Payment } from '@amirhossein-moloki/payment-core';
-import { ZibalGateway } from '@company/payment-zibal';
+import { ZibalGateway } from '@amirhossein-moloki/payment-zibal';
 
 async function main() {
   const zibal = new ZibalGateway({

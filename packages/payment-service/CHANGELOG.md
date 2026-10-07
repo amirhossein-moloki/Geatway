@@ -1,6 +1,6 @@
-# Changelog - @company/payment-service
+# Changelog - @amirhossein-moloki/payment-service
 
-All notable changes to `@company/payment-service` will be documented in this file.
+All notable changes to `@amirhossein-moloki/payment-service` will be documented in this file.
 
 ## [1.0.0] - initial release
 

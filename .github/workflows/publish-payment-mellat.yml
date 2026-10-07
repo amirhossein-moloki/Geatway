@@ -7,7 +7,7 @@ on:
       - 'packages/payment-mellat/**'
     tags:
       - 'payment-mellat-v*'
-      - '@company/payment-mellat@*'
+      - '@amirhossein-moloki/payment-mellat@*'
       - 'packages/payment-mellat/v*'
   workflow_dispatch:
 
@@ -44,18 +44,17 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Verify linter for payment-mellat
-        run: pnpm --filter @company/payment-mellat lint
+        run: pnpm --filter @amirhossein-moloki/payment-mellat lint
 
       - name: Build payment-mellat and required workspace dependencies
-        run: pnpm --filter @company/payment-mellat... build
+        run: pnpm --filter @amirhossein-moloki/payment-mellat... build
 
       - name: Run unit tests for payment-mellat
-        run: pnpm --filter @company/payment-mellat test
+        run: pnpm --filter @amirhossein-moloki/payment-mellat test
 
       - name: Setup release .npmrc
         run: |
           echo "@amirhossein-moloki:registry=https://npm.pkg.github.com" > .npmrc
-          echo "@company:registry=https://npm.pkg.github.com" >> .npmrc
           echo "//npm.pkg.github.com/:_authToken=\${NODE_AUTH_TOKEN}" >> .npmrc
           cp .npmrc packages/payment-mellat/.npmrc
           cp .npmrc ~/.npmrc

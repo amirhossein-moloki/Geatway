@@ -1,5 +1,5 @@
 import { Payment } from '@amirhossein-moloki/payment-core';
-import { SamanGateway } from '@company/payment-saman';
+import { SamanGateway } from '@amirhossein-moloki/payment-saman';
 
 async function main() {
   const saman = new SamanGateway({

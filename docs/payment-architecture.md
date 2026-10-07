@@ -14,7 +14,7 @@ The payment ecosystem is designed around strict separation between core orchestr
                 │                         │
 ┌───────────────▼─────────────────────────▼───────────────┐
 │             Application Integration Layer               │
-│              (@company/payment-service)                 │
+│              (@amirhossein-moloki/payment-service)                 │
 │  - PaymentApplicationService                            │
 │  - IdempotencyOrchestrator                              │
 │  - Retry & Timeout Policies                             │
@@ -23,7 +23,7 @@ The payment ecosystem is designed around strict separation between core orchestr
                 │                         │
 ┌───────────────▼───────────────┐ ┌───────▼──────────────┐
 │     @amirhossein-moloki/payment-core     │ │ Persistence Layer    │
-│  - Domain Entities            │ │ @company/payment-    │
+│  - Domain Entities            │ │ @amirhossein-moloki/payment-    │
 │  - Gateway Registry & Contracts│ │  persistence-postgres│
 │  - Normalized Errors          │ │ (or Custom Repos)    │
 └───────────────┬───────────────┘ └──────────────────────┘
@@ -43,13 +43,13 @@ payment-mellat payment-zibal payment-zarinpal payment-saman
 - Standardizes normalized errors (`ValidationError`, `GatewayNotFoundError`, `GatewayDisabledError`, `UnsupportedCapabilityError`, `InvalidPaymentStateError`, `GatewayError`).
 - Contains **zero** provider-specific details or direct network dependencies.
 
-### 2. Provider Packages (`@company/payment-mellat`, `@company/payment-zibal`, `@company/payment-zarinpal`, `@company/payment-saman`)
+### 2. Provider Packages (`@amirhossein-moloki/payment-mellat`, `@amirhossein-moloki/payment-zibal`, `@amirhossein-moloki/payment-zarinpal`, `@amirhossein-moloki/payment-saman`)
 
 - Implement `PaymentGateway` and specific capability interfaces.
 - Perform network communication with provider endpoints.
 - Map domain requests to provider DTOs and provider responses back to domain responses.
 
-### 3. Application Integration Layer (`@company/payment-service`)
+### 3. Application Integration Layer (`@amirhossein-moloki/payment-service`)
 
 - `PaymentApplicationService` coordinates gateways, persistence repositories, idempotency checking, and error mapping.
 - Enforces retries (`RetryPolicy`) and timeouts (`TimeoutPolicy`).

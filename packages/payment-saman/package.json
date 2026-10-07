@@ -1,5 +1,5 @@
 {
-  "name": "@company/payment-saman",
+  "name": "@amirhossein-moloki/payment-saman",
   "version": "1.0.0",
   "description": "Saman/SEP payment provider implementation for Payment Core Orchestrator",
   "main": "./dist/index.js",

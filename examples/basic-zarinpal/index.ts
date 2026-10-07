@@ -1,5 +1,5 @@
 import { Payment } from '@amirhossein-moloki/payment-core';
-import { ZarinpalGateway } from '@company/payment-zarinpal';
+import { ZarinpalGateway } from '@amirhossein-moloki/payment-zarinpal';
 
 async function main() {
   const zarinpal = new ZarinpalGateway({
