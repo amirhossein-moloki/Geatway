@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@company/payment-core": "workspace:*",
+    "@amirhossein-moloki/payment-core": "workspace:*",
     "@company/payment-mellat": "workspace:*"
   }
 }

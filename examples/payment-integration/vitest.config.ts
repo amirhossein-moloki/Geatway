@@ -14,7 +14,10 @@ export default defineConfig({
         __dirname,
         '../../packages/payment-service/src/index.ts',
       ),
-      '@company/payment-core': path.resolve(__dirname, '../../packages/payment-core/src/index.ts'),
+      '@amirhossein-moloki/payment-core': path.resolve(
+        __dirname,
+        '../../packages/payment-core/src/index.ts',
+      ),
       '@company/payment-mellat': path.resolve(
         __dirname,
         '../../packages/payment-mellat/src/index.ts',

@@ -6,7 +6,7 @@ import {
   RefundPaymentResponse,
   ReversePaymentResponse,
   VerifyPaymentResponse,
-} from '@company/payment-core';
+} from '@amirhossein-moloki/payment-core';
 import { RedirectFormData } from '../client/mellat-client.js';
 import { MellatCallbackPayload } from '../types/mellat-api.types.js';
 

@@ -19,7 +19,7 @@ import {
   ReversePaymentResponse,
   VerifyPaymentRequest,
   VerifyPaymentResponse,
-} from '@company/payment-core';
+} from '@amirhossein-moloki/payment-core';
 import { HttpTransport, MellatClient } from '../client/mellat-client.js';
 import { MellatConfig, validateMellatConfig } from '../config/mellat-config.interface.js';
 import { MellatErrorMapper } from '../errors/mellat-error-mapper.js';

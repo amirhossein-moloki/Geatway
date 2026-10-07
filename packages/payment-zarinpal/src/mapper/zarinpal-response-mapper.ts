@@ -3,7 +3,7 @@ import {
   ParsedCallbackResult,
   PaymentStatus,
   VerifyPaymentResponse,
-} from '@company/payment-core';
+} from '@amirhossein-moloki/payment-core';
 import {
   PaymentRequestData,
   PaymentVerificationData,

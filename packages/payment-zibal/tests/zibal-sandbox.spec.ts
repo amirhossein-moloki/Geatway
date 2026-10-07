@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { ZibalGateway } from '../src/gateway/zibal-gateway.js';
-import { Payment } from '@company/payment-core';
+import { Payment } from '@amirhossein-moloki/payment-core';
 
 describe('Zibal Provider Sandbox Integration Test Suite', () => {
   const isSandboxEnabled = process.env.RUN_SANDBOX_TESTS === 'true';

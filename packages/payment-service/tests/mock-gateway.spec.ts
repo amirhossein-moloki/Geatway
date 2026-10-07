@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { GatewayError, PaymentStatus } from '@company/payment-core';
+import { GatewayError, PaymentStatus } from '@amirhossein-moloki/payment-core';
 import { createTestPaymentService, TestEnvironment } from '../src/testing/index.js';
 
 describe('MockGateway Failure & Flow Scenarios', () => {

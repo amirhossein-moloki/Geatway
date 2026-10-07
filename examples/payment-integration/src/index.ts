@@ -6,7 +6,7 @@ import {
   UnsupportedCapabilityError,
   InvalidPaymentStateError,
   GatewayError,
-} from '@company/payment-core';
+} from '@amirhossein-moloki/payment-core';
 import { createPaymentApplication } from './payment.js';
 
 export class AppController {

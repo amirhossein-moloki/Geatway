@@ -4,7 +4,7 @@ import {
   Payment,
   PaymentStatus,
   ValidationError,
-} from '@company/payment-core';
+} from '@amirhossein-moloki/payment-core';
 import { describe, expect, it, vi } from 'vitest';
 import { HttpTransport, MellatClient } from '../src/client/mellat-client.js';
 import { MellatConfig, validateMellatConfig } from '../src/config/mellat-config.interface.js';

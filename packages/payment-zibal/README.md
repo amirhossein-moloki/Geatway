@@ -1,6 +1,6 @@
 # @company/payment-zibal
 
-درگاه پرداخت زیبال برای اکوسیستم `@company/payment-core`.
+درگاه پرداخت زیبال برای اکوسیستم `@amirhossein-moloki/payment-core`.
 
 ## Source of Truth
 
@@ -9,13 +9,13 @@
 ## نصب
 
 ```bash
-pnpm add @company/payment-zibal @company/payment-core
+pnpm add @company/payment-zibal @amirhossein-moloki/payment-core
 ```
 
 ## نحوه استفاده
 
 ```ts
-import { GatewayRegistry, Payment } from '@company/payment-core';
+import { GatewayRegistry, Payment } from '@amirhossein-moloki/payment-core';
 import { ZibalGateway } from '@company/payment-zibal';
 
 const registry = new GatewayRegistry();

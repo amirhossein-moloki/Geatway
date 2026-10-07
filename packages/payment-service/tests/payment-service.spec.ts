@@ -6,7 +6,7 @@ import {
   ValidationError,
   GatewayNotFoundError,
   InvalidPaymentStateError,
-} from '@company/payment-core';
+} from '@amirhossein-moloki/payment-core';
 import { createTestPaymentService, TestEnvironment } from '../src/testing/index.js';
 
 describe('PaymentApplicationService Integration & Workflows', () => {

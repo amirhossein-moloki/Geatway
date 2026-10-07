@@ -1,6 +1,6 @@
-# Changelog - @company/payment-core
+# Changelog - @amirhossein-moloki/payment-core
 
-All notable changes to `@company/payment-core` will be documented in this file.
+All notable changes to `@amirhossein-moloki/payment-core` will be documented in this file.
 
 ## [1.0.0] - initial release
 

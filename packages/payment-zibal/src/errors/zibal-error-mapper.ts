@@ -1,4 +1,4 @@
-import { GatewayError, ValidationError } from '@company/payment-core';
+import { GatewayError, ValidationError } from '@amirhossein-moloki/payment-core';
 
 export class ZibalErrorMapper {
   private static readonly RESULT_MESSAGES: Record<number, string> = {

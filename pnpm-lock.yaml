@@ -34,7 +34,7 @@ importers:
 
   examples/basic-mellat:
     dependencies:
-      '@company/payment-core':
+      '@amirhossein-moloki/payment-core':
         specifier: workspace:*
         version: link:../../packages/payment-core
       '@company/payment-mellat':
@@ -43,7 +43,7 @@ importers:
 
   examples/payment-integration:
     dependencies:
-      '@company/payment-core':
+      '@amirhossein-moloki/payment-core':
         specifier: workspace:*
         version: link:../../packages/payment-core
       '@company/payment-mellat':
@@ -73,13 +73,13 @@ importers:
 
   packages/payment-mellat:
     dependencies:
-      '@company/payment-core':
+      '@amirhossein-moloki/payment-core':
         specifier: workspace:*
         version: link:../payment-core
 
   packages/payment-persistence-postgres:
     dependencies:
-      '@company/payment-core':
+      '@amirhossein-moloki/payment-core':
         specifier: workspace:*
         version: link:../payment-core
       pg:
@@ -104,7 +104,7 @@ importers:
 
   packages/payment-saman:
     dependencies:
-      '@company/payment-core':
+      '@amirhossein-moloki/payment-core':
         specifier: workspace:*
         version: link:../payment-core
     devDependencies:
@@ -120,7 +120,7 @@ importers:
 
   packages/payment-service:
     dependencies:
-      '@company/payment-core':
+      '@amirhossein-moloki/payment-core':
         specifier: workspace:*
         version: link:../payment-core
     devDependencies:
@@ -130,7 +130,7 @@ importers:
 
   packages/payment-zarinpal:
     dependencies:
-      '@company/payment-core':
+      '@amirhossein-moloki/payment-core':
         specifier: workspace:*
         version: link:../payment-core
     devDependencies:
@@ -146,7 +146,7 @@ importers:
 
   packages/payment-zibal:
     dependencies:
-      '@company/payment-core':
+      '@amirhossein-moloki/payment-core':
         specifier: workspace:*
         version: link:../payment-core
     devDependencies:
@@ -441,7 +441,6 @@ packages:
     engines: { node: ^22.20 || ^24.12 || >=25 }
     cpu: [x64]
     os: [linux]
-    libc: [glibc]
 
   '@nodelib/fs.scandir@2.1.5':
     resolution:
@@ -519,7 +518,6 @@ packages:
       }
     cpu: [arm]
     os: [linux]
-    libc: [glibc]
 
   '@rollup/rollup-linux-arm-musleabihf@4.64.0':
     resolution:
@@ -528,7 +526,6 @@ packages:
       }
     cpu: [arm]
     os: [linux]
-    libc: [musl]
 
   '@rollup/rollup-linux-arm64-gnu@4.64.0':
     resolution:
@@ -537,7 +534,6 @@ packages:
       }
     cpu: [arm64]
     os: [linux]
-    libc: [glibc]
 
   '@rollup/rollup-linux-arm64-musl@4.64.0':
     resolution:
@@ -546,7 +542,6 @@ packages:
       }
     cpu: [arm64]
     os: [linux]
-    libc: [musl]
 
   '@rollup/rollup-linux-loong64-gnu@4.64.0':
     resolution:
@@ -555,7 +550,6 @@ packages:
       }
     cpu: [loong64]
     os: [linux]
-    libc: [glibc]
 
   '@rollup/rollup-linux-loong64-musl@4.64.0':
     resolution:
@@ -564,7 +558,6 @@ packages:
       }
     cpu: [loong64]
     os: [linux]
-    libc: [musl]
 
   '@rollup/rollup-linux-ppc64-gnu@4.64.0':
     resolution:
@@ -573,7 +566,6 @@ packages:
       }
     cpu: [ppc64]
     os: [linux]
-    libc: [glibc]
 
   '@rollup/rollup-linux-ppc64-musl@4.64.0':
     resolution:
@@ -582,7 +574,6 @@ packages:
       }
     cpu: [ppc64]
     os: [linux]
-    libc: [musl]
 
   '@rollup/rollup-linux-riscv64-gnu@4.64.0':
     resolution:
@@ -591,7 +582,6 @@ packages:
       }
     cpu: [riscv64]
     os: [linux]
-    libc: [glibc]
 
   '@rollup/rollup-linux-riscv64-musl@4.64.0':
     resolution:
@@ -600,7 +590,6 @@ packages:
       }
     cpu: [riscv64]
     os: [linux]
-    libc: [musl]
 
   '@rollup/rollup-linux-s390x-gnu@4.64.0':
     resolution:
@@ -609,7 +598,6 @@ packages:
       }
     cpu: [s390x]
     os: [linux]
-    libc: [glibc]
 
   '@rollup/rollup-linux-x64-gnu@4.64.0':
     resolution:
@@ -618,7 +606,6 @@ packages:
       }
     cpu: [x64]
     os: [linux]
-    libc: [glibc]
 
   '@rollup/rollup-linux-x64-musl@4.64.0':
     resolution:
@@ -627,7 +614,6 @@ packages:
       }
     cpu: [x64]
     os: [linux]
-    libc: [musl]
 
   '@rollup/rollup-openbsd-x64@4.64.0':
     resolution:

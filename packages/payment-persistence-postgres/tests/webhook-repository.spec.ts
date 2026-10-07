@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { WebhookEvent, WebhookEventStatus, PersistenceConflictError } from '@company/payment-core';
+import {
+  WebhookEvent,
+  WebhookEventStatus,
+  PersistenceConflictError,
+} from '@amirhossein-moloki/payment-core';
 import { PostgresWebhookEventRepository } from '../src/repositories/postgres-webhook-event-repository.js';
 import { createTestDatabase } from './test-utils.js';
 import { PgExecutor } from '../src/migrator.js';

@@ -3,7 +3,7 @@ import {
   GatewayCapability,
   Payment,
   PaymentStatus,
-} from '@company/payment-core';
+} from '@amirhossein-moloki/payment-core';
 import { describe, expect, it } from 'vitest';
 import { HttpTransport, ZibalGateway, validateZibalConfig } from '../src/index.js';
 

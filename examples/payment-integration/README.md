@@ -1,6 +1,6 @@
 # Payment Integration Reference Application
 
-This reference application demonstrates how to integrate `@company/payment-core`, `@company/payment-service`, and gateway provider packages (`@company/payment-mellat`, `@company/payment-zibal`, `@company/payment-zarinpal`, `@company/payment-saman`) into a backend service.
+This reference application demonstrates how to integrate `@amirhossein-moloki/payment-core`, `@company/payment-service`, and gateway provider packages (`@company/payment-mellat`, `@company/payment-zibal`, `@company/payment-zarinpal`, `@company/payment-saman`) into a backend service.
 
 ---
 

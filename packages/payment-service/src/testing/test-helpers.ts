@@ -1,4 +1,4 @@
-import { GatewayRegistry } from '@company/payment-core';
+import { GatewayRegistry } from '@amirhossein-moloki/payment-core';
 import {
   InMemoryPaymentRepository,
   InMemoryTransactionRepository,

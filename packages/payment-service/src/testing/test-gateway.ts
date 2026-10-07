@@ -33,7 +33,7 @@ import {
   ParsedWebhookResult,
   PaymentStatus,
   GatewayError,
-} from '@company/payment-core';
+} from '@amirhossein-moloki/payment-core';
 
 export type MockGatewayScenario =
   | 'success'

@@ -2,7 +2,7 @@ import {
   PersistenceError,
   PersistenceConflictError,
   PersistenceUnavailableError,
-} from '@company/payment-core';
+} from '@amirhossein-moloki/payment-core';
 
 export function mapPgError(error: unknown, contextMessage?: string): Error {
   if (error instanceof PersistenceError) {

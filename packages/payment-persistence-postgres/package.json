@@ -34,7 +34,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@company/payment-core": "workspace:*",
+    "@amirhossein-moloki/payment-core": "workspace:*",
     "pg": "^8.11.5"
   },
   "devDependencies": {

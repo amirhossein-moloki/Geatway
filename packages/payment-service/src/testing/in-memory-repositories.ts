@@ -11,7 +11,7 @@ import {
   WebhookEventRepository,
   RepositoryNotFoundError,
   ConcurrencyError,
-} from '@company/payment-core';
+} from '@amirhossein-moloki/payment-core';
 
 export class InMemoryPaymentRepository implements PaymentRepository {
   private readonly payments = new Map<string, Payment>();

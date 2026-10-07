@@ -1,4 +1,8 @@
-import { GatewayError, PaymentPlatformError, ValidationError } from '@company/payment-core';
+import {
+  GatewayError,
+  PaymentPlatformError,
+  ValidationError,
+} from '@amirhossein-moloki/payment-core';
 
 export const MELLAT_ERROR_MAPPING: Record<
   string,

@@ -46,7 +46,7 @@ Target Application (REST Controllers / DTOs / Business Rules / Database)
 @company/payment-service (Application Orchestration / Retry / Idempotency / Test Utilities)
         │
         ▼
-@company/payment-core (Domain Entities / Gateway Contracts / Registry / Standard Errors)
+@amirhossein-moloki/payment-core (Domain Entities / Gateway Contracts / Registry / Standard Errors)
         ▲                             ▲                            ▲                           ▲
         │                             │                            │                           │
 @company/payment-mellat     @company/payment-zibal      @company/payment-zarinpal   @company/payment-saman
@@ -61,7 +61,7 @@ Target Application
 PaymentApplicationService
         │
         ▼
-@company/payment-core contracts (PaymentRepository, TransactionRepository, etc.)
+@amirhossein-moloki/payment-core contracts (PaymentRepository, TransactionRepository, etc.)
         │
         ▼
 Persistence Adapter (@company/payment-persistence-postgres OR InMemory Repositories)
@@ -72,10 +72,10 @@ Database / Storage
 
 ### Layer Responsibilities
 
-- **`@company/payment-core`**: Defines domain entities (`Payment`, `Transaction`, `IdempotencyRecord`, `WebhookEvent`), contracts (`PaymentGateway`, capabilities), errors (`PaymentPlatformError` hierarchy), and the `GatewayRegistry`. Zero external payment dependencies.
-- **Provider Packages** (`@company/payment-mellat`, `@company/payment-zibal`, `@company/payment-zarinpal`, `@company/payment-saman`): Implement provider client, request/response mappers, error mappers, callback parsers, and capabilities. Depend **only** on `@company/payment-core`. Provider packages NEVER depend on each other.
-- **`@company/payment-service`**: Application orchestration service (`PaymentApplicationService` / `PaymentService`), idempotency protection (`IdempotencyOrchestrator`), retry & timeout policies, and testing utilities (`MockGateway`, `TestGateway`, `InMemory*` repositories). Depends on `@company/payment-core`.
-- **`@company/payment-persistence-postgres`**: PostgreSQL implementations of `PaymentRepository`, `TransactionRepository`, `IdempotencyRepository`, and `WebhookEventRepository`, along with schema migrations (`DatabaseMigrator`). Depends on `@company/payment-core` and `pg`.
+- **`@amirhossein-moloki/payment-core`**: Defines domain entities (`Payment`, `Transaction`, `IdempotencyRecord`, `WebhookEvent`), contracts (`PaymentGateway`, capabilities), errors (`PaymentPlatformError` hierarchy), and the `GatewayRegistry`. Zero external payment dependencies.
+- **Provider Packages** (`@company/payment-mellat`, `@company/payment-zibal`, `@company/payment-zarinpal`, `@company/payment-saman`): Implement provider client, request/response mappers, error mappers, callback parsers, and capabilities. Depend **only** on `@amirhossein-moloki/payment-core`. Provider packages NEVER depend on each other.
+- **`@company/payment-service`**: Application orchestration service (`PaymentApplicationService` / `PaymentService`), idempotency protection (`IdempotencyOrchestrator`), retry & timeout policies, and testing utilities (`MockGateway`, `TestGateway`, `InMemory*` repositories). Depends on `@amirhossein-moloki/payment-core`.
+- **`@company/payment-persistence-postgres`**: PostgreSQL implementations of `PaymentRepository`, `TransactionRepository`, `IdempotencyRepository`, and `WebhookEventRepository`, along with schema migrations (`DatabaseMigrator`). Depends on `@amirhossein-moloki/payment-core` and `pg`.
 - **Target Application**: Implements HTTP controllers, REST routes, DTOs, request validation, authentication, authorization, business rules, OpenAPI specs, and wiring.
 
 ---
@@ -84,7 +84,7 @@ Database / Storage
 
 - **No Circular Dependencies:** Core has no provider dependencies. Providers depend only on Core.
 - **No Gateway Dependencies Between Providers:** `@company/payment-mellat` never imports from `@company/payment-zibal`, etc.
-- **Public Imports Only:** Target applications must import from top-level package exports (e.g., `import { GatewayRegistry } from '@company/payment-core'`). Subpath imports are allowed **only** where explicitly exported in `package.json` (such as `import { MockGateway } from '@company/payment-service/testing'`). Never import internal source paths like `@company/payment-mellat/src/...`.
+- **Public Imports Only:** Target applications must import from top-level package exports (e.g., `import { GatewayRegistry } from '@amirhossein-moloki/payment-core'`). Subpath imports are allowed **only** where explicitly exported in `package.json` (such as `import { MockGateway } from '@company/payment-service/testing'`). Never import internal source paths like `@company/payment-mellat/src/...`.
 
 ---
 
@@ -92,15 +92,15 @@ Database / Storage
 
 Target applications should install only the packages required for their specific implementation:
 
-| Package Name                            |   Required   | Purpose / Responsibility                                                                         | Dependencies                  |
-| :-------------------------------------- | :----------: | :----------------------------------------------------------------------------------------------- | :---------------------------- |
-| `@company/payment-core`                 | **Required** | Core domain entities, capability contracts, error hierarchy, and GatewayRegistry.                | None                          |
-| `@company/payment-service`              |   Optional   | Higher-level application orchestration service, retry policies, idempotency, and test utilities. | `@company/payment-core`       |
-| `@company/payment-mellat`               |   Optional   | Mellat (Behpardazht) PSP gateway implementation.                                                 | `@company/payment-core`       |
-| `@company/payment-zibal`                |   Optional   | Zibal IPG gateway implementation.                                                                | `@company/payment-core`       |
-| `@company/payment-zarinpal`             |   Optional   | Zarinpal GraphQL v4 gateway implementation.                                                      | `@company/payment-core`       |
-| `@company/payment-saman`                |   Optional   | Saman (SEP) gateway implementation.                                                              | `@company/payment-core`       |
-| `@company/payment-persistence-postgres` |   Optional   | PostgreSQL persistence repositories and SQL migrations.                                          | `@company/payment-core`, `pg` |
+| Package Name                            |   Required   | Purpose / Responsibility                                                                         | Dependencies                             |
+| :-------------------------------------- | :----------: | :----------------------------------------------------------------------------------------------- | :--------------------------------------- |
+| `@amirhossein-moloki/payment-core`      | **Required** | Core domain entities, capability contracts, error hierarchy, and GatewayRegistry.                | None                                     |
+| `@company/payment-service`              |   Optional   | Higher-level application orchestration service, retry policies, idempotency, and test utilities. | `@amirhossein-moloki/payment-core`       |
+| `@company/payment-mellat`               |   Optional   | Mellat (Behpardazht) PSP gateway implementation.                                                 | `@amirhossein-moloki/payment-core`       |
+| `@company/payment-zibal`                |   Optional   | Zibal IPG gateway implementation.                                                                | `@amirhossein-moloki/payment-core`       |
+| `@company/payment-zarinpal`             |   Optional   | Zarinpal GraphQL v4 gateway implementation.                                                      | `@amirhossein-moloki/payment-core`       |
+| `@company/payment-saman`                |   Optional   | Saman (SEP) gateway implementation.                                                              | `@amirhossein-moloki/payment-core`       |
+| `@company/payment-persistence-postgres` |   Optional   | PostgreSQL persistence repositories and SQL migrations.                                          | `@amirhossein-moloki/payment-core`, `pg` |
 
 ---
 
@@ -123,7 +123,7 @@ Install required scoped packages via your package manager (e.g., `pnpm` or `npm`
 
 ```bash
 # Core orchestrator and selected provider packages
-pnpm add @company/payment-core @company/payment-service @company/payment-mellat @company/payment-zibal
+pnpm add @amirhossein-moloki/payment-core @company/payment-service @company/payment-mellat @company/payment-zibal
 
 # Optional: Add PostgreSQL persistence adapter if using PostgreSQL
 pnpm add @company/payment-persistence-postgres pg
@@ -213,7 +213,7 @@ Store credentials securely in environment variables.
 
 | Environment Variable    |  Required / Optional  | Consumer Package                        | Purpose                                              | Secret? | Validation Rule                                     |
 | :---------------------- | :-------------------: | :-------------------------------------- | :--------------------------------------------------- | :-----: | :-------------------------------------------------- |
-| `PAYMENT_ENV`           |       Optional        | `@company/payment-core`                 | Global environment (`production`, `sandbox`, `test`) |   No    | Must be `'production'`, `'sandbox'`, or `'test'`    |
+| `PAYMENT_ENV`           |       Optional        | `@amirhossein-moloki/payment-core`      | Global environment (`production`, `sandbox`, `test`) |   No    | Must be `'production'`, `'sandbox'`, or `'test'`    |
 | `MELLAT_TERMINAL_ID`    |  Required for Mellat  | `@company/payment-mellat`               | Numeric or string terminal ID                        |   No    | Non-empty                                           |
 | `MELLAT_USERNAME`       |  Required for Mellat  | `@company/payment-mellat`               | Gateway username                                     |   Yes   | Non-empty string                                    |
 | `MELLAT_PASSWORD`       |  Required for Mellat  | `@company/payment-mellat`               | Gateway password                                     |   Yes   | Non-empty string                                    |
@@ -234,7 +234,7 @@ Store credentials securely in environment variables.
 Providers are instantiated and explicitly registered into an instance of `GatewayRegistry`.
 
 ```ts
-import { GatewayRegistry, PaymentEnvironment } from '@company/payment-core';
+import { GatewayRegistry, PaymentEnvironment } from '@amirhossein-moloki/payment-core';
 import { MellatGateway } from '@company/payment-mellat';
 import { ZibalGateway } from '@company/payment-zibal';
 
@@ -548,7 +548,7 @@ When AI agents add or alter REST payment endpoints in a target project, they **M
 Target applications should use `MockGateway` from `@company/payment-service/testing`:
 
 ```ts
-import { GatewayRegistry } from '@company/payment-core';
+import { GatewayRegistry } from '@amirhossein-moloki/payment-core';
 import { MockGateway } from '@company/payment-service/testing';
 
 const registry = new GatewayRegistry();
@@ -667,9 +667,9 @@ Execute Validation (Typecheck, Lint, Tests)
 
 1. **Rule 1 — Never Invent APIs:** Use only classes, interfaces, and methods verified in public package exports.
 2. **Rule 2 — Inspect Before Coding:** Always inspect target application files and exports before making changes.
-3. **Rule 3 — Respect Layer Isolation:** Do not add provider-specific logic into `@company/payment-core`.
+3. **Rule 3 — Respect Layer Isolation:** Do not add provider-specific logic into `@amirhossein-moloki/payment-core`.
 4. **Rule 4 — Verify Capability:** Check provider capability before invoking `inquiry`, `refund`, or `reverse`.
-5. **Rule 5 — Use Public Exports:** Import only from top-level package entrypoints (`@company/payment-core`).
+5. **Rule 5 — Use Public Exports:** Import only from top-level package entrypoints (`@amirhossein-moloki/payment-core`).
 6. **Rule 6 — Preserve Target Architecture:** Match the target project's existing coding standards and framework patterns.
 7. **Rule 7 — Callback Is Not Automatically Success:** Always execute `verifyPayment` after receiving a callback.
 8. **Rule 8 — Never Expose Secrets:** Keep credentials in environment variables; never commit secrets or leak them in OpenAPI specs.

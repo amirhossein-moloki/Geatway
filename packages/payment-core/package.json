@@ -1,5 +1,5 @@
 {
-  "name": "@company/payment-core",
+  "name": "@amirhossein-moloki/payment-core",
   "version": "1.0.0",
   "description": "Provider-agnostic core payment orchestration domain and contracts",
   "main": "./dist/index.js",

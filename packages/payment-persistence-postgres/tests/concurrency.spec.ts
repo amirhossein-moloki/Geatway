@@ -5,7 +5,7 @@ import {
   ConcurrencyError,
   IdempotencyRecord,
   IdempotencyStatus,
-} from '@company/payment-core';
+} from '@amirhossein-moloki/payment-core';
 import { PostgresPaymentRepository } from '../src/repositories/postgres-payment-repository.js';
 import { PostgresIdempotencyRepository } from '../src/repositories/postgres-idempotency-repository.js';
 import { createTestDatabase } from './test-utils.js';

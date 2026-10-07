@@ -33,7 +33,7 @@ All packages belong to the `@company` scope and can be independently versioned a
 
 | Package Name                            | Purpose                                                                                   |
 | :-------------------------------------- | :---------------------------------------------------------------------------------------- |
-| `@company/payment-core`                 | Core domain entities, gateway contracts, capability interfaces, and GatewayRegistry.      |
+| `@amirhossein-moloki/payment-core`      | Core domain entities, gateway contracts, capability interfaces, and GatewayRegistry.      |
 | `@company/payment-service`              | Application integration service, retry/timeout policies, idempotency, and test utilities. |
 | `@company/payment-persistence-postgres` | PostgreSQL persistence repositories and schema migrations.                                |
 | `@company/payment-mellat`               | Mellat (Behpardazht) PSP gateway integration.                                             |
@@ -56,7 +56,7 @@ Consumers configure their project's `.npmrc` to authenticate with GitHub Package
 
 ```bash
 # Install core and required provider packages only
-npm install @company/payment-core @company/payment-service @company/payment-mellat
+npm install @amirhossein-moloki/payment-core @company/payment-service @company/payment-mellat
 ```
 
 ---

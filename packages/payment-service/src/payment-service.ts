@@ -37,7 +37,7 @@ import {
   RepositoryNotFoundError,
   UnsupportedCapabilityError,
   InvalidPaymentStateError,
-} from '@company/payment-core';
+} from '@amirhossein-moloki/payment-core';
 
 import { PaymentServiceConfig, Clock, SystemClock } from './configuration.js';
 import { PaymentLogger, NoopLogger } from './observability/logger.js';

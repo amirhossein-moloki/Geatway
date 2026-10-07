@@ -13,7 +13,7 @@ import {
   PaymentGateway,
   VerifyPaymentRequest,
   VerifyPaymentResponse,
-} from '@company/payment-core';
+} from '@amirhossein-moloki/payment-core';
 import { HttpTransport, ZibalClient } from '../client/zibal-client.js';
 import { ZibalConfig, validateZibalConfig } from '../config/zibal-config.interface.js';
 import { ZibalErrorMapper } from '../errors/zibal-error-mapper.js';

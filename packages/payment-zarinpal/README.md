@@ -1,6 +1,6 @@
 # @company/payment-zarinpal
 
-درگاه پرداخت زرین‌پال (GraphQL) برای اکوسیستم `@company/payment-core`.
+درگاه پرداخت زرین‌پال (GraphQL) برای اکوسیستم `@amirhossein-moloki/payment-core`.
 
 ## Source of Truth
 
@@ -9,13 +9,13 @@
 ## نصب
 
 ```bash
-pnpm add @company/payment-zarinpal @company/payment-core
+pnpm add @company/payment-zarinpal @amirhossein-moloki/payment-core
 ```
 
 ## نحوه استفاده
 
 ```ts
-import { GatewayRegistry, Payment } from '@company/payment-core';
+import { GatewayRegistry, Payment } from '@amirhossein-moloki/payment-core';
 import { ZarinpalGateway } from '@company/payment-zarinpal';
 
 const registry = new GatewayRegistry();
