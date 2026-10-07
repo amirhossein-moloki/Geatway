@@ -11,9 +11,9 @@ The ecosystem follows a single source of truth distribution model:
 ```text
 GitHub Private Repository (Source of Truth)
         │
-        │ Validated source code + Git Release Tag (e.g. v1.0.0)
+        │ Package Path Change or Specific Package Tag (e.g. payment-core-v1.0.1)
         ▼
-   CI/CD Pipeline (GitHub Actions)
+   CI/CD Pipeline (Independent GitHub Actions Workflows)
         │
         └──────────────► GitHub Packages (https://npm.pkg.github.com)
 ```
@@ -24,22 +24,23 @@ GitHub Private Repository (Source of Truth)
 2. **GitHub Packages Distribution:** Validated release builds are published exclusively to **GitHub Packages**.
 3. **No Code Forks:** The published package build artifact (tarball) is distributed without maintaining separate source trees or provider-specific forks.
 4. **Independent Package Granularity:** Consumers install only the scoped packages they are entitled or required to use (e.g. `@amirhossein-moloki/payment-core`, `@company/payment-service`, `@company/payment-mellat`).
+5. **Independent Package Publishing:** Each package is published completely independently. Changes or releases for one package do not trigger publish jobs for other packages.
 
 ---
 
 ## 2. Package Scope & Distribution Architecture
 
-All packages belong to the `@company` scope and are configured as private (`"publishConfig": { "access": "restricted" }`):
+Packages belong to either `@amirhossein-moloki` or `@company` scopes and are configured as private (`"publishConfig": { "access": "restricted", "registry": "https://npm.pkg.github.com" }`):
 
-| Package Name                            | Distributable Target | Description                                                                                             |
-| :-------------------------------------- | :------------------- | :------------------------------------------------------------------------------------------------------ |
-| `@amirhossein-moloki/payment-core`      | Standard Library     | Provider-agnostic domain entities, gateway contracts, registry, and standard errors.                    |
-| `@company/payment-service`              | Standard Library     | Higher-level application service, retry/timeout policies, idempotency orchestrator, and test utilities. |
-| `@company/payment-persistence-postgres` | Adapter              | PostgreSQL persistence repositories and SQL schema migrations.                                          |
-| `@company/payment-mellat`               | PSP Provider         | Mellat (Behpardazht) payment gateway provider implementation.                                           |
-| `@company/payment-zibal`                | IPG Provider         | Zibal payment gateway provider implementation.                                                          |
-| `@company/payment-zarinpal`             | IPG Provider         | Zarinpal GraphQL v4 payment gateway provider implementation.                                            |
-| `@company/payment-saman`                | PSP Provider         | Saman (SEP) payment gateway provider implementation.                                                    |
+| Package Name                            | Directory                               | Distributable Target | Description                                                                                             |
+| :-------------------------------------- | :-------------------------------------- | :------------------- | :------------------------------------------------------------------------------------------------------ |
+| `@amirhossein-moloki/payment-core`      | `packages/payment-core`                 | Standard Library     | Provider-agnostic domain entities, gateway contracts, registry, and standard errors.                    |
+| `@company/payment-service`              | `packages/payment-service`              | Standard Library     | Higher-level application service, retry/timeout policies, idempotency orchestrator, and test utilities. |
+| `@company/payment-persistence-postgres` | `packages/payment-persistence-postgres` | Adapter              | PostgreSQL persistence repositories and SQL schema migrations.                                          |
+| `@company/payment-mellat`               | `packages/payment-mellat`               | PSP Provider         | Mellat (Behpardazht) payment gateway provider implementation.                                           |
+| `@company/payment-zibal`                | `packages/payment-zibal`                | IPG Provider         | Zibal payment gateway provider implementation.                                                          |
+| `@company/payment-zarinpal`             | `packages/payment-zarinpal`             | IPG Provider         | Zarinpal GraphQL v4 payment gateway provider implementation.                                            |
+| `@company/payment-saman`                | `packages/payment-saman`                | PSP Provider         | Saman (SEP) payment gateway provider implementation.                                                    |
 
 ---
 
@@ -54,6 +55,7 @@ A sample template is provided at root `.npmrc.example`:
 ```ini
 # .npmrc.example - GitHub Packages Registry Configuration Template
 
+@amirhossein-moloki:registry=https://npm.pkg.github.com
 @company:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
 ```
@@ -78,30 +80,44 @@ Published packages **NEVER** contain monorepo relative path dependencies (such a
 
 ---
 
-## 5. Automated CI/CD Release Pipeline
+## 5. Automated Independent CI/CD Release Workflows
 
-Package validation and dual-registry publishing are automated via GitHub Actions workflows:
+Package validation and publishing are automated via dedicated GitHub Actions workflows in `.github/workflows/`:
 
-### CI Workflow (`.github/workflows/ci.yml`)
+### 1. CI Workflow (`.github/workflows/ci.yml`)
 
 - **Triggers:** Pull Requests and pushes to `main`.
 - **Actions:** Matrix testing (Node 18.x & 20.x), code format checks (`pnpm format:check`), ESLint (`pnpm lint`), TypeScript build (`pnpm build`), unit test suites (`pnpm test`), and external consumer package installation simulation (`python3 scripts/validate-consumer-packages.py`).
 - **Safety:** Pull Requests NEVER publish packages.
 
-### Release Workflow (`.github/workflows/release.yml`)
+### 2. Dedicated Package Publishing Workflows
 
-- **Triggers:** Git tag push matching `v*` (e.g. `v1.0.0`) or manual `workflow_dispatch`.
-- **Publishing Steps:**
-  1. Full validation suite execution.
-  2. Tarball verification & workspace protocol resolution audit.
-  3. Publish to **GitHub Packages** using `GITHUB_TOKEN`.
-  4. Post-publish cleanup of authentication tokens.
+Each package has a dedicated publish workflow:
+
+- `.github/workflows/publish-payment-core.yml`
+- `.github/workflows/publish-payment-service.yml`
+- `.github/workflows/publish-payment-persistence-postgres.yml`
+- `.github/workflows/publish-payment-mellat.yml`
+- `.github/workflows/publish-payment-zibal.yml`
+- `.github/workflows/publish-payment-zarinpal.yml`
+- `.github/workflows/publish-payment-saman.yml`
+
+#### Workflow Triggering Principles:
+
+1. **Path-Based Trigger (`paths`)**: Triggers on `push` to `main` when files under `packages/<package-dir>/**` are modified.
+2. **Package-Specific Tags**: Triggers when package-specific tags are pushed (e.g., `payment-core-v1.0.1`, `@amirhossein-moloki/payment-core@1.0.1`, `packages/payment-core/v1.0.1`).
+3. **Manual Trigger (`workflow_dispatch`)**: Allows manually triggering package releases.
+
+#### Idempotency & Version Checking:
+
+Before publishing, each workflow checks if the version in `package.json` is already published on GitHub Packages using `npm view <package-name>@<version> version --registry=https://npm.pkg.github.com`.
+If the version already exists, the publish step is safely skipped (exit 0) to prevent duplicate publishing errors or breaking releases.
 
 ---
 
 ## 6. Secrets Management & Security
 
-- **`GITHUB_TOKEN`**: Standard GitHub Actions secret with `packages: write` permissions for GitHub Packages.
+- **`GITHUB_TOKEN`**: Standard GitHub Actions secret with `packages: write` permissions for GitHub Packages (`NODE_AUTH_TOKEN: ${{ github.token }}`).
 - **Log Sanitization:** Publishing scripts do not print complete environment variables or authentication tokens.
 - **Tarball Audit:** Pre-pack audits verify that sensitive files (`.env`, `.log`, private keys, internal uncompiled `src/`, or test fixtures) are excluded from published package artifacts.
 
@@ -115,11 +131,11 @@ GitHub Packages enforces package immutability; published versions cannot be sile
 
 1. **Failed Publish Step:**
    - If publishing fails on GitHub Packages (e.g. network timeout or missing permissions):
-   - Re-run the release workflow using `workflow_dispatch` or fix the condition and push a patch release tag (e.g., `v1.0.1`).
+   - Re-run the package workflow using `workflow_dispatch` or bump the version and push a patch release tag (e.g., `payment-core-v1.0.1`).
 
 2. **Defective Release Version:**
    - If a published package contains a critical defect or security vulnerability:
-   - Immediately publish a corrected patch version (e.g., `1.0.1`).
+   - Immediately publish a corrected patch version for that specific package (e.g., `1.0.1`).
 
 ---
 
