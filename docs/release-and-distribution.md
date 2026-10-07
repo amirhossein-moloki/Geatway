@@ -93,6 +93,7 @@ Package validation and publishing are automated via dedicated GitHub Actions wor
 ### 2. Dedicated Package Publishing Workflows
 
 Each package has a dedicated publish workflow:
+
 - `.github/workflows/publish-payment-core.yml`
 - `.github/workflows/publish-payment-service.yml`
 - `.github/workflows/publish-payment-persistence-postgres.yml`
@@ -102,11 +103,13 @@ Each package has a dedicated publish workflow:
 - `.github/workflows/publish-payment-saman.yml`
 
 #### Workflow Triggering Principles:
+
 1. **Path-Based Trigger (`paths`)**: Triggers on `push` to `main` when files under `packages/<package-dir>/**` are modified.
 2. **Package-Specific Tags**: Triggers when package-specific tags are pushed (e.g., `payment-core-v1.0.1`, `@amirhossein-moloki/payment-core@1.0.1`, `packages/payment-core/v1.0.1`).
 3. **Manual Trigger (`workflow_dispatch`)**: Allows manually triggering package releases.
 
 #### Idempotency & Version Checking:
+
 Before publishing, each workflow checks if the version in `package.json` is already published on GitHub Packages using `npm view <package-name>@<version> version --registry=https://npm.pkg.github.com`.
 If the version already exists, the publish step is safely skipped (exit 0) to prevent duplicate publishing errors or breaking releases.
 
