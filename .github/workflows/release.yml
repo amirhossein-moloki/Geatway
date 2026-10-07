@@ -30,7 +30,7 @@ jobs:
           version: 9
 
       - name: Setup Node.js 20
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           registry-url: https://npm.pkg.github.com
@@ -58,15 +58,21 @@ jobs:
       - name: Setup release .npmrc
         run: |
           echo "@amirhossein-moloki:registry=https://npm.pkg.github.com" > .npmrc
+          echo "@company:registry=https://npm.pkg.github.com" >> .npmrc
           echo "//npm.pkg.github.com/:_authToken=\${NODE_AUTH_TOKEN}" >> .npmrc
+          cp .npmrc packages/payment-core/.npmrc
+          cp .npmrc ~/.npmrc
 
       - name: Publish to GitHub Packages
         working-directory: packages/payment-core
-        run: npm publish
+        run: npm publish --loglevel verbose
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN || secrets.GITHUB_TOKEN }}
         continue-on-error: false
 
       - name: Cleanup release .npmrc
         if: always()
-        run: rm -f .npmrc
+        run: |
+          rm -f .npmrc
+          rm -f packages/payment-core/.npmrc
+          rm -f ~/.npmrc
