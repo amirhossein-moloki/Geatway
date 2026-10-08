@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { SmsCapability, SmsMessage, SmsStatus, SmsValidationError } from '@amirhossein-moloki/sms-core';
+import {
+  SmsCapability,
+  SmsMessage,
+  SmsStatus,
+  SmsValidationError,
+} from '@amirhossein-moloki/sms-core';
 import { SmsirProvider } from '../src/provider/smsir-provider.js';
 import { HttpTransport } from '../src/client/smsir-client.js';
 
@@ -104,9 +109,7 @@ describe('SmsirProvider Unit Tests', () => {
     const res = await provider.sendPattern({
       mobile: '09123456789',
       templateId: 100000,
-      parameters: [
-        { name: 'CODE', value: '123456' },
-      ],
+      parameters: [{ name: 'CODE', value: '123456' }],
     });
 
     expect(res.success).toBe(true);

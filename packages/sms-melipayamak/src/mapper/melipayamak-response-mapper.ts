@@ -13,7 +13,9 @@ import {
 import { MelipayamakApiResponse, MelipayamakMessageItem } from '../types/melipayamak-api.types.js';
 
 export class MelipayamakResponseMapper {
-  public static mapSendResponse(response: MelipayamakApiResponse<string | number>): SendSmsResponse {
+  public static mapSendResponse(
+    response: MelipayamakApiResponse<string | number>,
+  ): SendSmsResponse {
     const isSuccess = response.RetStatus === 1 || Number(response.Value) > 0;
     const recId = isSuccess ? String(response.Value) : undefined;
 
@@ -112,7 +114,10 @@ export class MelipayamakResponseMapper {
           const parsed = JSON.parse(response.Value);
           if (Array.isArray(parsed)) {
             lines = parsed.map((item: unknown) => ({
-              lineNumber: typeof item === 'string' ? item : String((item as { Number?: string }).Number || item),
+              lineNumber:
+                typeof item === 'string'
+                  ? item
+                  : String((item as { Number?: string }).Number || item),
             }));
           } else {
             lines = [{ lineNumber: response.Value }];

@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { SmsCapability, SmsMessage, SmsStatus, SmsValidationError } from '@amirhossein-moloki/sms-core';
+import {
+  SmsCapability,
+  SmsMessage,
+  SmsStatus,
+  SmsValidationError,
+} from '@amirhossein-moloki/sms-core';
 import { MelipayamakProvider } from '../src/provider/melipayamak-provider.js';
 import { HttpTransport } from '../src/client/melipayamak-client.js';
 
@@ -11,8 +16,12 @@ describe('MelipayamakProvider Unit Tests', () => {
   };
 
   it('throws validation error if username or password is missing', () => {
-    expect(() => new MelipayamakProvider({ username: '', password: 'p' })).toThrow(SmsValidationError);
-    expect(() => new MelipayamakProvider({ username: 'u', password: '' })).toThrow(SmsValidationError);
+    expect(() => new MelipayamakProvider({ username: '', password: 'p' })).toThrow(
+      SmsValidationError,
+    );
+    expect(() => new MelipayamakProvider({ username: 'u', password: '' })).toThrow(
+      SmsValidationError,
+    );
   });
 
   it('correctly initializes capabilities and metadata', () => {

@@ -23,7 +23,10 @@ import {
   SmsValidationError,
 } from '@amirhossein-moloki/sms-core';
 import { HttpTransport, MelipayamakClient } from '../client/melipayamak-client.js';
-import { MelipayamakConfig, validateMelipayamakConfig } from '../config/melipayamak-config.interface.js';
+import {
+  MelipayamakConfig,
+  validateMelipayamakConfig,
+} from '../config/melipayamak-config.interface.js';
 import { MelipayamakErrorMapper } from '../errors/melipayamak-error-mapper.js';
 import { MelipayamakResponseMapper } from '../mapper/melipayamak-response-mapper.js';
 
@@ -73,11 +76,15 @@ export class MelipayamakProvider
     const isFlash = Boolean(options?.isFlash);
 
     if (!to) {
-      throw new SmsValidationError('Recipient mobile number is required for Melipayamak single SMS');
+      throw new SmsValidationError(
+        'Recipient mobile number is required for Melipayamak single SMS',
+      );
     }
 
     if (!from) {
-      throw new SmsValidationError('Sender line number ("from") is required for Melipayamak single SMS');
+      throw new SmsValidationError(
+        'Sender line number ("from") is required for Melipayamak single SMS',
+      );
     }
 
     try {
@@ -196,9 +203,7 @@ export class MelipayamakProvider
     }
   }
 
-  public async receiveMessages(
-    request?: ReceiveMessagesRequest,
-  ): Promise<ReceiveMessagesResponse> {
+  public async receiveMessages(request?: ReceiveMessagesRequest): Promise<ReceiveMessagesResponse> {
     const location = (request?.options?.location as number | undefined) ?? 1;
     const index = request?.pageNumber ?? 0;
     const count = request?.pageSize ?? request?.count ?? 100;

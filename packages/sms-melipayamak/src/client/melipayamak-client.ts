@@ -20,7 +20,10 @@ export class MelipayamakClient {
   private readonly transport: HttpTransport;
 
   constructor(config: MelipayamakConfig, transport?: HttpTransport) {
-    this.baseUrl = (config.baseUrl || 'https://rest.payamak-panel.com/api/SendSMS').replace(/\/+$/, '');
+    this.baseUrl = (config.baseUrl || 'https://rest.payamak-panel.com/api/SendSMS').replace(
+      /\/+$/,
+      '',
+    );
     this.username = config.username;
     this.password = config.password;
     this.transport = transport || this.defaultFetchTransport;
@@ -98,7 +101,9 @@ export class MelipayamakClient {
     });
   }
 
-  public async isDelivered(recId: string | number): Promise<MelipayamakApiResponse<string | number>> {
+  public async isDelivered(
+    recId: string | number,
+  ): Promise<MelipayamakApiResponse<string | number>> {
     return this.post<string | number>('GetDeliveries2', {
       recId: Number(recId),
     });

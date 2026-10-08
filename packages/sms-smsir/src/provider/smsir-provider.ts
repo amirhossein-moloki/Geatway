@@ -332,9 +332,7 @@ export class SmsirProvider
     }
   }
 
-  public async receiveMessages(
-    request?: ReceiveMessagesRequest,
-  ): Promise<ReceiveMessagesResponse> {
+  public async receiveMessages(request?: ReceiveMessagesRequest): Promise<ReceiveMessagesResponse> {
     const count = request?.count || request?.pageSize || 100;
 
     try {

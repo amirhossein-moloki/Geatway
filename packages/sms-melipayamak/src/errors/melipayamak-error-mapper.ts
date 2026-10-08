@@ -1,4 +1,8 @@
-import { SmsPlatformError, SmsProviderError, SmsValidationError } from '@amirhossein-moloki/sms-core';
+import {
+  SmsPlatformError,
+  SmsProviderError,
+  SmsValidationError,
+} from '@amirhossein-moloki/sms-core';
 
 export class MelipayamakErrorMapper {
   public static mapCodeToError(
@@ -11,18 +15,10 @@ export class MelipayamakErrorMapper {
     switch (numCode) {
       case 2:
       case 35:
-        return new SmsProviderError(
-          `Authentication failed: code ${numCode}`,
-          providerId,
-          numCode,
-        );
+        return new SmsProviderError(`Authentication failed: code ${numCode}`, providerId, numCode);
       case 3:
       case 14:
-        return new SmsProviderError(
-          `Insufficient credit: code ${numCode}`,
-          providerId,
-          numCode,
-        );
+        return new SmsProviderError(`Insufficient credit: code ${numCode}`, providerId, numCode);
       case 4:
       case 5:
       case 6:
@@ -33,11 +29,7 @@ export class MelipayamakErrorMapper {
       case 12:
         return new SmsValidationError(`Invalid parameters: code ${numCode}`);
       default:
-        return new SmsProviderError(
-          `${fallbackMessage} (code: ${code})`,
-          providerId,
-          code,
-        );
+        return new SmsProviderError(`${fallbackMessage} (code: ${code})`, providerId, code);
     }
   }
 }

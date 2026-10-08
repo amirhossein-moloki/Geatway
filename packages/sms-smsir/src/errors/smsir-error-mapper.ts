@@ -1,4 +1,8 @@
-import { SmsPlatformError, SmsProviderError, SmsValidationError } from '@amirhossein-moloki/sms-core';
+import {
+  SmsPlatformError,
+  SmsProviderError,
+  SmsValidationError,
+} from '@amirhossein-moloki/sms-core';
 
 export class SmsirErrorMapper {
   public static mapStatusToError(

@@ -104,7 +104,9 @@ export class SmsirClient {
     });
   }
 
-  public async getMessageReport(messageId: string | number): Promise<SmsirApiResponse<SmsirDeliveryDataItem>> {
+  public async getMessageReport(
+    messageId: string | number,
+  ): Promise<SmsirApiResponse<SmsirDeliveryDataItem>> {
     return this.request<SmsirDeliveryDataItem>(`v1/send/${messageId}`, 'GET');
   }
 
@@ -137,7 +139,9 @@ export class SmsirClient {
     return this.request<SmsirLineData[]>('v1/line', 'GET');
   }
 
-  public async getLatestReceived(count: number = 100): Promise<SmsirApiResponse<SmsirReceiveMessageItem[]>> {
+  public async getLatestReceived(
+    count: number = 100,
+  ): Promise<SmsirApiResponse<SmsirReceiveMessageItem[]>> {
     return this.request<SmsirReceiveMessageItem[]>(`v1/receive/latest?count=${count}`, 'GET');
   }
 

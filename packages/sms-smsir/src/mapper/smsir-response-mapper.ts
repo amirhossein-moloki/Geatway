@@ -24,9 +24,7 @@ import {
 } from '../types/smsir-api.types.js';
 
 export class SmsirResponseMapper {
-  public static mapSendResponse(
-    response: SmsirApiResponse<SmsirSendBulkData>,
-  ): SendSmsResponse {
+  public static mapSendResponse(response: SmsirApiResponse<SmsirSendBulkData>): SendSmsResponse {
     const isSuccess = response.status === 1;
     const msgId = response.data?.messageIds?.[0];
 
@@ -77,7 +75,8 @@ export class SmsirResponseMapper {
 
     return {
       success: isSuccess,
-      messageId: response.data?.messageId !== undefined ? String(response.data.messageId) : undefined,
+      messageId:
+        response.data?.messageId !== undefined ? String(response.data.messageId) : undefined,
       cost: response.data?.cost,
       status: isSuccess ? SmsStatus.SENT : SmsStatus.FAILED,
       rawResponse: response,
