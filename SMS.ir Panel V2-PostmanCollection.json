@@ -170,7 +170,7 @@
               },
               {
                 "key": "x-api-key",
-                "value": "9z7bCq8cEx1YtgV6KmyZ1Hbx9CfSwdF47NDweJGHg7wIw3EE4UPjUSsnOmFZ2eXm",
+                "value": "[YOURAPIKEY]",
                 "type": "text"
               }
             ],
