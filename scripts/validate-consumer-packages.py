@@ -25,7 +25,10 @@ def main():
         "payment-zarinpal",
         "payment-saman",
         "payment-service",
-        "payment-persistence-postgres"
+        "payment-persistence-postgres",
+        "sms-core",
+        "sms-melipayamak",
+        "sms-smsir"
     ]
 
     for p in pkgs:
@@ -107,7 +110,10 @@ def main():
             "@amirhossein-moloki/payment-core": tarballs["@amirhossein-moloki/payment-core"],
             "@amirhossein-moloki/payment-mellat": tarballs["@amirhossein-moloki/payment-mellat"],
             "@amirhossein-moloki/payment-zibal": tarballs["@amirhossein-moloki/payment-zibal"],
-            "@amirhossein-moloki/payment-service": tarballs["@amirhossein-moloki/payment-service"]
+            "@amirhossein-moloki/payment-service": tarballs["@amirhossein-moloki/payment-service"],
+            "@amirhossein-moloki/sms-core": tarballs["@amirhossein-moloki/sms-core"],
+            "@amirhossein-moloki/sms-melipayamak": tarballs["@amirhossein-moloki/sms-melipayamak"],
+            "@amirhossein-moloki/sms-smsir": tarballs["@amirhossein-moloki/sms-smsir"]
         },
         "devDependencies": {
             "typescript": "^5.4.5",
@@ -134,6 +140,9 @@ import { GatewayRegistry } from '@amirhossein-moloki/payment-core';
 import { MellatGateway } from '@amirhossein-moloki/payment-mellat';
 import { ZibalGateway } from '@amirhossein-moloki/payment-zibal';
 import { PaymentApplicationService, InMemoryPaymentRepository, InMemoryTransactionRepository } from '@amirhossein-moloki/payment-service';
+import { SmsProviderRegistry, SmsService } from '@amirhossein-moloki/sms-core';
+import { MelipayamakProvider } from '@amirhossein-moloki/sms-melipayamak';
+import { SmsirProvider } from '@amirhossein-moloki/sms-smsir';
 
 const registry = new GatewayRegistry();
 const mellat = new MellatGateway({ terminalId: '123', userName: 'u', userPassword: 'p', callbackUrl: 'https://example.com/mellat' });
@@ -147,7 +156,17 @@ const transactionRepository = new InMemoryTransactionRepository();
 
 const service = new PaymentApplicationService({ registry, paymentRepository, transactionRepository });
 
+const smsRegistry = new SmsProviderRegistry();
+const melipayamak = new MelipayamakProvider({ username: 'u', password: 'p' });
+const smsir = new SmsirProvider({ apiKey: 'k' });
+
+smsRegistry.register(melipayamak);
+smsRegistry.register(smsir);
+
+const smsService = new SmsService(smsRegistry);
+
 console.log("Registered Gateways:", registry.listGateways().map(g => g.id));
+console.log("Registered SMS Providers:", smsRegistry.listProviders().map(p => p.id));
 console.log("CONSUMER_PACKAGE_VERIFICATION_SUCCESS");
 """
     with open(os.path.join(test_dir, "index.ts"), "w") as f:
