@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
+    "types": ["node"],
+    "declaration": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": ".",
+    "paths": {
+      "@amirhossein-moloki/payment-core": ["../../packages/payment-core/dist/index.d.ts"],
+      "@amirhossein-moloki/payment-service": [
+        "../../packages/payment-service/dist/payment-service.d.ts"
+      ],
+      "@amirhossein-moloki/payment-service/testing": [
+        "../../packages/payment-service/dist/testing/index.d.ts"
+      ],
+      "@amirhossein-moloki/payment-mellat": ["../../packages/payment-mellat/dist/index.d.ts"],
+      "@amirhossein-moloki/payment-zibal": ["../../packages/payment-zibal/dist/index.d.ts"],
+      "@amirhossein-moloki/payment-zarinpal": ["../../packages/payment-zarinpal/dist/index.d.ts"],
+      "@amirhossein-moloki/payment-saman": ["../../packages/payment-saman/dist/index.d.ts"],
+      "@amirhossein-moloki/payment-persistence-postgres": [
+        "../../packages/payment-persistence-postgres/dist/index.d.ts"
+      ]
+    }
+  },
+  "include": ["src/**/*"]
+}
