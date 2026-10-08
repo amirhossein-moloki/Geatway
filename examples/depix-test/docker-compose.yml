@@ -8,8 +8,10 @@ services:
     environment:
       - PORT=3000
       - NODE_ENV=development
-      - USE_MOCK_GATEWAYS=true
+      - USE_MOCK_GATEWAYS=false
       - PAYMENT_ENV=sandbox
+      - ZIBAL_MERCHANT=zibal
+      - ZIBAL_CALLBACK_URL=http://localhost:3000/api/callbacks/zibal
 
   test:
     build:
@@ -18,8 +20,9 @@ services:
     command: pnpm test
     environment:
       - NODE_ENV=test
-      - USE_MOCK_GATEWAYS=true
-      - PAYMENT_ENV=test
+      - USE_MOCK_GATEWAYS=false
+      - PAYMENT_ENV=sandbox
+      - ZIBAL_MERCHANT=zibal
 
   cli-test:
     build:
@@ -28,5 +31,7 @@ services:
     command: node dist/cli-test.js
     environment:
       - NODE_ENV=development
-      - USE_MOCK_GATEWAYS=true
+      - USE_MOCK_GATEWAYS=false
       - PAYMENT_ENV=sandbox
+      - ZIBAL_MERCHANT=zibal
+      - ZIBAL_CALLBACK_URL=http://localhost:3000/api/callbacks/zibal

@@ -25,13 +25,9 @@ describe('Depix Test Application Integration Suite', () => {
     await new Promise<void>((resolve) => server.close(() => resolve()));
   });
 
-  it('registers all expected payment gateways', () => {
+  it('registers Zibal payment gateway', () => {
     const gateways = app.getRegisteredGateways();
-    expect(gateways).toContain('mellat');
-    expect(gateways).toContain('zibal');
-    expect(gateways).toContain('zarinpal');
-    expect(gateways).toContain('saman');
-    expect(gateways).toContain('mock');
+    expect(gateways).toEqual(['zibal']);
   });
 
   it('returns status info on GET /', async () => {
@@ -45,7 +41,7 @@ describe('Depix Test Application Integration Suite', () => {
     };
     expect(body.name).toBe('Depix Payment Test Environment');
     expect(body.status).toBe('running');
-    expect(body.registeredGateways.length).toBeGreaterThanOrEqual(4);
+    expect(body.registeredGateways).toEqual(['zibal']);
   });
 
   it('returns health status on GET /health', async () => {
@@ -54,11 +50,11 @@ describe('Depix Test Application Integration Suite', () => {
 
     const body = (await res.json()) as { status: string; gateways: string[] };
     expect(body.status).toBe('ok');
-    expect(body.gateways.length).toBeGreaterThan(0);
+    expect(body.gateways).toEqual(['zibal']);
   });
 
-  it('executes end-to-end payment creation and verification via HTTP API for each gateway', async () => {
-    const gateways = ['mellat', 'zibal', 'zarinpal', 'saman', 'mock'];
+  it('executes end-to-end payment creation and verification via HTTP API for Zibal', async () => {
+    const gateways = ['zibal'];
 
     for (const gateway of gateways) {
       // 1. Create Payment
@@ -97,7 +93,7 @@ describe('Depix Test Application Integration Suite', () => {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ Status: '10', Authority: 'test_auth' }),
+          body: JSON.stringify({ trackId: '123456', success: '1', status: '2' }),
         },
       );
       expect(callbackRes.status).toBe(200);
