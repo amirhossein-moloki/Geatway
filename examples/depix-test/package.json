@@ -1,0 +1,25 @@
+{
+  "name": "depix-test",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@amirhossein-moloki/payment-core": "workspace:*",
+    "@amirhossein-moloki/payment-mellat": "workspace:*",
+    "@amirhossein-moloki/payment-persistence-postgres": "workspace:*",
+    "@amirhossein-moloki/payment-saman": "workspace:*",
+    "@amirhossein-moloki/payment-service": "workspace:*",
+    "@amirhossein-moloki/payment-zarinpal": "workspace:*",
+    "@amirhossein-moloki/payment-zibal": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  }
+}

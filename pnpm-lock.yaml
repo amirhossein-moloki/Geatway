@@ -41,6 +41,40 @@ importers:
         specifier: workspace:*
         version: link:../../packages/payment-mellat
 
+  examples/depix-test:
+    dependencies:
+      '@amirhossein-moloki/payment-core':
+        specifier: workspace:*
+        version: link:../../packages/payment-core
+      '@amirhossein-moloki/payment-mellat':
+        specifier: workspace:*
+        version: link:../../packages/payment-mellat
+      '@amirhossein-moloki/payment-persistence-postgres':
+        specifier: workspace:*
+        version: link:../../packages/payment-persistence-postgres
+      '@amirhossein-moloki/payment-saman':
+        specifier: workspace:*
+        version: link:../../packages/payment-saman
+      '@amirhossein-moloki/payment-service':
+        specifier: workspace:*
+        version: link:../../packages/payment-service
+      '@amirhossein-moloki/payment-zarinpal':
+        specifier: workspace:*
+        version: link:../../packages/payment-zarinpal
+      '@amirhossein-moloki/payment-zibal':
+        specifier: workspace:*
+        version: link:../../packages/payment-zibal
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.43
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+      vitest:
+        specifier: ^1.0.0
+        version: 1.6.1(@types/node@20.19.43)
+
   examples/payment-integration:
     dependencies:
       '@amirhossein-moloki/payment-core':
