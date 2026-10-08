@@ -6,7 +6,11 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "vitest run"
+    "test": "vitest run",
+    "docker:build": "docker compose build",
+    "docker:start": "docker compose up server",
+    "docker:test": "docker compose run --rm test",
+    "docker:cli": "docker compose run --rm cli-test"
   },
   "dependencies": {
     "@amirhossein-moloki/payment-core": "workspace:*",

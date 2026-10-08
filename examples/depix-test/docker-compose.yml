@@ -1,0 +1,32 @@
+services:
+  server:
+    build:
+      context: ../..
+      dockerfile: examples/depix-test/Dockerfile
+    ports:
+      - '3000:3000'
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+      - USE_MOCK_GATEWAYS=true
+      - PAYMENT_ENV=sandbox
+
+  test:
+    build:
+      context: ../..
+      dockerfile: examples/depix-test/Dockerfile
+    command: pnpm test
+    environment:
+      - NODE_ENV=test
+      - USE_MOCK_GATEWAYS=true
+      - PAYMENT_ENV=test
+
+  cli-test:
+    build:
+      context: ../..
+      dockerfile: examples/depix-test/Dockerfile
+    command: node dist/cli-test.js
+    environment:
+      - NODE_ENV=development
+      - USE_MOCK_GATEWAYS=true
+      - PAYMENT_ENV=sandbox
