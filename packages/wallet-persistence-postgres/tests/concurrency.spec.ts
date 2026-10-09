@@ -7,9 +7,11 @@ import {
   LedgerTransaction,
   Money,
 } from '@amirhossein-moloki/wallet-core';
+import { PersistenceConflictError } from '@amirhossein-moloki/payment-core';
 import { PostgresLedgerRepository } from '../src/repositories/postgres-ledger-repository.js';
 import { createTestDatabase } from './test-utils.js';
 import { PgExecutor } from '../src/migrator.js';
+import { mapWalletPgError } from '../src/error-mapper.js';
 
 describe('Concurrency and Deterministic Lock Ordering', () => {
   let db: PgExecutor;
@@ -146,5 +148,79 @@ describe('Concurrency and Deterministic Lock Ordering', () => {
 
     const balB = await ledgerRepo.getAccountBalance(accB.id);
     expect(balB.amount).toBe(80000n);
+  });
+
+  it('should result in at most one financial posting during concurrent duplicate requests', async () => {
+    const accBank = await ledgerRepo.saveAccount(
+      LedgerAccount.create({
+        id: 'acc_dup_bank',
+        name: 'Bank',
+        type: AccountType.ASSET,
+        currency: 'IRR',
+      }),
+    );
+
+    const accUser = await ledgerRepo.saveAccount(
+      LedgerAccount.create({
+        id: 'acc_dup_user',
+        name: 'User',
+        type: AccountType.LIABILITY,
+        currency: 'IRR',
+      }),
+    );
+
+    const idempotencyKey = 'concurrent_dup_key_777';
+
+    // Build 10 concurrent requests with the SAME idempotency key and identical payload
+    const tasks = Array.from({ length: 10 }, (_, i) => {
+      const tx = LedgerTransaction.draft({
+        id: `tx_dup_req_${i + 1}`,
+        description: 'Concurrent Duplicate Topup',
+        idempotencyKey,
+        entries: [
+          new LedgerEntry({
+            id: `e1_dup_${i + 1}`,
+            accountId: accBank.id,
+            direction: EntryDirection.DEBIT,
+            amount: Money.fromMinor(250000n, 'IRR'),
+          }),
+          new LedgerEntry({
+            id: `e2_dup_${i + 1}`,
+            accountId: accUser.id,
+            direction: EntryDirection.CREDIT,
+            amount: Money.fromMinor(250000n, 'IRR'),
+          }),
+        ],
+      });
+      tx.post();
+      return ledgerRepo.saveTransaction(tx);
+    });
+
+    const results = await Promise.all(tasks);
+
+    // All results must be valid and reference the SAME posted transaction ID (the first inserted)
+    const firstTxId = results[0]!.id;
+    for (const res of results) {
+      expect(res.id).toBe(firstTxId);
+    }
+
+    // Financial balance must be updated EXACTLY ONCE (250,000 IRR, NOT 2,500,000 IRR)
+    const bankBal = await ledgerRepo.getAccountBalance(accBank.id);
+    expect(bankBal.amount).toBe(250000n);
+
+    const userBal = await ledgerRepo.getAccountBalance(accUser.id);
+    expect(userBal.amount).toBe(250000n);
+  });
+
+  it('should map PostgreSQL deadlock (40P01) and serialization errors (40001) to PersistenceConflictError', () => {
+    const deadlockErr = { code: '40P01', message: 'deadlock detected' };
+    const mappedDeadlock = mapWalletPgError(deadlockErr);
+    expect(mappedDeadlock).toBeInstanceOf(PersistenceConflictError);
+    expect(mappedDeadlock.message).toContain('40P01');
+
+    const serializationErr = { code: '40001', message: 'could not serialize access due to concurrent update' };
+    const mappedSerialization = mapWalletPgError(serializationErr);
+    expect(mappedSerialization).toBeInstanceOf(PersistenceConflictError);
+    expect(mappedSerialization.message).toContain('40001');
   });
 });

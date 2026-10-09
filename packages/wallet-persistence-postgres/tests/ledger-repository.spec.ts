@@ -4,6 +4,7 @@ import {
   CurrencyMismatchError,
   EntryDirection,
   ImmutableTransactionError,
+  InvalidAmountError,
   LedgerAccount,
   LedgerEntry,
   LedgerTransaction,
@@ -326,6 +327,55 @@ describe('PostgresLedgerRepository', () => {
 
       const userBal = await ledgerRepo.getAccountBalance(userLiabilityAcc.id);
       expect(userBal.amount).toBe(5000000000000n);
+    });
+
+    it('should reject invalid amount formats (floats, non-integer strings)', () => {
+      expect(() => Money.fromMinor(100.5, 'IRR')).toThrow(InvalidAmountError);
+      expect(() => Money.fromMinor('invalid_number', 'IRR')).toThrow(InvalidAmountError);
+    });
+
+    it('should guarantee atomicity and leave zero records on execution error', async () => {
+      // Create a transaction that fails due to an inactive account
+      const inactiveAcc = await ledgerRepo.saveAccount(
+        LedgerAccount.create({
+          id: 'acc_inactive_1',
+          name: 'Inactive Account',
+          type: AccountType.LIABILITY,
+          currency: 'IRR',
+        }),
+      );
+      // Manually set status to FROZEN
+      await db.query(`UPDATE ledger_accounts SET status = 'FROZEN' WHERE id = 'acc_inactive_1'`);
+
+      const tx = LedgerTransaction.draft({
+        id: 'tx_frozen_test',
+        description: 'Attempt transfer to frozen account',
+        entries: [
+          new LedgerEntry({
+            id: 'e_fr_1',
+            accountId: bankAssetAcc.id,
+            direction: EntryDirection.DEBIT,
+            amount: Money.fromMinor(100000n, 'IRR'),
+          }),
+          new LedgerEntry({
+            id: 'e_fr_2',
+            accountId: inactiveAcc.id,
+            direction: EntryDirection.CREDIT,
+            amount: Money.fromMinor(100000n, 'IRR'),
+          }),
+        ],
+      });
+      tx.post();
+
+      await expect(ledgerRepo.saveTransaction(tx)).rejects.toThrow();
+
+      // Check that transaction was NOT saved
+      const savedTx = await ledgerRepo.getTransactionById('tx_frozen_test');
+      expect(savedTx).toBeNull();
+
+      // Check that bank account balance remains 0
+      const bankBal = await ledgerRepo.getAccountBalance(bankAssetAcc.id);
+      expect(bankBal.amount).toBe(0n);
     });
   });
 
