@@ -1,14 +1,16 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  WalletReconciliationService,
-  Money,
-} from '@amirhossein-moloki/wallet-core';
+import { WalletReconciliationService, Money } from '@amirhossein-moloki/wallet-core';
 import {
   PostgresReconciliationRepository,
   PostgresLedgerRepository,
   PostgresWalletRepository,
 } from '../src/index.js';
-import { WalletService, LedgerTransaction, LedgerEntry, EntryDirection } from '@amirhossein-moloki/wallet-core';
+import {
+  WalletService,
+  LedgerTransaction,
+  LedgerEntry,
+  EntryDirection,
+} from '@amirhossein-moloki/wallet-core';
 import { PgExecutor } from '../src/migrator.js';
 import { createTestDatabase } from './test-utils.js';
 
@@ -89,10 +91,9 @@ describe('PostgresReconciliationRepository Integration Tests', () => {
     expect(report.isHealthy).toBe(true);
 
     // Corrupt stored balance directly in database to test reconciliation detection
-    await executor.query(
-      `UPDATE ledger_accounts SET balance = 999999 WHERE id = $1`,
-      [balanceAccount.id],
-    );
+    await executor.query(`UPDATE ledger_accounts SET balance = 999999 WHERE id = $1`, [
+      balanceAccount.id,
+    ]);
 
     report = await reconciliationService.reconcile();
     expect(report.isHealthy).toBe(false);

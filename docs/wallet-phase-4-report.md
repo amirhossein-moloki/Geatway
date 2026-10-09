@@ -11,25 +11,27 @@
 The `payment-platform-monorepo` provides a framework-agnostic double-entry financial ledger and wallet infrastructure with explicit Medusa v2 integration adapters.
 
 ### Monorepo Wallet Architecture & Components
-* **`@amirhossein-moloki/wallet-core`**: Defines core domain aggregates (`Wallet`, `Money`, `LedgerAccount`, `LedgerTransaction`, `LedgerEntry`), error types, domain repository ports (`IWalletRepository`, `ILedgerRepository`, `IReconciliationRepository`), `WalletService` application domain service, `WalletReconciliationService`, and Medusa v2 integration adapters (`MedusaWalletModuleService`, `MedusaWalletPaymentProvider`).
-* **`@amirhossein-moloki/wallet-persistence-postgres`**: Implements PostgreSQL persistence adapters (`PostgresWalletRepository`, `PostgresLedgerRepository`, `PostgresReconciliationRepository`) using direct PostgreSQL SQL queries with deterministic row locking (`SELECT ... FOR UPDATE` ordered by account ID) and exact `BIGINT` minor-unit monetary math.
-* **`examples/depix-test`**: Integration example and test harness simulating payment gateway flows (`Zibal`, `Zarinpal`, `Mellat`, `Saman`) and wallet debit workflows.
-* **External Application (`depix-ecommerce`)**: Consumer Medusa v2 store application residing in a separate external repository (not present in this monorepo tree).
+
+- **`@amirhossein-moloki/wallet-core`**: Defines core domain aggregates (`Wallet`, `Money`, `LedgerAccount`, `LedgerTransaction`, `LedgerEntry`), error types, domain repository ports (`IWalletRepository`, `ILedgerRepository`, `IReconciliationRepository`), `WalletService` application domain service, `WalletReconciliationService`, and Medusa v2 integration adapters (`MedusaWalletModuleService`, `MedusaWalletPaymentProvider`).
+- **`@amirhossein-moloki/wallet-persistence-postgres`**: Implements PostgreSQL persistence adapters (`PostgresWalletRepository`, `PostgresLedgerRepository`, `PostgresReconciliationRepository`) using direct PostgreSQL SQL queries with deterministic row locking (`SELECT ... FOR UPDATE` ordered by account ID) and exact `BIGINT` minor-unit monetary math.
+- **`examples/depix-test`**: Integration example and test harness simulating payment gateway flows (`Zibal`, `Zarinpal`, `Mellat`, `Saman`) and wallet debit workflows.
+- **External Application (`depix-ecommerce`)**: Consumer Medusa v2 store application residing in a separate external repository (not present in this monorepo tree).
 
 ### Build & Test Scripts
-* Workspace Build: `pnpm run build` (`tsc` compilation across 16 projects).
-* Test Suite Execution: `pnpm run test` (`vitest run` across 16 workspace projects; PostgreSQL integration tests executed in-memory via `pg-mem`).
+
+- Workspace Build: `pnpm run build` (`tsc` compilation across 16 projects).
+- Test Suite Execution: `pnpm run test` (`vitest run` across 16 workspace projects; PostgreSQL integration tests executed in-memory via `pg-mem`).
 
 ---
 
 ## 2. Earlier-Phase Completion Matrix
 
-| Phase | Scope / Focus | Status | Details & Verification Evidence |
-| :--- | :--- | :--- | :--- |
-| **Phase 1** | Payment Core & Provider Gateways (`Mellat`, `Saman`, `Zarinpal`, `Zibal`) | **COMPLETE** | Abstract gateway registry, signature verification, payment lifecycle workflows, and provider test coverage. |
-| **Phase 2** | SMS Core & Provider Integrations (`SMS.ir`, `Melipayamak`) | **COMPLETE** | SMS provider registry, pattern-based message dispatch, and error handling. |
-| **Phase 3** | Wallet Core & PostgreSQL Persistence | **COMPLETE** | `Money` value object (exact integer minor units), double-entry ledger balancing, row locking, `WalletService`, and Medusa `pp_wallet` payment provider. |
-| **Phase 4** | Integration Testing, Security, Reconciliation & Production Readiness | **COMPLETE** | Safety audit, customer wallet ownership isolation, `WalletReconciliationService`, concurrency tests, and readiness report. |
+| Phase       | Scope / Focus                                                             | Status       | Details & Verification Evidence                                                                                                                         |
+| :---------- | :------------------------------------------------------------------------ | :----------- | :------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Phase 1** | Payment Core & Provider Gateways (`Mellat`, `Saman`, `Zarinpal`, `Zibal`) | **COMPLETE** | Abstract gateway registry, signature verification, payment lifecycle workflows, and provider test coverage.                                             |
+| **Phase 2** | SMS Core & Provider Integrations (`SMS.ir`, `Melipayamak`)                | **COMPLETE** | SMS provider registry, pattern-based message dispatch, and error handling.                                                                              |
+| **Phase 3** | Wallet Core & PostgreSQL Persistence                                      | **COMPLETE** | `Money` value object (exact integer minor units), double-entry ledger balancing, row locking, `WalletService`, and Medusa `pp_wallet` payment provider. |
+| **Phase 4** | Integration Testing, Security, Reconciliation & Production Readiness      | **COMPLETE** | Safety audit, customer wallet ownership isolation, `WalletReconciliationService`, concurrency tests, and readiness report.                              |
 
 ---
 
@@ -50,8 +52,9 @@ All 15 financial invariants specified for Phase 4 were audited and verified acro
 ## 4. Reconciliation and Diagnostic Capabilities
 
 A safe, read-only reconciliation service has been implemented:
-* **`WalletReconciliationService`** (`wallet-core`): Orchestrates health checks and returns structured `ReconciliationReport`.
-* **`PostgresReconciliationRepository`** (`wallet-persistence-postgres`): Executes SQL analysis queries:
+
+- **`WalletReconciliationService`** (`wallet-core`): Orchestrates health checks and returns structured `ReconciliationReport`.
+- **`PostgresReconciliationRepository`** (`wallet-persistence-postgres`): Executes SQL analysis queries:
   1. `findUnbalancedTransactions()`: Identifies any `POSTED` transaction where total debits do not equal total credits.
   2. `findBalanceMismatches()`: Recomputes derived balances from `POSTED` `ledger_entries` and compares them against stored `ledger_accounts.balance` projections.
 
@@ -61,19 +64,20 @@ Reconciliation is completely read-only, safe to rerun periodically, and separate
 
 ## 5. Security Findings and Safeguards
 
-* **Customer Wallet Isolation:** Updated `MedusaWalletPaymentProvider` (`initiatePayment`, `authorizePayment`, `refundPayment`) to assert that the target wallet owner matches `customer_id`.
-* **Admin Audit Metadata:** Required `adminId` and `reason` for all administrative credit and debit operations (`adminCreditWallet`, `adminDebitWallet`).
-* **Secret Protection:** Inspected logs and error handlers; error mapping excludes authentication tokens, credentials, and sensitive payload values.
+- **Customer Wallet Isolation:** Updated `MedusaWalletPaymentProvider` (`initiatePayment`, `authorizePayment`, `refundPayment`) to assert that the target wallet owner matches `customer_id`.
+- **Admin Audit Metadata:** Required `adminId` and `reason` for all administrative credit and debit operations (`adminCreditWallet`, `adminDebitWallet`).
+- **Secret Protection:** Inspected logs and error handlers; error mapping excludes authentication tokens, credentials, and sensitive payload values.
 
 ---
 
 ## 6. Concurrency and Race-Condition Verification
 
 Automated concurrency tests in `packages/wallet-persistence-postgres/tests/concurrency.spec.ts` verified:
-* Concurrent top-ups execute atomically without balance race conditions.
-* Alphabetical lock ordering on `ledger_accounts` (`SELECT FOR UPDATE`) prevents database deadlocks when locking multiple accounts in arbitrary order.
-* Concurrent duplicate requests with the same idempotency key result in exactly 1 posting and 1 balance update.
-* PostgreSQL deadlock (`40P01`) and serialization error (`40001`) handling correctly maps to `PersistenceConflictError`.
+
+- Concurrent top-ups execute atomically without balance race conditions.
+- Alphabetical lock ordering on `ledger_accounts` (`SELECT FOR UPDATE`) prevents database deadlocks when locking multiple accounts in arbitrary order.
+- Concurrent duplicate requests with the same idempotency key result in exactly 1 posting and 1 balance update.
+- PostgreSQL deadlock (`40P01`) and serialization error (`40001`) handling correctly maps to `PersistenceConflictError`.
 
 ---
 

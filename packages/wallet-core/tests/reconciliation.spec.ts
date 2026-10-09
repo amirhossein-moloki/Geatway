@@ -1,9 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  WalletReconciliationService,
-  IReconciliationRepository,
-  Money,
-} from '../src/index.js';
+import { WalletReconciliationService, IReconciliationRepository, Money } from '../src/index.js';
 
 describe('WalletReconciliationService', () => {
   it('returns healthy report when no discrepancies exist', async () => {
