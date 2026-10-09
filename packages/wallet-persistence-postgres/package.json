@@ -1,0 +1,51 @@
+{
+  "name": "@amirhossein-moloki/wallet-persistence-postgres",
+  "version": "1.0.0",
+  "description": "PostgreSQL persistence implementation for the wallet domain",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "migrations",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amirhossein-moloki/Geatway.git",
+    "directory": "packages/wallet-persistence-postgres"
+  },
+  "publishConfig": {
+    "access": "restricted",
+    "registry": "https://npm.pkg.github.com"
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rimraf dist",
+    "lint": "eslint 'src/**/*.ts' 'tests/**/*.ts'",
+    "lint:fix": "eslint 'src/**/*.ts' 'tests/**/*.ts' --fix",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@amirhossein-moloki/payment-core": "workspace:*",
+    "@amirhossein-moloki/wallet-core": "workspace:*",
+    "pg": "^8.11.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "@types/pg": "^8.11.6",
+    "pg-mem": "^3.0.4",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
