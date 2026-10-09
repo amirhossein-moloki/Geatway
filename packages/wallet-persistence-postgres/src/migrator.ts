@@ -14,6 +14,13 @@ export class DatabaseMigrator {
   constructor(private readonly executor: PgExecutor) {}
 
   public async initMigrationsTable(): Promise<void> {
+    try {
+      await this.executor.query(`SELECT 1 FROM schema_migrations LIMIT 1`);
+      return;
+    } catch {
+      // Table does not exist yet; create it.
+    }
+
     await this.executor.query(`
       CREATE TABLE IF NOT EXISTS schema_migrations (
         version VARCHAR(255) PRIMARY KEY,
