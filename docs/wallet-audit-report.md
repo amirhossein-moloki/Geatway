@@ -12,6 +12,7 @@
 A comprehensive, evidence-based audit was conducted on the custom wallet implementation within `payment-platform-monorepo`. All planned implementation prompt deliverables across core domain logic, PostgreSQL persistence, financial invariant enforcement, concurrency management, and Medusa v2 integration adapters are fully implemented, verified, and backed by test execution evidence.
 
 ### Core Audit Outcomes:
+
 1. **Implementation Baseline:** The monorepo contains a complete framework-agnostic double-entry financial ledger (`@amirhossein-moloki/wallet-core`) paired with PostgreSQL transactional adapters (`@amirhossein-moloki/wallet-persistence-postgres`) and Medusa v2 integration adapters (`MedusaWalletModuleService`, `MedusaWalletPaymentProvider`).
 2. **Consumer Application (`depix-ecommerce`):** `depix-ecommerce` is an external Medusa v2 consumer application residing outside this monorepo tree. Monorepo adapters strictly conform to Medusa v2 payment provider interfaces (`pp_wallet`).
 3. **Workspace Build & Test Integrity:** 100% build rate across all 16 monorepo workspace packages (`pnpm build`). 100% test pass rate: **270 tests passed**, 1 skipped (sandbox provider test requiring external credentials). Zero linting errors (`pnpm lint`).
@@ -22,12 +23,14 @@ A comprehensive, evidence-based audit was conducted on the custom wallet impleme
 ## Step 1 — Repository Baseline
 
 ### 1. Repository & Branch State
+
 - **Branch:** `wallet-audit-report-15553477299409394943`
 - **Git Working-Tree Status:** Clean working tree.
 - **Recent Commit History:**
   - `1de49f4` Merge pull request #36 from amirhossein-moloki/wallet-phase-4-testing-security-readiness
 
 ### 2. Workspace & Package Structure (`payment-platform-monorepo`)
+
 - **Root Workspace:** Monorepo managed via `pnpm-workspace.yaml`.
 - **Wallet-Related Workspace Packages:**
   - `packages/wallet-core`: Core domain entities (`Wallet`, `Money`, `LedgerAccount`, `LedgerTransaction`, `LedgerEntry`), errors (`WalletError`, `CurrencyMismatchError`, `InvalidAmountError`), ports (`IWalletRepository`, `ILedgerRepository`, `IReconciliationRepository`), services (`WalletService`, `WalletReconciliationService`), and Medusa v2 adapters (`MedusaWalletPaymentProvider`, `MedusaWalletModuleService`).
@@ -37,6 +40,7 @@ A comprehensive, evidence-based audit was conducted on the custom wallet impleme
   - Confirmed via file system and process analysis to reside in a separate external repository (not present in this local monorepo directory tree).
 
 ### 3. Dependencies & Tooling
+
 - **TypeScript:** `5.9.3` (NodeNext module resolution, ESM target)
 - **Test Runner:** `vitest 1.6.1` (In-memory PostgreSQL database powered by `pg-mem`)
 - **Linter / Formatter:** `eslint 8.57.1`, `prettier 3.9.9`
@@ -47,12 +51,12 @@ A comprehensive, evidence-based audit was conducted on the custom wallet impleme
 
 The originally planned implementation phases were reconstructed from repository documentation (`docs/wallet-phase-4-report.md`, package READMEs, and Git log):
 
-| Phase ID | Objective / Scope | Key Deliverables & Files | Implementation Evidence | Test Evidence | Missing Requirements | Status |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Phase 1** | Payment Core & Provider Gateways | Gateway registry, IPG drivers (`Mellat`, `Saman`, `Zarinpal`, `Zibal`), signature verification. | `packages/payment-core`, `packages/payment-*` | 76 unit/integration tests passed | None | **COMPLETE** |
-| **Phase 2** | SMS Core & Provider Integrations | SMS registry, driver implementations (`SMS.ir`, `Melipayamak`), dispatch services. | `packages/sms-core`, `packages/sms-*` | 48 unit tests passed | None | **COMPLETE** |
-| **Phase 3** | Wallet Core & PostgreSQL Persistence | `Money` value object, double-entry ledger, atomic PostgreSQL storage, `WalletService`, `pp_wallet`. | `packages/wallet-core`, `packages/wallet-persistence-postgres` | 76 wallet core & persistence tests passed | None | **COMPLETE** |
-| **Phase 4** | Integration Testing, Concurrency, Reconciliation & Readiness | Deterministic row locking, concurrency race tests, `WalletReconciliationService`, customer isolation controls. | `WalletReconciliationService`, `PostgresReconciliationRepository`, `concurrency.spec.ts` | 5 concurrency & 5 reconciliation tests passed | None | **COMPLETE** |
+| Phase ID    | Objective / Scope                                            | Key Deliverables & Files                                                                                       | Implementation Evidence                                                                  | Test Evidence                                 | Missing Requirements | Status       |
+| :---------- | :----------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------- | :-------------------------------------------- | :------------------- | :----------- |
+| **Phase 1** | Payment Core & Provider Gateways                             | Gateway registry, IPG drivers (`Mellat`, `Saman`, `Zarinpal`, `Zibal`), signature verification.                | `packages/payment-core`, `packages/payment-*`                                            | 76 unit/integration tests passed              | None                 | **COMPLETE** |
+| **Phase 2** | SMS Core & Provider Integrations                             | SMS registry, driver implementations (`SMS.ir`, `Melipayamak`), dispatch services.                             | `packages/sms-core`, `packages/sms-*`                                                    | 48 unit tests passed                          | None                 | **COMPLETE** |
+| **Phase 3** | Wallet Core & PostgreSQL Persistence                         | `Money` value object, double-entry ledger, atomic PostgreSQL storage, `WalletService`, `pp_wallet`.            | `packages/wallet-core`, `packages/wallet-persistence-postgres`                           | 76 wallet core & persistence tests passed     | None                 | **COMPLETE** |
+| **Phase 4** | Integration Testing, Concurrency, Reconciliation & Readiness | Deterministic row locking, concurrency race tests, `WalletReconciliationService`, customer isolation controls. | `WalletReconciliationService`, `PostgresReconciliationRepository`, `concurrency.spec.ts` | 5 concurrency & 5 reconciliation tests passed | None                 | **COMPLETE** |
 
 ---
 
@@ -143,9 +147,10 @@ Inspection of `@amirhossein-moloki/wallet-core/src/medusa`:
    - **Outcome:** **SUCCESS**
    - Executed Vitest across all 16 workspace projects.
    - **Pass Rate:** **270 tests passed**, 0 failed, 1 skipped.
-   - *Skipped Test Detail:* `tests/zibal-sandbox.spec.ts` skipped automatically because live IPG sandbox environment credentials (`RUN_SANDBOX_TESTS=true`) were not set.
+   - _Skipped Test Detail:_ `tests/zibal-sandbox.spec.ts` skipped automatically because live IPG sandbox environment credentials (`RUN_SANDBOX_TESTS=true`) were not set.
 
 #### Package Test Breakdown:
+
 - `@amirhossein-moloki/payment-core`: 30 passed
 - `@amirhossein-moloki/payment-service`: 33 passed
 - `@amirhossein-moloki/payment-persistence-postgres`: 24 passed
@@ -166,16 +171,16 @@ Inspection of `@amirhossein-moloki/wallet-core/src/medusa`:
 
 ## Step 8 — Financial Security and Reliability Assessment
 
-| Failure Scenario | Audit Findings & Evidence | Risk Level | Mitigation Status |
-| :--- | :--- | :--- | :--- |
-| **1. Concurrent Debits (Same Balance)** | Executed `concurrency.spec.ts`. Account rows locked via `SELECT FOR UPDATE ORDER BY id ASC`. Parallel debits execute sequentially; insufficient balance throws HTTP 422. | **LOW** | Fully Mitigated |
-| **2. Duplicate Top-Up Confirmation** | `PostgresLedgerRepository` enforces unique idempotency keys via `uk_ledger_transactions_idempotency_key`. Duplicates return cached transaction without re-posting. | **LOW** | Fully Mitigated |
-| **3. Duplicate or Out-of-Order Webhooks** | Managed via `IdempotencyRepository` in `payment-persistence-postgres`. Webhooks deduplicated by key. | **LOW** | Fully Mitigated |
-| **4. Idempotency Key Reuse (Different Payload)** | Evaluated in `PostgresLedgerRepository.saveTransaction`. Payload comparison fails and throws `PersistenceConflictError` (HTTP 409). | **LOW** | Fully Mitigated |
-| **5. External Payment Success / Local Failure** | Webhook processing and wallet top-ups execute inside PostgreSQL transactions with error mapping (`mapWalletPgError`). | **MEDIUM** | Mitigated; monitor via reconciliation |
-| **6. Stored Balance Mismatch** | Evaluated `PostgresReconciliationRepository.findBalanceMismatches()`. Read-only SQL computes actual ledger entry sum and identifies projection drift. | **LOW** | Fully Mitigated |
-| **7. Unauthorized Customer Isolation** | Tested in `medusa-integration.spec.ts`. Mismatched customer ID returns HTTP error in `MedusaWalletPaymentProvider`. | **LOW** | Fully Mitigated |
-| **8. Unauthorized Admin Actions** | `adminCreditWallet` and `adminDebitWallet` enforce mandatory `adminId` and `reason` audit fields. | **LOW** | Fully Mitigated |
+| Failure Scenario                                 | Audit Findings & Evidence                                                                                                                                                | Risk Level | Mitigation Status                     |
+| :----------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------- | :------------------------------------ |
+| **1. Concurrent Debits (Same Balance)**          | Executed `concurrency.spec.ts`. Account rows locked via `SELECT FOR UPDATE ORDER BY id ASC`. Parallel debits execute sequentially; insufficient balance throws HTTP 422. | **LOW**    | Fully Mitigated                       |
+| **2. Duplicate Top-Up Confirmation**             | `PostgresLedgerRepository` enforces unique idempotency keys via `uk_ledger_transactions_idempotency_key`. Duplicates return cached transaction without re-posting.       | **LOW**    | Fully Mitigated                       |
+| **3. Duplicate or Out-of-Order Webhooks**        | Managed via `IdempotencyRepository` in `payment-persistence-postgres`. Webhooks deduplicated by key.                                                                     | **LOW**    | Fully Mitigated                       |
+| **4. Idempotency Key Reuse (Different Payload)** | Evaluated in `PostgresLedgerRepository.saveTransaction`. Payload comparison fails and throws `PersistenceConflictError` (HTTP 409).                                      | **LOW**    | Fully Mitigated                       |
+| **5. External Payment Success / Local Failure**  | Webhook processing and wallet top-ups execute inside PostgreSQL transactions with error mapping (`mapWalletPgError`).                                                    | **MEDIUM** | Mitigated; monitor via reconciliation |
+| **6. Stored Balance Mismatch**                   | Evaluated `PostgresReconciliationRepository.findBalanceMismatches()`. Read-only SQL computes actual ledger entry sum and identifies projection drift.                    | **LOW**    | Fully Mitigated                       |
+| **7. Unauthorized Customer Isolation**           | Tested in `medusa-integration.spec.ts`. Mismatched customer ID returns HTTP error in `MedusaWalletPaymentProvider`.                                                      | **LOW**    | Fully Mitigated                       |
+| **8. Unauthorized Admin Actions**                | `adminCreditWallet` and `adminDebitWallet` enforce mandatory `adminId` and `reason` audit fields.                                                                        | **LOW**    | Fully Mitigated                       |
 
 ---
 
@@ -183,16 +188,17 @@ Inspection of `@amirhossein-moloki/wallet-core/src/medusa`:
 
 ### Action Plan Matrix:
 
-| ID | Severity | Area / Evidence | Financial / Business Impact | Required Remediation | Prerequisites | Next Step Order |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **F-01** | Low | External Consumer Repo (`depix-ecommerce`) | Medusa v2 store checkout end-to-end flow requires verification in staging environment. | Deploy monorepo packages to staging registry and run E2E browser checkout tests in `depix-ecommerce`. | Staging Medusa Instance & PostgreSQL DB | 1 |
-| **F-02** | Low | Production Deployment Scripts | Schema migrations must be applied before app launch. | Run `DatabaseMigrator` as part of CI/CD container startup sequence. | Production DB credentials | 2 |
+| ID       | Severity | Area / Evidence                            | Financial / Business Impact                                                            | Required Remediation                                                                                  | Prerequisites                           | Next Step Order |
+| :------- | :------- | :----------------------------------------- | :------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------- | :-------------------------------------- | :-------------- |
+| **F-01** | Low      | External Consumer Repo (`depix-ecommerce`) | Medusa v2 store checkout end-to-end flow requires verification in staging environment. | Deploy monorepo packages to staging registry and run E2E browser checkout tests in `depix-ecommerce`. | Staging Medusa Instance & PostgreSQL DB | 1               |
+| **F-02** | Low      | Production Deployment Scripts              | Schema migrations must be applied before app launch.                                   | Run `DatabaseMigrator` as part of CI/CD container startup sequence.                                   | Production DB credentials               | 2               |
 
 ---
 
 ## Required Summary & Readiness Classification
 
 ### 1. What is demonstrably working?
+
 - Framework-agnostic double-entry financial ledger and exact integer minor-unit `Money` value object.
 - Atomic PostgreSQL transactions, deterministic row locking (`SELECT FOR UPDATE`), and balance projection updates.
 - Wallet top-up, admin credit/debit with mandatory audit metadata, and e-commerce checkout debits.
@@ -201,18 +207,23 @@ Inspection of `@amirhossein-moloki/wallet-core/src/medusa`:
 - 100% monorepo build and test pass rate (270 passed tests).
 
 ### 2. What remains unverified?
+
 - End-to-end browser checkout in the separate `depix-ecommerce` consumer application repository.
 
 ### 3. What is the most important current risk?
+
 - Operational risk: Ensured execution of `DatabaseMigrator` during staging/production deployment to apply schema migrations before service instantiation.
 
 ### 4. What exact task should be performed next?
+
 - Deploy monorepo packages to the staging registry and perform end-to-end Medusa store integration verification in `depix-ecommerce`.
 
 ### 5. Which files or modules should that next task touch?
+
 - External repository `depix-ecommerce` (`medusa-config.ts`, payment provider registration, and checkout workflows).
 
 ### 6. What tests must pass to consider it complete?
+
 - Medusa v2 store checkout flow using `pp_wallet`, customer balance query, and order creation end-to-end test suite.
 
 ---
