@@ -229,5 +229,54 @@ describe('Depix Test Wallet Integration API Suite', () => {
       expect(chk2Data.success).toBe(false);
       expect(chk2Data.error).toContain('Insufficient wallet balance');
     });
+
+    it('ensures wallet checkout idempotency over HTTP', async () => {
+      // Provision wallet and add funds
+      const walletRes = await fetch(`${serverUrl}/store/me/wallet`, {
+        headers: { 'x-customer-id': 'cust_http_idemp' },
+      });
+      const walletData = (await walletRes.json()) as { walletId: string };
+
+      await fetch(`${serverUrl}/admin/wallets/${walletData.walletId}/credit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-id': 'admin_test' },
+        body: JSON.stringify({
+          amount: 500000,
+          currency: 'IRR',
+          reason: 'Fund for idempotency test',
+          idempotencyKey: 'idemp_fund_http_idemp',
+        }),
+      });
+
+      const bodyData = {
+        walletId: walletData.walletId,
+        amount: 200000,
+        currency: 'IRR',
+        orderId: 'order_http_idemp_1',
+        idempotencyKey: 'idemp_key_http_chk_1',
+      };
+
+      // Call 1
+      const res1 = await fetch(`${serverUrl}/api/payments/wallet-checkout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bodyData),
+      });
+      expect(res1.status).toBe(200);
+
+      // Call 2 with exact same idempotencyKey
+      const res2 = await fetch(`${serverUrl}/api/payments/wallet-checkout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bodyData),
+      });
+      expect(res2.status).toBe(200);
+
+      // Check balance (500000 - 200000 = 300000)
+      const checkBal = await fetch(`${serverUrl}/store/me/wallet`, {
+        headers: { 'x-customer-id': 'cust_http_idemp' },
+      });
+      expect(((await checkBal.json()) as { balance: string }).balance).toBe('300000');
+    });
   });
 });
