@@ -46,7 +46,7 @@ describe('PostgresReconciliationRepository Integration Tests', () => {
   });
 
   it('ignores draft transactions when calculating derived balance', async () => {
-    const { wallet, balanceAccount } = await walletService.createWallet('user_rec_draft', 'IRR');
+    const { balanceAccount } = await walletService.createWallet('user_rec_draft', 'IRR');
 
     // Create a draft transaction (unposted)
     const draftTx = LedgerTransaction.draft({
