@@ -12,6 +12,7 @@ import {
   WalletError,
   WalletFrozenError,
   CurrencyMismatchError,
+  InvalidAmountError,
   WalletService,
 } from '../src/index.js';
 
@@ -71,6 +72,12 @@ class InMemoryLedgerRepo implements ILedgerRepository {
   }
 
   public async saveTransaction(transaction: LedgerTransaction): Promise<LedgerTransaction> {
+    if (transaction.idempotencyKey) {
+      const existing = this.idempotencyMap.get(transaction.idempotencyKey);
+      if (existing) {
+        return existing;
+      }
+    }
     this.transactions.set(transaction.id, transaction);
     if (transaction.idempotencyKey) {
       this.idempotencyMap.set(transaction.idempotencyKey, transaction);
@@ -195,6 +202,28 @@ describe('WalletService Domain Integration', () => {
       expect(tx1.id).toBe(tx2.id);
       const balance = await service.getWalletBalance(wallet.id);
       expect(balance.amount).toBe(300000n);
+    });
+
+    it('should reject top-up with zero or negative amount', async () => {
+      const { wallet } = await service.createWallet('user_102_neg', 'IRR');
+
+      await expect(
+        service.topUpWallet({
+          walletId: wallet.id,
+          amount: Money.fromMinor(0n, 'IRR'),
+          reference: 'ref_zero',
+          idempotencyKey: 'idemp_zero',
+        }),
+      ).rejects.toThrow(InvalidAmountError);
+
+      await expect(
+        service.topUpWallet({
+          walletId: wallet.id,
+          amount: Money.fromMinor(-500n, 'IRR'),
+          reference: 'ref_neg',
+          idempotencyKey: 'idemp_neg',
+        }),
+      ).rejects.toThrow(InvalidAmountError);
     });
 
     it('should reject top-up with mismatched currency', async () => {
