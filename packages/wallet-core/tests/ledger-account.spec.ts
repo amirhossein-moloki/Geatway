@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { AccountStatus, AccountType, CurrencyMismatchError, LedgerAccount, Money } from '../src/index.js';
+import {
+  AccountStatus,
+  AccountType,
+  CurrencyMismatchError,
+  LedgerAccount,
+  Money,
+} from '../src/index.js';
 
 describe('LedgerAccount Domain Entity', () => {
   it('should create an active ledger account', () => {

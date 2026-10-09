@@ -58,11 +58,7 @@ export class InvalidAmountError extends WalletError {
 export class InvalidWalletStateError extends WalletError {
   public override readonly code: string = 'INVALID_WALLET_STATE_ERROR';
 
-  constructor(
-    currentStatus: string,
-    targetStatus?: string,
-    details?: Record<string, unknown>,
-  ) {
+  constructor(currentStatus: string, targetStatus?: string, details?: Record<string, unknown>) {
     const msg = targetStatus
       ? `Invalid wallet status transition from '${currentStatus}' to '${targetStatus}'`
       : `Operation not allowed on wallet with status '${currentStatus}'`;
@@ -97,7 +93,10 @@ export class InvalidLedgerEntryError extends WalletError {
 export class EmptyTransactionError extends WalletError {
   public override readonly code: string = 'EMPTY_TRANSACTION_ERROR';
 
-  constructor(message = 'A ledger transaction must contain at least two entries', details?: Record<string, unknown>) {
+  constructor(
+    message = 'A ledger transaction must contain at least two entries',
+    details?: Record<string, unknown>,
+  ) {
     super(message, 400, details);
   }
 }

@@ -58,10 +58,18 @@ export class LedgerAccount {
 
   public calculateBalance(totalDebits: Money, totalCredits: Money): Money {
     if (totalDebits.currency !== this.currency) {
-      throw new CurrencyMismatchError(this.currency, totalDebits.currency, 'Total debits currency does not match account currency');
+      throw new CurrencyMismatchError(
+        this.currency,
+        totalDebits.currency,
+        'Total debits currency does not match account currency',
+      );
     }
     if (totalCredits.currency !== this.currency) {
-      throw new CurrencyMismatchError(this.currency, totalCredits.currency, 'Total credits currency does not match account currency');
+      throw new CurrencyMismatchError(
+        this.currency,
+        totalCredits.currency,
+        'Total credits currency does not match account currency',
+      );
     }
 
     switch (this.type) {

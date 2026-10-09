@@ -19,16 +19,22 @@ export class Money {
       parsedAmount = amount;
     } else if (typeof amount === 'number') {
       if (!Number.isInteger(amount)) {
-        throw new InvalidAmountError(`Minor unit amount must be an integer, received float: ${amount}`);
+        throw new InvalidAmountError(
+          `Minor unit amount must be an integer, received float: ${amount}`,
+        );
       }
       if (!Number.isSafeInteger(amount)) {
-        throw new InvalidAmountError(`Number ${amount} is not a safe integer; use bigint or string instead`);
+        throw new InvalidAmountError(
+          `Number ${amount} is not a safe integer; use bigint or string instead`,
+        );
       }
       parsedAmount = BigInt(amount);
     } else if (typeof amount === 'string') {
       const trimmed = amount.trim();
       if (!/^-?\d+$/.test(trimmed)) {
-        throw new InvalidAmountError(`Minor unit string must be an integer string, received: '${amount}'`);
+        throw new InvalidAmountError(
+          `Minor unit string must be an integer string, received: '${amount}'`,
+        );
       }
       try {
         parsedAmount = BigInt(trimmed);
@@ -42,13 +48,11 @@ export class Money {
     return new Money(parsedAmount, currency);
   }
 
-  public static fromMajor(
-    amount: number | string,
-    currency: string,
-    decimals = 0,
-  ): Money {
+  public static fromMajor(amount: number | string, currency: string, decimals = 0): Money {
     if (!Number.isInteger(decimals) || decimals < 0) {
-      throw new InvalidAmountError(`Decimals must be a non-negative integer, received: ${decimals}`);
+      throw new InvalidAmountError(
+        `Decimals must be a non-negative integer, received: ${decimals}`,
+      );
     }
 
     const strAmount = typeof amount === 'number' ? amount.toString() : amount.trim();
@@ -96,7 +100,9 @@ export class Money {
       multiplier = factor;
     } else if (typeof factor === 'number') {
       if (!Number.isInteger(factor)) {
-        throw new InvalidAmountError(`Multiplication factor must be an integer, received float: ${factor}`);
+        throw new InvalidAmountError(
+          `Multiplication factor must be an integer, received float: ${factor}`,
+        );
       }
       multiplier = BigInt(factor);
     } else {
@@ -138,7 +144,9 @@ export class Money {
 
   public toMajor(decimals = 0): string {
     if (!Number.isInteger(decimals) || decimals < 0) {
-      throw new InvalidAmountError(`Decimals must be a non-negative integer, received: ${decimals}`);
+      throw new InvalidAmountError(
+        `Decimals must be a non-negative integer, received: ${decimals}`,
+      );
     }
 
     const isNegative = this.amount < 0n;

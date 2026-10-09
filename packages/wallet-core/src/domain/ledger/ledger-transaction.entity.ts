@@ -41,7 +41,11 @@ export class LedgerTransaction {
     if (!props.id || typeof props.id !== 'string' || props.id.trim() === '') {
       throw new Error('LedgerTransaction id must be a non-empty string');
     }
-    if (!props.description || typeof props.description !== 'string' || props.description.trim() === '') {
+    if (
+      !props.description ||
+      typeof props.description !== 'string' ||
+      props.description.trim() === ''
+    ) {
       throw new Error('LedgerTransaction description must be a non-empty string');
     }
 
@@ -93,7 +97,9 @@ export class LedgerTransaction {
 
   public getCurrency(): string {
     if (this._entries.length === 0) {
-      throw new EmptyTransactionError(`Transaction '${this.id}' has no entries to determine currency`);
+      throw new EmptyTransactionError(
+        `Transaction '${this.id}' has no entries to determine currency`,
+      );
     }
     const currency = this._entries[0]!.amount.currency;
     for (const entry of this._entries) {
@@ -106,7 +112,9 @@ export class LedgerTransaction {
 
   public calculateTotals(): { debits: Money; credits: Money; currency: string } {
     if (this._entries.length === 0) {
-      throw new EmptyTransactionError(`Transaction '${this.id}' has no entries to calculate totals`);
+      throw new EmptyTransactionError(
+        `Transaction '${this.id}' has no entries to calculate totals`,
+      );
     }
 
     const currency = this.getCurrency();
