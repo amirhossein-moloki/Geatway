@@ -29,8 +29,8 @@ import {
   CanGetBalance,
   SendSmsRequest,
   SendSmsResponse,
-  SendPatternRequest,
-  SendPatternResponse,
+  SendPatternSmsRequest,
+  SendPatternSmsResponse,
   GetBalanceResponse,
 } from '@amirhossein-moloki/sms-core';
 
@@ -59,7 +59,7 @@ export class MockSmsProvider
     };
   }
 
-  async sendPattern(request: SendPatternRequest): Promise<SendPatternResponse> {
+  async sendPattern(request: SendPatternSmsRequest): Promise<SendPatternSmsResponse> {
     return {
       success: true,
       messageId: 'msg_mock_pattern_202',
@@ -118,16 +118,14 @@ When testing custom provider extensions or client options, mock underlying HTTP 
 
 ```ts
 import { describe, expect, it, vi } from 'vitest';
-import { SmsIrProvider } from '@amirhossein-moloki/sms-smsir';
+import { SmsirProvider } from '@amirhossein-moloki/sms-smsir';
 
-describe('SmsIrProvider Unit Tests', () => {
+describe('SmsirProvider Unit Tests', () => {
   it('handles provider error codes gracefully', async () => {
-    const provider = new SmsIrProvider({ apiKey: 'test_key' });
+    const provider = new SmsirProvider({ apiKey: 'test_key' });
 
     // Mock client request failure
-    vi.spyOn(provider['client'], 'post').mockRejectedValue({
-      response: { status: 401, data: { status: 401, message: 'Unauthorized' } },
-    });
+    vi.spyOn(provider['client'], 'sendBulk').mockRejectedValue(new Error('Network failure'));
 
     await expect(
       provider.sendPattern({
@@ -165,4 +163,3 @@ export default defineConfig({
 - [ ] Unit tests execute with no live network calls or credentials.
 - [ ] Edge cases (invalid phone numbers, missing templates, provider errors) are covered.
 - [ ] Unsupported capability errors are verified when calling capabilities not present on target providers.
-- [ ] Webhook payload parsing is tested with sample provider payloads.

@@ -50,7 +50,7 @@ Target Application (REST Controllers / DTOs / Business Rules)
 ### Layer Responsibilities
 
 - **`@amirhossein-moloki/sms-core`**: Defines domain entities (`SmsMessage`, `SmsStatus`, `SmsType`, `SmsCapability`), provider contracts (`SmsProvider`, capability interfaces), error hierarchy (`SmsPlatformError`), provider registry (`SmsProviderRegistry`), and orchestrator service (`SmsService`). Zero external SMS provider network dependencies.
-- **Provider Packages** (`@amirhossein-moloki/sms-melipayamak`, `@amirhossein-moloki/sms-smsir`): Implement provider HTTP clients, request/response mappers, error mappers, webhook parsers, and capabilities. Depend **only** on `@amirhossein-moloki/sms-core`. Provider packages NEVER depend on each other.
+- **Provider Packages** (`@amirhossein-moloki/sms-melipayamak`, `@amirhossein-moloki/sms-smsir`): Implement provider HTTP clients, request/response mappers, error mappers, and capabilities. Depend **only** on `@amirhossein-moloki/sms-core`. Provider packages NEVER depend on each other.
 - **Target Application**: Implements HTTP controllers, REST routes, DTOs, request validation, authentication, authorization, business rules, OpenAPI specs, and wiring.
 
 ---
@@ -108,7 +108,7 @@ pnpm add @amirhossein-moloki/sms-core @amirhossein-moloki/sms-melipayamak @amirh
 
 ## 8. Configuration
 
-Each provider package exports a typed configuration interface and validation function (`validateMelipayamakConfig`, `validateSmsIrConfig`).
+Each provider package exports a typed configuration interface and validation function (`validateMelipayamakConfig`, `validateSmsirConfig`).
 
 ### Melipayamak Configuration (`MelipayamakConfig`)
 
@@ -117,20 +117,18 @@ export interface MelipayamakConfig {
   readonly providerId?: string; // Defaults to 'melipayamak'
   readonly username: string;
   readonly password: string;
-  readonly defaultLineNumber?: string;
-  readonly requestTimeoutMs?: number;
+  readonly from?: string;
   readonly isEnabled?: boolean;
 }
 ```
 
-### SMS.ir Configuration (`SmsIrConfig`)
+### SMS.ir Configuration (`SmsirConfig`)
 
 ```ts
-export interface SmsIrConfig {
+export interface SmsirConfig {
   readonly providerId?: string; // Defaults to 'smsir'
   readonly apiKey: string;
-  readonly defaultLineNumber?: string;
-  readonly requestTimeoutMs?: number;
+  readonly lineNumber?: string;
   readonly isEnabled?: boolean;
 }
 ```
@@ -158,7 +156,7 @@ Providers are instantiated and explicitly registered into an instance of `SmsPro
 ```ts
 import { SmsProviderRegistry, SmsService } from '@amirhossein-moloki/sms-core';
 import { MelipayamakProvider } from '@amirhossein-moloki/sms-melipayamak';
-import { SmsIrProvider } from '@amirhossein-moloki/sms-smsir';
+import { SmsirProvider } from '@amirhossein-moloki/sms-smsir';
 
 export function configureSmsService(): SmsService {
   const registry = new SmsProviderRegistry();
@@ -166,13 +164,13 @@ export function configureSmsService(): SmsService {
   const melipayamak = new MelipayamakProvider({
     username: process.env.MELIPAYAMAK_USERNAME!,
     password: process.env.MELIPAYAMAK_PASSWORD!,
-    defaultLineNumber: process.env.MELIPAYAMAK_LINE_NUMBER,
+    from: process.env.MELIPAYAMAK_LINE_NUMBER,
   });
   registry.register(melipayamak);
 
-  const smsir = new SmsIrProvider({
+  const smsir = new SmsirProvider({
     apiKey: process.env.SMSIR_API_KEY!,
-    defaultLineNumber: process.env.SMSIR_LINE_NUMBER,
+    lineNumber: process.env.SMSIR_LINE_NUMBER,
   });
   registry.register(smsir);
 
@@ -212,10 +210,10 @@ console.log(result.message.status); // SmsStatus.SENT
 
 ## 12. Sending Bulk SMS
 
-Bulk SMS dispatches a single text message to multiple recipient numbers:
+Bulk SMS dispatches a single text message to multiple recipient numbers (supported by SMS.ir):
 
 ```ts
-const bulkResponse = await smsService.sendBulk('melipayamak', {
+const bulkResponse = await smsService.sendBulk('smsir', {
   messageText: 'Special holiday discount available now!',
   mobiles: ['09121111111', '09122222222'],
 });
@@ -224,11 +222,13 @@ console.log(bulkResponse.success);
 console.log(bulkResponse.packId);
 ```
 
+_Note:_ `sendBulk` is supported by SMS.ir (`@amirhossein-moloki/sms-smsir`). Calling `sendBulk` on Melipayamak throws `UnsupportedSmsCapabilityError`.
+
 ---
 
 ## 13. Sending Like-to-Like SMS
 
-Like-to-Like SMS sends individual messages to corresponding recipients in parallel:
+Like-to-Like SMS sends individual messages to corresponding recipients in parallel (supported by SMS.ir):
 
 ```ts
 const response = await smsService.sendLikeToLike('smsir', {
@@ -238,6 +238,8 @@ const response = await smsService.sendLikeToLike('smsir', {
 
 console.log(response.packId);
 ```
+
+_Note:_ Supported by SMS.ir. Calling on Melipayamak throws `UnsupportedSmsCapabilityError`.
 
 ---
 
@@ -254,6 +256,8 @@ const otpResponse = await smsService.sendPattern('smsir', {
 
 console.log(otpResponse.messageId);
 ```
+
+_Supported by:_ Both `@amirhossein-moloki/sms-melipayamak` and `@amirhossein-moloki/sms-smsir`.
 
 ---
 
@@ -299,7 +303,6 @@ Retrieve inbox messages sent to your panel number:
 
 ```ts
 const incomingMessages = await smsService.receiveMessages('melipayamak', {
-  type: 'latest',
   count: 20,
 });
 
@@ -310,32 +313,23 @@ console.log('Received count:', incomingMessages.messages.length);
 
 ## 19. Canceling Scheduled Messages
 
-Cancel a scheduled bulk dispatch prior to execution:
+Cancel a scheduled bulk dispatch prior to execution (supported by SMS.ir):
 
 ```ts
-const cancelResult = await smsService.cancelScheduled('melipayamak', {
+const cancelResult = await smsService.cancelScheduled('smsir', {
   packId: 'pack_12345',
 });
 
 console.log('Returned credits:', cancelResult.returnedCreditCount);
 ```
 
+_Note:_ Supported by SMS.ir. Calling on Melipayamak throws `UnsupportedSmsCapabilityError`.
+
 ---
 
-## 20. Webhook Processing
+## 20. Webhook Processing Status
 
-Parse delivery reports or inbound SMS webhooks posted by providers:
-
-```ts
-const webhookResult = await smsService.parseWebhook('melipayamak', {
-  query: req.query as Record<string, unknown>,
-  body: req.body as Record<string, unknown>,
-  headers: req.headers as Record<string, string>,
-});
-
-console.log(webhookResult.eventType);
-console.log(webhookResult.status);
-```
+> **CAPABILITY NOTICE:** The `CanHandleSmsWebhook` capability interface and `smsService.parseWebhook()` method exist in `@amirhossein-moloki/sms-core`. However, neither `@amirhossein-moloki/sms-melipayamak` nor `@amirhossein-moloki/sms-smsir` currently implements `parseWebhook`. Invoking `parseWebhook` on either existing provider will throw an `UnsupportedSmsCapabilityError`.
 
 ---
 
@@ -364,9 +358,8 @@ Target applications are fully responsible for HTTP controllers, routes, request 
 ### Reference Endpoints Pattern
 
 - `POST /api/v1/sms/send-otp` - Send OTP code via pattern
-- `POST /api/v1/sms/send-bulk` - Send bulk SMS campaign
+- `POST /api/v1/sms/send-single` - Send single text message
 - `GET /api/v1/sms/balance` - Retrieve credit balance
-- `POST /api/v1/sms/webhooks/:provider` - Handle provider webhooks
 
 ---
 
@@ -411,8 +404,8 @@ Capabilities verified directly from source code implementation:
 
 | Provider Package                      | `SEND_SINGLE` | `SEND_BULK` | `SEND_LIKE_TO_LIKE` | `SEND_PATTERN` | `GET_DELIVERY` | `GET_BALANCE` | `GET_LINES` | `RECEIVE_MESSAGES` | `CANCEL_SCHEDULED` | `WEBHOOK` |
 | :------------------------------------ | :-----------: | :---------: | :-----------------: | :------------: | :------------: | :-----------: | :---------: | :----------------: | :----------------: | :-------: |
-| `@amirhossein-moloki/sms-melipayamak` |       ✓       |      ✓      |          ✓          |       ✓        |       ✓        |       ✓       |      ✓      |         ✓          |         ✓          |     ✓     |
-| `@amirhossein-moloki/sms-smsir`       |       ✓       |      ✓      |          ✓          |       ✓        |       ✓        |       ✓       |      ✓      |         ✓          |         —          |     ✓     |
+| `@amirhossein-moloki/sms-melipayamak` |       ✓       |      —      |          —          |       ✓        |       ✓        |       ✓       |      ✓      |         ✓          |         —          |     —     |
+| `@amirhossein-moloki/sms-smsir`       |       ✓       |      ✓      |          ✓          |       ✓        |       ✓        |       ✓       |      ✓      |         ✓          |         ✓          |     —     |
 
 _Legend: `✓` Verified Supported | `—` Verified Not Supported_
 
@@ -420,11 +413,11 @@ _Legend: `✓` Verified Supported | `—` Verified Not Supported_
 
 ## 26. Common AI Failure Modes
 
-1. **Inventing Non-Existent Capabilities:** Attempting to call `cancelScheduled` on SMS.ir (which is not supported).
-2. **Importing Internal Paths:** Using `import { SmsIrProvider } from '@amirhossein-moloki/sms-smsir/src/provider/smsir-provider'`.
+1. **Inventing Non-Existent Capabilities:** Attempting to call `sendBulk`, `sendLikeToLike`, `cancelScheduled`, or `parseWebhook` on Melipayamak, or calling `parseWebhook` on SMS.ir.
+2. **Importing Internal Paths:** Using `import { SmsirProvider } from '@amirhossein-moloki/sms-smsir/src/provider/smsir-provider'`.
 3. **Hardcoding Credentials:** Embedding API keys, passwords, or phone numbers in source files.
 4. **Bypassing OpenAPI Updates:** Creating or modifying REST controllers without updating `openapi.yml`.
-5. **Ignoring Capabilities:** Calling capabilities without checking `provider.supportsCapability()`.
+5. **Ignoring Capabilities:** Calling capabilities without checking `provider.supportsCapability()` or verifying the provider capability matrix.
 
 ---
 
@@ -459,7 +452,7 @@ Initialize SmsProviderRegistry & Register Providers
 Setup SmsService
         │
         ▼
-Implement REST Endpoints (Send OTP, Bulk, Balance)
+Implement REST Endpoints (Send OTP, Single, Balance)
         │
         ▼
 Update OpenAPI Specification
@@ -473,7 +466,26 @@ Execute Validation (Typecheck, Lint, Tests)
 
 ---
 
-## 28. AI Agent Rules
+## 28. Procedure for Adding a New SMS Provider
+
+To add a new SMS provider (e.g. `@amirhossein-moloki/sms-kavenegar`), follow this exact architectural procedure:
+
+1. **Create Package Directory:** `packages/sms-<provider>` depending strictly on `@amirhossein-moloki/sms-core`.
+2. **Define Configuration Interface:** Export typed config (e.g. `<Provider>Config`) and validator function `validate<Provider>Config` checking required credentials.
+3. **Implement API Client:** Build an HTTP client for the provider's REST/SOAP API with configurable timeout and credentials.
+4. **Implement Response and Error Mappers:**
+   - `<Provider>ResponseMapper`: Converts raw API responses to `SendSmsResponse`, `SendPatternSmsResponse`, etc.
+   - `<Provider>ErrorMapper`: Maps raw API status/error codes to `SmsProviderError`, `SmsValidationError`, or `SmsConfigurationError`.
+5. **Implement Provider Class:**
+   - Implement `SmsProvider` and target capability interfaces (`CanSendSingleSms`, `CanSendPatternSms`, etc.).
+   - Define `id`, `displayName`, `isEnabled`, and `capabilities` set matching implemented capabilities.
+6. **Export Public API:** Export classes, interfaces, and error mappers in `src/index.ts`.
+7. **Write Unit Tests:** Add unit tests in `tests/` mocking the HTTP client or transport layer.
+8. **Register in Consumer Application:** Instantiate the new provider and register it in `SmsProviderRegistry`.
+
+---
+
+## 29. AI Agent Rules
 
 1. **Rule 1 — Never Invent APIs:** Use only classes, interfaces, and methods verified in public package exports.
 2. **Rule 2 — Inspect Before Coding:** Always inspect target application files and exports before making changes.
@@ -487,7 +499,7 @@ Execute Validation (Typecheck, Lint, Tests)
 
 ---
 
-## 29. Integration Checklist
+## 30. Integration Checklist
 
 - [ ] Target application inspected and framework identified.
 - [ ] Required SMS provider packages installed.
@@ -495,7 +507,7 @@ Execute Validation (Typecheck, Lint, Tests)
 - [ ] `SmsProviderRegistry` initialized and providers registered.
 - [ ] `SmsService` instantiated.
 - [ ] OTP / Pattern sending endpoints implemented.
-- [ ] Bulk SMS / single SMS endpoints implemented where required.
+- [ ] Single SMS endpoints implemented where required.
 - [ ] Error handling implemented with `SmsPlatformError` hierarchy.
 - [ ] OpenAPI spec (`openapi.yml`) updated.
 - [ ] Unit tests created using `MockSmsProvider`.
@@ -505,7 +517,7 @@ Execute Validation (Typecheck, Lint, Tests)
 
 ---
 
-## 30. Final Validation Status
+## 31. Final Validation Status
 
 All claims and examples in this document have been audited against actual source code implementations and verified using TypeScript typechecking and automated test suites.
 

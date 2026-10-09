@@ -7,7 +7,7 @@ Welcome to the SMS Package Ecosystem integration guide. This document provides a
 ## Table of Contents
 
 1. [Overview](#1-overview)
-2. [Architecture](#2-architecture)
+2. [Architecture Summary](#2-architecture-summary)
 3. [Package Installation](#3-package-installation)
 4. [Package Selection](#4-package-selection)
 5. [Configuration](#5-configuration)
@@ -22,13 +22,14 @@ Welcome to the SMS Package Ecosystem integration guide. This document provides a
 14. [Fetching Available Lines](#14-fetching-available-lines)
 15. [Receiving Messages](#15-receiving-messages)
 16. [Canceling Scheduled Messages](#16-canceling-scheduled-messages)
-17. [Webhook Integration](#17-webhook-integration)
+17. [Webhook Status](#17-webhook-status)
 18. [Error Handling](#18-error-handling)
 19. [Testing Strategy](#19-testing-strategy)
 20. [REST API Integration](#20-rest-api-integration)
 21. [OpenAPI Integration](#21-openapi-integration)
-22. [Security & Best Practices](#22-security--best-practices)
-23. [Complete Integration Example](#23-complete-integration-example)
+22. [Adding a New Provider](#22-adding-a-new-provider)
+23. [Security & Best Practices](#23-security--best-practices)
+24. [Complete Integration Example](#24-complete-integration-example)
 
 ---
 
@@ -44,7 +45,7 @@ Key principles:
 
 ---
 
-## 2. Architecture
+## 2. Architecture Summary
 
 ```text
 Target Application (Express / Fastify / NestJS / Custom Controllers)
@@ -55,7 +56,7 @@ SmsService (@amirhossein-moloki/sms-core)
         ▼
 SmsProviderRegistry (@amirhossein-moloki/sms-core)
         ├──► MelipayamakProvider (@amirhossein-moloki/sms-melipayamak)
-        └──► SmsIrProvider (@amirhossein-moloki/sms-smsir)
+        └──► SmsirProvider (@amirhossein-moloki/sms-smsir)
 ```
 
 ---
@@ -76,17 +77,17 @@ pnpm add @amirhossein-moloki/sms-melipayamak @amirhossein-moloki/sms-smsir
 
 ## 4. Package Selection
 
-| Package Name                          |   Required   | Provider / Capability                                                  |
-| :------------------------------------ | :----------: | :--------------------------------------------------------------------- |
-| `@amirhossein-moloki/sms-core`        | **Required** | Domain entities, provider registry, orchestrator service, error types. |
-| `@amirhossein-moloki/sms-melipayamak` |   Optional   | Melipayamak SMS Panel provider integration.                            |
-| `@amirhossein-moloki/sms-smsir`       |   Optional   | SMS.ir Panel V2 provider integration.                                  |
+| Package Name                          |   Required   | Provider / Purpose                                                     | Dependencies                   |
+| :------------------------------------ | :----------: | :--------------------------------------------------------------------- | :----------------------------- |
+| `@amirhossein-moloki/sms-core`        | **Required** | Domain entities, provider registry, orchestrator service, error types. | None                           |
+| `@amirhossein-moloki/sms-melipayamak` |   Optional   | Melipayamak SMS Panel provider integration.                            | `@amirhossein-moloki/sms-core` |
+| `@amirhossein-moloki/sms-smsir`       |   Optional   | SMS.ir Panel V2 provider integration.                                  | `@amirhossein-moloki/sms-core` |
 
 ---
 
 ## 5. Configuration
 
-Each provider package exports a configuration interface and validation function.
+Each provider package exports a typed configuration interface and a runtime validation function.
 
 ### Melipayamak Configuration (`MelipayamakConfig`)
 
@@ -94,22 +95,24 @@ Each provider package exports a configuration interface and validation function.
 import { MelipayamakConfig } from '@amirhossein-moloki/sms-melipayamak';
 
 const config: MelipayamakConfig = {
-  providerId: 'melipayamak',
+  providerId: 'melipayamak', // Optional, defaults to 'melipayamak'
   username: process.env.MELIPAYAMAK_USERNAME!,
   password: process.env.MELIPAYAMAK_PASSWORD!,
-  defaultLineNumber: process.env.MELIPAYAMAK_LINE_NUMBER,
+  from: process.env.MELIPAYAMAK_LINE_NUMBER, // Optional sender line number
+  isEnabled: true,
 };
 ```
 
-### SMS.ir Configuration (`SmsIrConfig`)
+### SMS.ir Configuration (`SmsirConfig`)
 
 ```ts
-import { SmsIrConfig } from '@amirhossein-moloki/sms-smsir';
+import { SmsirConfig } from '@amirhossein-moloki/sms-smsir';
 
-const config: SmsIrConfig = {
-  providerId: 'smsir',
+const config: SmsirConfig = {
+  providerId: 'smsir', // Optional, defaults to 'smsir'
   apiKey: process.env.SMSIR_API_KEY!,
-  defaultLineNumber: process.env.SMSIR_LINE_NUMBER,
+  lineNumber: process.env.SMSIR_LINE_NUMBER, // Optional sender line number
+  isEnabled: true,
 };
 ```
 
@@ -139,7 +142,7 @@ Register initialized provider instances into `SmsProviderRegistry` and pass the 
 ```ts
 import { SmsProviderRegistry, SmsService } from '@amirhossein-moloki/sms-core';
 import { MelipayamakProvider } from '@amirhossein-moloki/sms-melipayamak';
-import { SmsIrProvider } from '@amirhossein-moloki/sms-smsir';
+import { SmsirProvider } from '@amirhossein-moloki/sms-smsir';
 
 export function setupSmsService(): SmsService {
   const registry = new SmsProviderRegistry();
@@ -148,15 +151,15 @@ export function setupSmsService(): SmsService {
     const melipayamak = new MelipayamakProvider({
       username: process.env.MELIPAYAMAK_USERNAME,
       password: process.env.MELIPAYAMAK_PASSWORD!,
-      defaultLineNumber: process.env.MELIPAYAMAK_LINE_NUMBER,
+      from: process.env.MELIPAYAMAK_LINE_NUMBER,
     });
     registry.register(melipayamak);
   }
 
   if (process.env.SMSIR_API_KEY) {
-    const smsir = new SmsIrProvider({
+    const smsir = new SmsirProvider({
       apiKey: process.env.SMSIR_API_KEY,
-      defaultLineNumber: process.env.SMSIR_LINE_NUMBER,
+      lineNumber: process.env.SMSIR_LINE_NUMBER,
     });
     registry.register(smsir);
   }
@@ -172,10 +175,11 @@ export function setupSmsService(): SmsService {
 Create an `SmsMessage` instance and call `smsService.sendSingle`:
 
 ```ts
-import { SmsMessage } from '@amirhossein-moloki/sms-core';
+import { SmsMessage, SmsType } from '@amirhossein-moloki/sms-core';
 
 const message = new SmsMessage({
   provider: 'smsir',
+  type: SmsType.SINGLE,
   recipients: ['09123456789'],
   messageTexts: ['Welcome to our platform!'],
 });
@@ -189,10 +193,10 @@ console.log('Status:', result.message.status);
 
 ## 9. Sending Bulk SMS
 
-Send a single text message to multiple recipients:
+Send a single text message to multiple recipients (supported by SMS.ir):
 
 ```ts
-const response = await smsService.sendBulk('melipayamak', {
+const response = await smsService.sendBulk('smsir', {
   messageText: 'Special discount offer on all products!',
   mobiles: ['09123456789', '09129999999'],
 });
@@ -201,11 +205,13 @@ console.log('Pack ID:', response.packId);
 console.log('Message IDs:', response.messageIds);
 ```
 
+_Capability Note:_ `sendBulk` is implemented on `@amirhossein-moloki/sms-smsir`. Calling `sendBulk` on `@amirhossein-moloki/sms-melipayamak` will throw `UnsupportedSmsCapabilityError`.
+
 ---
 
 ## 10. Sending Like-to-Like SMS
 
-Send individual custom messages to corresponding recipient numbers:
+Send individual custom messages to corresponding recipient numbers (supported by SMS.ir):
 
 ```ts
 const response = await smsService.sendLikeToLike('smsir', {
@@ -220,7 +226,7 @@ console.log('Pack ID:', response.packId);
 
 ## 11. Sending Pattern (OTP) SMS
 
-Send templated operational SMS (e.g., OTP codes) using template parameters:
+Send templated operational SMS (e.g., OTP verification codes) using template parameters:
 
 ```ts
 const response = await smsService.sendPattern('smsir', {
@@ -232,11 +238,13 @@ const response = await smsService.sendPattern('smsir', {
 console.log('OTP Message ID:', response.messageId);
 ```
 
+_Supported by:_ Both `@amirhossein-moloki/sms-melipayamak` and `@amirhossein-moloki/sms-smsir`.
+
 ---
 
 ## 12. Checking Delivery Status
 
-Retrieve the delivery report for sent messages:
+Retrieve delivery status report for sent messages:
 
 ```ts
 const delivery = await smsService.getDeliveryStatus('smsir', {
@@ -276,7 +284,6 @@ Retrieve incoming SMS messages sent to your line:
 
 ```ts
 const incoming = await smsService.receiveMessages('melipayamak', {
-  type: 'latest',
   count: 10,
 });
 
@@ -287,10 +294,10 @@ console.log('Received messages count:', incoming.messages.length);
 
 ## 16. Canceling Scheduled Messages
 
-Cancel a scheduled bulk message before dispatch:
+Cancel a scheduled bulk message before dispatch (supported by SMS.ir):
 
 ```ts
-const cancelResult = await smsService.cancelScheduled('melipayamak', {
+const cancelResult = await smsService.cancelScheduled('smsir', {
   packId: 'pack_98765',
 });
 
@@ -299,27 +306,9 @@ console.log('Returned credit:', cancelResult.returnedCreditCount);
 
 ---
 
-## 17. Webhook Integration
+## 17. Webhook Status
 
-Parse incoming status report webhooks from providers:
-
-```ts
-app.post('/api/v1/sms/webhooks/:provider', async (req, res) => {
-  const { provider } = req.params;
-
-  const result = await smsService.parseWebhook(provider, {
-    query: req.query as Record<string, unknown>,
-    body: req.body as Record<string, unknown>,
-    headers: req.headers as Record<string, string>,
-  });
-
-  console.log('Webhook Event:', result.eventType);
-  console.log('Message ID:', result.messageId);
-  console.log('Status:', result.status);
-
-  res.status(200).json({ status: 'ok' });
-});
-```
+> **CAPABILITY NOTICE:** The `CanHandleSmsWebhook` interface and `smsService.parseWebhook()` orchestrator method exist in `@amirhossein-moloki/sms-core`. However, neither `@amirhossein-moloki/sms-melipayamak` nor `@amirhossein-moloki/sms-smsir` currently implements `parseWebhook`. Invoking `parseWebhook` on these providers will throw an `UnsupportedSmsCapabilityError`.
 
 ---
 
@@ -362,23 +351,36 @@ try {
 Implement a mock provider conforming to `SmsProvider` for unit testing without live network calls:
 
 ```ts
-import { SmsProvider, SmsCapability, SmsStatus } from '@amirhossein-moloki/sms-core';
+import {
+  SmsProvider,
+  SmsCapability,
+  SmsStatus,
+  CanSendSingleSms,
+  CanSendPatternSms,
+  SendSmsRequest,
+  SendSmsResponse,
+  SendPatternSmsRequest,
+  SendPatternSmsResponse,
+} from '@amirhossein-moloki/sms-core';
 
-class MockSmsProvider implements SmsProvider {
+export class MockSmsProvider implements SmsProvider, CanSendSingleSms, CanSendPatternSms {
   readonly id = 'mock-provider';
   readonly displayName = 'Mock Provider';
   readonly isEnabled = true;
-  readonly capabilities = new Set([SmsCapability.SEND_SINGLE, SmsCapability.SEND_PATTERN]);
+  readonly capabilities = new Set<SmsCapability>([
+    SmsCapability.SEND_SINGLE,
+    SmsCapability.SEND_PATTERN,
+  ]);
 
-  supportsCapability(cap: SmsCapability) {
-    return this.capabilities.has(cap);
+  supportsCapability(capability: SmsCapability): boolean {
+    return this.capabilities.has(capability);
   }
 
-  async sendSingle() {
+  async sendSingle(request: SendSmsRequest): Promise<SendSmsResponse> {
     return { success: true, messageId: 999, status: SmsStatus.SENT };
   }
 
-  async sendPattern() {
+  async sendPattern(request: SendPatternSmsRequest): Promise<SendPatternSmsResponse> {
     return { success: true, messageId: 888, status: SmsStatus.SENT };
   }
 }
@@ -391,9 +393,8 @@ class MockSmsProvider implements SmsProvider {
 In your target project, expose endpoints for your business logic:
 
 - `POST /api/v1/sms/send-otp` — Send OTP verification code via pattern
-- `POST /api/v1/sms/send-bulk` — Send marketing bulk SMS
+- `POST /api/v1/sms/send-single` — Send single text message
 - `GET /api/v1/sms/balance` — Query remaining credit balance
-- `POST /api/v1/sms/webhooks/:provider` — Handle delivery report webhooks
 
 ---
 
@@ -403,7 +404,21 @@ When adding SMS endpoints to your application, document them in your application
 
 ---
 
-## 22. Security & Best Practices
+## 22. Adding a New Provider
+
+To extend the platform with a new SMS gateway (e.g., `packages/sms-kavenegar`):
+
+1. **Create Package Structure**: Add `packages/sms-kavenegar` with `package.json` depending on `@amirhossein-moloki/sms-core`.
+2. **Configuration Interface**: Define `KavenegarConfig` and validation function `validateKavenegarConfig`.
+3. **HTTP Client**: Implement `KavenegarClient` for executing network calls.
+4. **Mappers**: Implement `KavenegarResponseMapper` and `KavenegarErrorMapper`.
+5. **Provider Class**: Implement `KavenegarProvider` conforming to `SmsProvider` and specific capability interfaces (`CanSendSingleSms`, `CanSendPatternSms`, etc.).
+6. **Public Entrypoint**: Export public components in `src/index.ts`.
+7. **Register at Startup**: Register `KavenegarProvider` into `SmsProviderRegistry`.
+
+---
+
+## 23. Security & Best Practices
 
 1. Never commit API keys, usernames, or passwords in source files.
 2. Rate limit public OTP endpoints to prevent SMS flooding attacks.
@@ -411,17 +426,17 @@ When adding SMS endpoints to your application, document them in your application
 
 ---
 
-## 23. Complete Integration Example
+## 24. Complete Integration Example
 
 ```ts
-import { SmsProviderRegistry, SmsService, SmsMessage } from '@amirhossein-moloki/sms-core';
-import { SmsIrProvider } from '@amirhossein-moloki/sms-smsir';
+import { SmsProviderRegistry, SmsService, SmsMessage, SmsType } from '@amirhossein-moloki/sms-core';
+import { SmsirProvider } from '@amirhossein-moloki/sms-smsir';
 
 async function main() {
   const registry = new SmsProviderRegistry();
-  const smsir = new SmsIrProvider({
-    apiKey: 'your_api_key',
-    defaultLineNumber: '30000000',
+  const smsir = new SmsirProvider({
+    apiKey: process.env.SMSIR_API_KEY || 'test_api_key',
+    lineNumber: process.env.SMSIR_LINE_NUMBER || '30000000',
   });
   registry.register(smsir);
 

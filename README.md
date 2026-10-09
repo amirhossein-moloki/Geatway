@@ -1,10 +1,13 @@
-# Payment Platform Ecosystem
+# Payment & SMS Platform Ecosystem
 
-Professional, modular, provider-agnostic multi-gateway payment orchestration platform built with Node.js, pnpm workspaces, and TypeScript (Strict Mode).
+Professional, modular, provider-agnostic multi-gateway payment orchestration and SMS panel platform built with Node.js, pnpm workspaces, and TypeScript (Strict Mode).
 
 ## Project Goal
 
-The Payment Platform ecosystem is designed to standardise payment processing across Iranian (Mellat, Zarinpal, Zibal, Saman, etc.) and international payment gateways.
+The monorepo contains two primary capability-driven platform ecosystems:
+
+1. **Payment Platform Ecosystem:** Standardizes payment processing across Iranian (Mellat, Zarinpal, Zibal, Saman, etc.) and international payment gateways.
+2. **SMS Platform Ecosystem:** Standardizes SMS sending, pattern/OTP dispatch, balance queries, line retrieval, and inbox message receiving across Iranian SMS panels (Melipayamak, SMS.ir).
 
 ---
 
@@ -12,7 +15,7 @@ The Payment Platform ecosystem is designed to standardise payment processing acr
 
 The repository uses a single source of truth commercial release model:
 
-- **Source of Truth:** GitHub Private Repository
+- **Source of Truth:** GitHub Repository
 - **Package Distribution:** GitHub Packages (`https://npm.pkg.github.com`)
 
 ```text
@@ -31,6 +34,8 @@ GitHub Private Repository (Source of Truth)
 
 All packages belong to the `@amirhossein-moloki` scope and can be independently versioned and installed:
 
+### Payment Packages
+
 | Package Name                                       | Purpose                                                                                   |
 | :------------------------------------------------- | :---------------------------------------------------------------------------------------- |
 | `@amirhossein-moloki/payment-core`                 | Core domain entities, gateway contracts, capability interfaces, and GatewayRegistry.      |
@@ -40,6 +45,14 @@ All packages belong to the `@amirhossein-moloki` scope and can be independently 
 | `@amirhossein-moloki/payment-zibal`                | Zibal IPG gateway integration.                                                            |
 | `@amirhossein-moloki/payment-zarinpal`             | Zarinpal GraphQL v4 gateway integration.                                                  |
 | `@amirhossein-moloki/payment-saman`                | Saman (SEP) gateway integration.                                                          |
+
+### SMS Packages
+
+| Package Name                          | Purpose                                                                            |
+| :------------------------------------ | :--------------------------------------------------------------------------------- |
+| `@amirhossein-moloki/sms-core`        | Core domain entities, provider contracts, capability interfaces, and `SmsService`. |
+| `@amirhossein-moloki/sms-melipayamak` | Melipayamak SMS Panel provider integration.                                        |
+| `@amirhossein-moloki/sms-smsir`       | SMS.ir Panel V2 provider integration.                                              |
 
 ---
 
@@ -52,11 +65,14 @@ Consumers configure their project's `.npmrc` to authenticate with GitHub Package
 //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
 ```
 
-### Installation Command
+### Installation Commands
 
 ```bash
-# Install core and required provider packages only
-npm install @amirhossein-moloki/payment-core @amirhossein-moloki/payment-service @amirhossein-moloki/payment-mellat
+# Payment platform packages
+pnpm add @amirhossein-moloki/payment-core @amirhossein-moloki/payment-service @amirhossein-moloki/payment-mellat
+
+# SMS platform packages
+pnpm add @amirhossein-moloki/sms-core @amirhossein-moloki/sms-melipayamak @amirhossein-moloki/sms-smsir
 ```
 
 ---
@@ -94,5 +110,17 @@ python3 scripts/validate-consumer-packages.py
 
 ## Documentation
 
-- [AI Integration Guide (`AI-INTEGRATION.md`)](./AI-INTEGRATION.md) — Single source of truth for AI agents integrating payment packages into consumer applications.
-- [Release & Commercial Distribution Guide (`docs/release-and-distribution.md`)](./docs/release-and-distribution.md) — Maintainer guide for release management, semver versioning, GitHub Packages publishing, and secrets safety.
+### Payment Ecosystem
+
+- [Payment AI Integration Guide (`AI-INTEGRATION.md`)](./AI-INTEGRATION.md) — Single source of truth for AI agents integrating payment packages.
+- [Payment Architecture (`docs/payment-architecture.md`)](./docs/payment-architecture.md) — Architectural principles and state machine.
+- [Payment Integration Guide (`docs/payment-integration-guide.md`)](./docs/payment-integration-guide.md) — Step-by-step developer integration guide.
+- [Payment Provider Capabilities (`docs/provider-capabilities.md`)](./docs/provider-capabilities.md) — Gateway matrix and configuration schemas.
+- [Release & Commercial Distribution Guide (`docs/release-and-distribution.md`)](./docs/release-and-distribution.md) — Maintainer guide for releases.
+
+### SMS Ecosystem
+
+- [SMS AI Integration Guide (`SMS-AI-INTEGRATION.md`)](./SMS-AI-INTEGRATION.md) — Authoritative single source of truth for AI agents integrating SMS packages.
+- [SMS Architecture (`docs/sms-architecture.md`)](./docs/sms-architecture.md) — Component responsibilities, layer isolation, and capability matrix.
+- [SMS Integration Guide (`docs/sms-integration-guide.md`)](./docs/sms-integration-guide.md) — Comprehensive developer guide for SMS setup and usage.
+- [SMS Testing Strategy (`docs/sms-testing.md`)](./docs/sms-testing.md) — Unit testing patterns and mock provider implementation.
