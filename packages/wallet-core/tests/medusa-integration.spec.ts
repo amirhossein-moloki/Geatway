@@ -308,7 +308,7 @@ describe('Medusa v2 Integration Adapters', () => {
 
     it('rejects initiatePayment, authorizePayment, and refundPayment if wallet does not belong to customer', async () => {
       const { wallet: walletA } = await moduleService.getCustomerWallet('cust_alice', 'IRR');
-      const { wallet: walletB } = await moduleService.getCustomerWallet('cust_bob', 'IRR');
+      await moduleService.getCustomerWallet('cust_bob', 'IRR');
 
       await moduleService.topUpWallet({
         walletId: walletA.id,
