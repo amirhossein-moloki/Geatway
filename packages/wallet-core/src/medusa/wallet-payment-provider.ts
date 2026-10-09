@@ -38,7 +38,16 @@ export class MedusaWalletPaymentProvider {
     const amountMoney = Money.fromMinor(BigInt(input.amount), currency);
 
     let walletId = input.wallet_id;
-    if (!walletId && input.customer_id) {
+    if (walletId && input.customer_id) {
+      const wallet = await this.walletService.getWalletById(walletId);
+      if (!wallet || wallet.ownerId !== input.customer_id) {
+        return {
+          status: 'error',
+          data: {},
+          error: `Wallet '${walletId}' does not belong to customer '${input.customer_id}'`,
+        };
+      }
+    } else if (!walletId && input.customer_id) {
       const wallets = await this.walletService.getWalletsByOwnerId(input.customer_id);
       const target = wallets.find((w) => w.currency === currency);
       if (target) {
@@ -89,6 +98,7 @@ export class MedusaWalletPaymentProvider {
     const walletId = paymentSessionData.walletId as string;
     const amountStr = paymentSessionData.amount as string;
     const currency = paymentSessionData.currency as string;
+    const customerId = paymentSessionData.customerId as string | undefined;
 
     if (!walletId || !amountStr || !currency) {
       return {
@@ -96,6 +106,17 @@ export class MedusaWalletPaymentProvider {
         data: paymentSessionData,
         error: 'Invalid payment session data for wallet checkout',
       };
+    }
+
+    if (customerId) {
+      const wallet = await this.walletService.getWalletById(walletId);
+      if (!wallet || wallet.ownerId !== customerId) {
+        return {
+          status: 'error',
+          data: paymentSessionData,
+          error: `Wallet '${walletId}' does not belong to customer '${customerId}'`,
+        };
+      }
     }
 
     try {
@@ -165,6 +186,7 @@ export class MedusaWalletPaymentProvider {
   ): Promise<PaymentProviderResult> {
     const walletId = paymentData.walletId as string;
     const currency = paymentData.currency as string;
+    const customerId = paymentData.customerId as string | undefined;
 
     if (!walletId || !currency) {
       return {
@@ -172,6 +194,17 @@ export class MedusaWalletPaymentProvider {
         data: paymentData,
         error: 'Missing walletId or currency for refund',
       };
+    }
+
+    if (customerId) {
+      const wallet = await this.walletService.getWalletById(walletId);
+      if (!wallet || wallet.ownerId !== customerId) {
+        return {
+          status: 'error',
+          data: paymentData,
+          error: `Wallet '${walletId}' does not belong to customer '${customerId}'`,
+        };
+      }
     }
 
     try {

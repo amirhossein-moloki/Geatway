@@ -212,6 +212,74 @@ describe('Concurrency and Deterministic Lock Ordering', () => {
     expect(userBal.amount).toBe(250000n);
   });
 
+  it('should reject conflicting transaction payloads under the same idempotency key', async () => {
+    const accBank = await ledgerRepo.saveAccount(
+      LedgerAccount.create({
+        id: 'acc_conflict_bank',
+        name: 'Bank',
+        type: AccountType.ASSET,
+        currency: 'IRR',
+      }),
+    );
+
+    const accUser = await ledgerRepo.saveAccount(
+      LedgerAccount.create({
+        id: 'acc_conflict_user',
+        name: 'User',
+        type: AccountType.LIABILITY,
+        currency: 'IRR',
+      }),
+    );
+
+    const idempotencyKey = 'conflict_idemp_key_100';
+
+    const tx1 = LedgerTransaction.draft({
+      id: 'tx_original',
+      description: 'Original Topup',
+      idempotencyKey,
+      entries: [
+        new LedgerEntry({
+          id: 'e1_orig',
+          accountId: accBank.id,
+          direction: EntryDirection.DEBIT,
+          amount: Money.fromMinor(100000n, 'IRR'),
+        }),
+        new LedgerEntry({
+          id: 'e2_orig',
+          accountId: accUser.id,
+          direction: EntryDirection.CREDIT,
+          amount: Money.fromMinor(100000n, 'IRR'),
+        }),
+      ],
+    });
+    tx1.post();
+    await ledgerRepo.saveTransaction(tx1);
+
+    // Conflicting request with DIFFERENT amount under same idempotency key
+    const tx2 = LedgerTransaction.draft({
+      id: 'tx_conflicting',
+      description: 'Original Topup',
+      idempotencyKey,
+      entries: [
+        new LedgerEntry({
+          id: 'e1_conf',
+          accountId: accBank.id,
+          direction: EntryDirection.DEBIT,
+          amount: Money.fromMinor(200000n, 'IRR'),
+        }),
+        new LedgerEntry({
+          id: 'e2_conf',
+          accountId: accUser.id,
+          direction: EntryDirection.CREDIT,
+          amount: Money.fromMinor(200000n, 'IRR'),
+        }),
+      ],
+    });
+    tx2.post();
+
+    await expect(ledgerRepo.saveTransaction(tx2)).rejects.toThrow(PersistenceConflictError);
+  });
+
   it('should map PostgreSQL deadlock (40P01) and serialization errors (40001) to PersistenceConflictError', () => {
     const deadlockErr = { code: '40P01', message: 'deadlock detected' };
     const mappedDeadlock = mapWalletPgError(deadlockErr);
