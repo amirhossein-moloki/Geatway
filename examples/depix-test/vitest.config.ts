@@ -38,6 +38,14 @@ export default defineConfig({
         __dirname,
         '../../packages/payment-persistence-postgres/src/index.ts',
       ),
+      '@amirhossein-moloki/wallet-core': path.resolve(
+        __dirname,
+        '../../packages/wallet-core/src/index.ts',
+      ),
+      '@amirhossein-moloki/wallet-persistence-postgres': path.resolve(
+        __dirname,
+        '../../packages/wallet-persistence-postgres/src/index.ts',
+      ),
     },
   },
 });

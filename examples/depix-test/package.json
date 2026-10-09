@@ -19,7 +19,9 @@
     "@amirhossein-moloki/payment-saman": "workspace:*",
     "@amirhossein-moloki/payment-service": "workspace:*",
     "@amirhossein-moloki/payment-zarinpal": "workspace:*",
-    "@amirhossein-moloki/payment-zibal": "workspace:*"
+    "@amirhossein-moloki/payment-zibal": "workspace:*",
+    "@amirhossein-moloki/wallet-core": "workspace:*",
+    "@amirhossein-moloki/wallet-persistence-postgres": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

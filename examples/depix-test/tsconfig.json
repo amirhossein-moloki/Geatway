@@ -27,6 +27,10 @@
       "@amirhossein-moloki/payment-saman": ["../../packages/payment-saman/dist/index.d.ts"],
       "@amirhossein-moloki/payment-persistence-postgres": [
         "../../packages/payment-persistence-postgres/dist/index.d.ts"
+      ],
+      "@amirhossein-moloki/wallet-core": ["../../packages/wallet-core/dist/index.d.ts"],
+      "@amirhossein-moloki/wallet-persistence-postgres": [
+        "../../packages/wallet-persistence-postgres/dist/index.d.ts"
       ]
     }
   },

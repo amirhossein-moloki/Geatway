@@ -6,8 +6,14 @@ import {
   InMemoryIdempotencyRepository,
   InMemoryWebhookEventRepository,
 } from '@amirhossein-moloki/payment-service/testing';
+import {
+  WalletService,
+  MedusaWalletModuleService,
+  MedusaWalletPaymentProvider,
+} from '@amirhossein-moloki/wallet-core';
 import { loadConfig, AppConfig } from './config.js';
 import { createGatewayRegistry } from './gateway-factory.js';
+import { InMemoryWalletRepository, InMemoryLedgerRepository } from './in-memory-wallet-repo.js';
 
 export class DepixPaymentApp {
   public readonly config: AppConfig;
@@ -17,6 +23,13 @@ export class DepixPaymentApp {
   public readonly idempotencyRepository: InMemoryIdempotencyRepository;
   public readonly webhookEventRepository: InMemoryWebhookEventRepository;
   public readonly service: PaymentApplicationService;
+
+  // Wallet Domain Services
+  public readonly walletRepository: InMemoryWalletRepository;
+  public readonly ledgerRepository: InMemoryLedgerRepository;
+  public readonly walletService: WalletService;
+  public readonly walletModuleService: MedusaWalletModuleService;
+  public readonly walletPaymentProvider: MedusaWalletPaymentProvider;
 
   constructor(customConfig?: Partial<AppConfig>) {
     this.config = { ...loadConfig(), ...customConfig };
@@ -41,6 +54,18 @@ export class DepixPaymentApp {
         },
       },
     });
+
+    // Initialize Wallet Domain Services & Medusa Adapters
+    this.walletRepository = new InMemoryWalletRepository();
+    this.ledgerRepository = new InMemoryLedgerRepository();
+    this.walletService = new WalletService({
+      walletRepository: this.walletRepository,
+      ledgerRepository: this.ledgerRepository,
+    });
+    this.walletModuleService = new MedusaWalletModuleService({
+      walletService: this.walletService,
+    });
+    this.walletPaymentProvider = new MedusaWalletPaymentProvider(this.walletService);
   }
 
   public getRegisteredGateways(): string[] {

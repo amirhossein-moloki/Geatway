@@ -64,6 +64,12 @@ importers:
       '@amirhossein-moloki/payment-zibal':
         specifier: workspace:*
         version: link:../../packages/payment-zibal
+      '@amirhossein-moloki/wallet-core':
+        specifier: workspace:*
+        version: link:../../packages/wallet-core
+      '@amirhossein-moloki/wallet-persistence-postgres':
+        specifier: workspace:*
+        version: link:../../packages/wallet-persistence-postgres
     devDependencies:
       '@types/node':
         specifier: ^20.11.0
