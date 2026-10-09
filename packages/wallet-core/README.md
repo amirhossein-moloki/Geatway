@@ -20,7 +20,7 @@ Framework-agnostic wallet core domain package for the payment platform monorepo.
 
 This section documents the integration contracts and boundary requirements for connecting `@amirhossein-moloki/wallet-core` to the consumer Medusa v2 store application (`depix-ecommerce`).
 
-*Note: The consumer store `depix-ecommerce` is an external repository that is deployed independently from this payment platform monorepo.*
+_Note: The consumer store `depix-ecommerce` is an external repository that is deployed independently from this payment platform monorepo._
 
 ### 1. Medusa Module Boundary (`WalletModule`)
 
@@ -28,14 +28,14 @@ To register the wallet domain within Medusa v2, create a dedicated Medusa module
 
 ```typescript
 // src/modules/wallet/index.ts
-import { Module } from "@medusajs/framework/utils"
-import { WalletModuleService } from "./service"
+import { Module } from '@medusajs/framework/utils';
+import { WalletModuleService } from './service';
 
-export const WALLET_MODULE = "wallet"
+export const WALLET_MODULE = 'wallet';
 
 export default Module(WALLET_MODULE, {
   service: WalletModuleService,
-})
+});
 ```
 
 ```typescript
@@ -45,76 +45,102 @@ import {
   Money,
   IWalletRepository,
   ILedgerRepository,
-} from "@amirhossein-moloki/wallet-core"
+} from '@amirhossein-moloki/wallet-core';
 import {
   PostgresWalletRepository,
   PostgresLedgerRepository,
-} from "@amirhossein-moloki/wallet-persistence-postgres"
+} from '@amirhossein-moloki/wallet-persistence-postgres';
 
 export class WalletModuleService {
-  private readonly walletService: WalletService
+  private readonly walletService: WalletService;
 
   constructor(container: any) {
-    const pgExecutor = container.pgExecutor // DB pool executor
-    const walletRepo = new PostgresWalletRepository(pgExecutor)
-    const ledgerRepo = new PostgresLedgerRepository(pgExecutor)
+    const pgExecutor = container.pgExecutor; // DB pool executor
+    const walletRepo = new PostgresWalletRepository(pgExecutor);
+    const ledgerRepo = new PostgresLedgerRepository(pgExecutor);
 
     this.walletService = new WalletService({
       walletRepository: walletRepo,
       ledgerRepository: ledgerRepo,
-    })
+    });
   }
 
-  public async getCustomerWallet(customerId: string, currency = "IRR") {
-    let wallet = (await this.walletService.getWalletsByOwnerId(customerId))[0]
+  public async getCustomerWallet(customerId: string, currency = 'IRR') {
+    let wallet = (await this.walletService.getWalletsByOwnerId(customerId))[0];
     if (!wallet) {
-      const created = await this.walletService.createWallet(customerId, currency)
-      wallet = created.wallet
+      const created = await this.walletService.createWallet(customerId, currency);
+      wallet = created.wallet;
     }
-    const balance = await this.walletService.getWalletBalance(wallet.id)
-    return { wallet, balance }
+    const balance = await this.walletService.getWalletBalance(wallet.id);
+    return { wallet, balance };
   }
 
-  public async topUpWallet(walletId: string, amountMinor: bigint, currency: string, reference: string, idempotencyKey: string) {
-    const amount = Money.fromMinor(amountMinor, currency)
+  public async topUpWallet(
+    walletId: string,
+    amountMinor: bigint,
+    currency: string,
+    reference: string,
+    idempotencyKey: string,
+  ) {
+    const amount = Money.fromMinor(amountMinor, currency);
     return this.walletService.topUpWallet({
       walletId,
       amount,
       reference,
       idempotencyKey,
-    })
+    });
   }
 
-  public async adminCreditWallet(walletId: string, amountMinor: bigint, currency: string, reason: string, adminId: string, idempotencyKey: string) {
-    const amount = Money.fromMinor(amountMinor, currency)
+  public async adminCreditWallet(
+    walletId: string,
+    amountMinor: bigint,
+    currency: string,
+    reason: string,
+    adminId: string,
+    idempotencyKey: string,
+  ) {
+    const amount = Money.fromMinor(amountMinor, currency);
     return this.walletService.adminCreditWallet({
       walletId,
       amount,
       reason,
       adminId,
       idempotencyKey,
-    })
+    });
   }
 
-  public async adminDebitWallet(walletId: string, amountMinor: bigint, currency: string, reason: string, adminId: string, idempotencyKey: string) {
-    const amount = Money.fromMinor(amountMinor, currency)
+  public async adminDebitWallet(
+    walletId: string,
+    amountMinor: bigint,
+    currency: string,
+    reason: string,
+    adminId: string,
+    idempotencyKey: string,
+  ) {
+    const amount = Money.fromMinor(amountMinor, currency);
     return this.walletService.adminDebitWallet({
       walletId,
       amount,
       reason,
       adminId,
       idempotencyKey,
-    })
+    });
   }
 
-  public async debitForCheckout(walletId: string, amountMinor: bigint, currency: string, orderId: string, idempotencyKey: string) {
-    const amount = Money.fromMinor(amountMinor, currency)
+  public async debitForCheckout(
+    walletId: string,
+    amountMinor: bigint,
+    currency: string,
+    orderId: string,
+    idempotencyKey: string,
+  ) {
+    const amount = Money.fromMinor(amountMinor, currency);
     return this.walletService.debitWalletForCheckout({
       walletId,
       amount,
       orderId,
       idempotencyKey,
-    })
+    });
   }
 }
 ```
@@ -128,7 +154,7 @@ export class WalletModuleService {
 
 - `POST /store/me/wallet/topup`:
   - **Auth**: Authenticated Customer.
-  - **Behavior**: Initiates an external gateway payment via `@amirhossein-moloki/payment-service`. *Does NOT credit the wallet immediately.*
+  - **Behavior**: Initiates an external gateway payment via `@amirhossein-moloki/payment-service`. _Does NOT credit the wallet immediately._
   - **Verification**: Credits the wallet **only** upon receiving an authoritative, server-verified payment result callback from the payment gateway via `walletService.topUpWallet()`.
 
 ### 3. Medusa Administrative API Routes
