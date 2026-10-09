@@ -21,7 +21,10 @@ export function createHttpServer(app: DepixPaymentApp): http.Server {
     // CORS Headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Idempotency-Key, x-customer-id, x-admin-id');
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      'Content-Type, Idempotency-Key, x-customer-id, x-admin-id',
+    );
 
     if (method === 'OPTIONS') {
       res.writeHead(204);
@@ -89,15 +92,22 @@ export function createHttpServer(app: DepixPaymentApp): http.Server {
 
       // 3. Customer Wallet: GET /store/me/wallet
       if (pathname === '/store/me/wallet' && method === 'GET') {
-        const customerId = (req.headers['x-customer-id'] as string) || (reqUrl.searchParams.get('customerId') as string);
+        const customerId =
+          (req.headers['x-customer-id'] as string) ||
+          (reqUrl.searchParams.get('customerId') as string);
         if (!customerId || customerId.trim() === '') {
           res.writeHead(401, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Unauthorized', message: 'Missing x-customer-id header' }));
+          res.end(
+            JSON.stringify({ error: 'Unauthorized', message: 'Missing x-customer-id header' }),
+          );
           return;
         }
 
         const currency = (reqUrl.searchParams.get('currency') as string) || 'IRR';
-        const { wallet, balance } = await app.walletModuleService.getCustomerWallet(customerId, currency);
+        const { wallet, balance } = await app.walletModuleService.getCustomerWallet(
+          customerId,
+          currency,
+        );
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(
@@ -117,14 +127,19 @@ export function createHttpServer(app: DepixPaymentApp): http.Server {
         const customerId = (req.headers['x-customer-id'] as string) || (body.customerId as string);
         if (!customerId || customerId.trim() === '') {
           res.writeHead(401, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Unauthorized', message: 'Missing x-customer-id header' }));
+          res.end(
+            JSON.stringify({ error: 'Unauthorized', message: 'Missing x-customer-id header' }),
+          );
           return;
         }
 
         const gateway = (body.gateway as string) || 'zibal';
         const amount = Number(body.amount) || 100000;
         const currency = (body.currency as string) || 'IRR';
-        const idempotencyKey = (req.headers['idempotency-key'] as string) || (body.idempotencyKey as string) || undefined;
+        const idempotencyKey =
+          (req.headers['idempotency-key'] as string) ||
+          (body.idempotencyKey as string) ||
+          undefined;
 
         const { wallet } = await app.walletModuleService.getCustomerWallet(customerId, currency);
 
@@ -171,7 +186,8 @@ export function createHttpServer(app: DepixPaymentApp): http.Server {
 
         if (action === 'credit' && method === 'POST') {
           const reason = body.reason as string;
-          const idempotencyKey = (req.headers['idempotency-key'] as string) || (body.idempotencyKey as string);
+          const idempotencyKey =
+            (req.headers['idempotency-key'] as string) || (body.idempotencyKey as string);
           const amount = Number(body.amount);
           const currency = (body.currency as string) || 'IRR';
 
@@ -204,7 +220,8 @@ export function createHttpServer(app: DepixPaymentApp): http.Server {
 
         if (action === 'debit' && method === 'POST') {
           const reason = body.reason as string;
-          const idempotencyKey = (req.headers['idempotency-key'] as string) || (body.idempotencyKey as string);
+          const idempotencyKey =
+            (req.headers['idempotency-key'] as string) || (body.idempotencyKey as string);
           const amount = Number(body.amount);
           const currency = (body.currency as string) || 'IRR';
 
@@ -242,7 +259,8 @@ export function createHttpServer(app: DepixPaymentApp): http.Server {
         const amount = Number(body.amount);
         const currency = (body.currency as string) || 'IRR';
         const orderId = body.orderId as string;
-        const idempotencyKey = (req.headers['idempotency-key'] as string) || (body.idempotencyKey as string);
+        const idempotencyKey =
+          (req.headers['idempotency-key'] as string) || (body.idempotencyKey as string);
 
         const result = await app.walletPaymentProvider.authorizePayment(
           { walletId, amount: amount.toString(), currency },

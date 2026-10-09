@@ -13,10 +13,7 @@ import {
 } from '@amirhossein-moloki/wallet-core';
 import { loadConfig, AppConfig } from './config.js';
 import { createGatewayRegistry } from './gateway-factory.js';
-import {
-  InMemoryWalletRepository,
-  InMemoryLedgerRepository,
-} from './in-memory-wallet-repo.js';
+import { InMemoryWalletRepository, InMemoryLedgerRepository } from './in-memory-wallet-repo.js';
 
 export class DepixPaymentApp {
   public readonly config: AppConfig;

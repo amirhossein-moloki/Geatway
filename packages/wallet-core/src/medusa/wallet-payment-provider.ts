@@ -33,9 +33,7 @@ export class MedusaWalletPaymentProvider {
   /**
    * Initiates payment by checking wallet balance.
    */
-  public async initiatePayment(
-    input: InitiatePaymentContext,
-  ): Promise<PaymentProviderResult> {
+  public async initiatePayment(input: InitiatePaymentContext): Promise<PaymentProviderResult> {
     const currency = input.currency_code.toUpperCase();
     const amountMoney = Money.fromMinor(BigInt(input.amount), currency);
 
@@ -146,9 +144,7 @@ export class MedusaWalletPaymentProvider {
   /**
    * Cancels payment.
    */
-  public async cancelPayment(
-    paymentData: Record<string, unknown>,
-  ): Promise<PaymentProviderResult> {
+  public async cancelPayment(paymentData: Record<string, unknown>): Promise<PaymentProviderResult> {
     return {
       status: 'canceled',
       data: {
