@@ -103,6 +103,25 @@ importers:
         specifier: ^1.0.0
         version: 1.6.1(@types/node@20.19.43)
 
+  examples/sms-integration:
+    dependencies:
+      '@amirhossein-moloki/sms-core':
+        specifier: workspace:*
+        version: link:../../packages/sms-core
+      '@amirhossein-moloki/sms-melipayamak':
+        specifier: workspace:*
+        version: link:../../packages/sms-melipayamak
+      '@amirhossein-moloki/sms-smsir':
+        specifier: workspace:*
+        version: link:../../packages/sms-smsir
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+      vitest:
+        specifier: ^1.0.0
+        version: 1.6.1(@types/node@20.19.43)
+
   packages/payment-core: {}
 
   packages/payment-mellat:

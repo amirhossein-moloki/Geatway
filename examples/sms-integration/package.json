@@ -1,0 +1,19 @@
+{
+  "name": "sms-integration-example",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@amirhossein-moloki/sms-core": "workspace:*",
+    "@amirhossein-moloki/sms-melipayamak": "workspace:*",
+    "@amirhossein-moloki/sms-smsir": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  }
+}

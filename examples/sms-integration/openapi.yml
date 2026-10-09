@@ -1,0 +1,94 @@
+openapi: 3.0.3
+info:
+  title: SMS Integration Example API
+  description: Reference HTTP API for SMS operations using @amirhossein-moloki/sms-core and provider packages.
+  version: 1.0.0
+paths:
+  /api/v1/sms/send-single:
+    post:
+      summary: Send single SMS message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - provider
+                - recipient
+                - text
+              properties:
+                provider:
+                  type: string
+                  example: smsir
+                recipient:
+                  type: string
+                  example: '09123456789'
+                text:
+                  type: string
+                  example: 'Hello from SMS Ecosystem!'
+      responses:
+        '200':
+          description: Message dispatched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  messageId:
+                    type: string
+                  status:
+                    type: string
+  /api/v1/sms/send-otp:
+    post:
+      summary: Send OTP operational message using pattern template
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - provider
+                - mobile
+                - templateId
+                - code
+              properties:
+                provider:
+                  type: string
+                  example: smsir
+                mobile:
+                  type: string
+                  example: '09123456789'
+                templateId:
+                  type: integer
+                  example: 100000
+                code:
+                  type: string
+                  example: '123456'
+      responses:
+        '200':
+          description: OTP message sent successfully
+  /api/v1/sms/balance/{provider}:
+    get:
+      summary: Check credit balance for a provider
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Provider balance returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  provider:
+                    type: string
+                  balance:
+                    type: number
