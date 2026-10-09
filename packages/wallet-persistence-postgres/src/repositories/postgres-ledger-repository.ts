@@ -20,6 +20,30 @@ import { PgExecutor } from '../migrator.js';
 import { mapWalletPgError } from '../error-mapper.js';
 import { withTransaction } from '../db-transaction.js';
 
+/**
+ * PostgreSQL Implementation of the Wallet Domain `ILedgerRepository`.
+ *
+ * ### Enforcement Strategy & Integrity Guarantees
+ *
+ * **PostgreSQL Database-Enforced Invariants:**
+ * - Entity identity & uniqueness: Primary keys on `wallets(id)`, `ledger_accounts(id)`, `ledger_transactions(id)`, `ledger_entries(id)`.
+ * - Durable Idempotency: `uk_ledger_transactions_idempotency_key` partial unique index on `ledger_transactions(idempotency_key)`.
+ * - Referencing Integrity: Foreign keys `ledger_entries.transaction_id -> ledger_transactions.id` and `ledger_entries.account_id -> ledger_accounts.id`.
+ * - Amount and Direction Domain Bounds: SQL `CHECK (amount > 0)` and `CHECK (direction IN ('DEBIT', 'CREDIT'))`.
+ * - Account Type & Status Bounds: SQL `CHECK (type IN (...))` and `CHECK (status IN (...))`.
+ *
+ * **Controlled Repository Posting Path Invariants:**
+ * - Double-Entry Balancing: Enforces `sum(DEBIT) == sum(CREDIT)` for a transaction in the exact currency (`transaction.validate()`).
+ * - Account Existence & Active Status: Verifies all referenced accounts exist and have status `ACTIVE`.
+ * - Currency Consistency: Verifies transaction entries match account currencies.
+ * - Concurrency Control: Locks referenced `ledger_accounts` using `SELECT ... FOR UPDATE` in deterministic alphabetical `ORDER BY id ASC`.
+ * - Exact Monetary Math: Performs BigInt minor-unit arithmetic directly on PostgreSQL `BIGINT` balances.
+ * - Atomic Persistence & Rollback: Executes all header, entry, and balance mutations inside a single PostgreSQL database transaction.
+ *
+ * **Boundary between Persistence and Service-Level Idempotency:**
+ * - Persistence Layer: Prevents duplicate ledger transactions at the PostgreSQL database level via unique constraints and transaction locks, ensuring financial operations execute at most once and rejecting payload mismatches.
+ * - Service Layer: Manages HTTP header parsing, request validation, response caching, and client retry handling.
+ */
 export class PostgresLedgerRepository implements ILedgerRepository {
   constructor(private readonly executor: PgExecutor) {}
 
@@ -170,40 +194,41 @@ export class PostgresLedgerRepository implements ILedgerRepository {
   }
 
   public async saveTransaction(transaction: LedgerTransaction): Promise<LedgerTransaction> {
-    return withTransaction(this.executor, async (txClient) => {
-      try {
-        // 1. Check existing transaction by ID
+    try {
+      return await withTransaction(this.executor, async (txClient) => {
+        // 1. Check existing transaction by ID with row lock
         const existingTxRes = await txClient.query(
-          `SELECT * FROM ledger_transactions WHERE id = $1`,
+          `SELECT * FROM ledger_transactions WHERE id = $1 FOR UPDATE`,
           [transaction.id],
         );
 
         if (existingTxRes.rows.length > 0) {
           const existingRow = existingTxRes.rows[0] as Record<string, unknown>;
           if (existingRow.status === TransactionStatus.POSTED) {
-            // Re-fetch full existing transaction with entries
             const entriesRes = await txClient.query(
               `SELECT * FROM ledger_entries WHERE transaction_id = $1 ORDER BY created_at ASC, id ASC`,
               [transaction.id],
             );
-            const existingEntries = entriesRes.rows.map((r) =>
-              this.mapRowToEntry(r as Record<string, unknown>),
-            );
-            const existingTx = this.mapRowToTransaction(existingRow, existingEntries);
+            if (entriesRes.rows.length >= 2) {
+              const existingEntries = entriesRes.rows.map((r) =>
+                this.mapRowToEntry(r as Record<string, unknown>),
+              );
+              const existingTx = this.mapRowToTransaction(existingRow, existingEntries);
 
-            if (transaction.status === TransactionStatus.POSTED) {
-              if (this.areTransactionsEqual(existingTx, transaction)) {
-                return existingTx;
+              if (transaction.status === TransactionStatus.POSTED) {
+                if (this.areTransactionsEqual(existingTx, transaction)) {
+                  return existingTx;
+                }
               }
+              throw new ImmutableTransactionError(transaction.id);
             }
-            throw new ImmutableTransactionError(transaction.id);
           }
         }
 
-        // 2. Check Idempotency Key
+        // 2. Check Idempotency Key with row lock
         if (transaction.idempotencyKey) {
           const idempRes = await txClient.query(
-            `SELECT * FROM ledger_transactions WHERE idempotency_key = $1`,
+            `SELECT * FROM ledger_transactions WHERE idempotency_key = $1 FOR UPDATE`,
             [transaction.idempotencyKey],
           );
 
@@ -213,25 +238,27 @@ export class PostgresLedgerRepository implements ILedgerRepository {
               `SELECT * FROM ledger_entries WHERE transaction_id = $1 ORDER BY created_at ASC, id ASC`,
               [existingRow.id],
             );
-            const existingEntries = entriesRes.rows.map((r) =>
-              this.mapRowToEntry(r as Record<string, unknown>),
-            );
-            const existingTx = this.mapRowToTransaction(existingRow, existingEntries);
-
-            if (this.areTransactionsPayloadEqual(existingTx, transaction)) {
-              return existingTx;
-            } else {
-              throw new PersistenceConflictError(
-                `Idempotency key conflict: key '${transaction.idempotencyKey}' was previously used with different transaction payload`,
-                { idempotencyKey: transaction.idempotencyKey },
+            if (entriesRes.rows.length >= 2) {
+              const existingEntries = entriesRes.rows.map((r) =>
+                this.mapRowToEntry(r as Record<string, unknown>),
               );
+              const existingTx = this.mapRowToTransaction(existingRow, existingEntries);
+
+              if (this.areTransactionsPayloadEqual(existingTx, transaction)) {
+                return existingTx;
+              } else {
+                throw new PersistenceConflictError(
+                  `Idempotency key conflict: key '${transaction.idempotencyKey}' was previously used with different transaction payload`,
+                  { idempotencyKey: transaction.idempotencyKey },
+                );
+              }
             }
           }
         }
 
-        // 3. Handle POSTED Status Saving (Atomic Posting & Locking)
+        // 3. Handle POSTED Status Saving (Atomic Posting & Deterministic Account Locking)
         if (transaction.status === TransactionStatus.POSTED) {
-          // Domain Validation
+          // Domain Validation (Debits == Credits, non-empty, etc.)
           transaction.validate();
 
           // Collect and sort unique account IDs alphabetically for deterministic lock order
@@ -243,7 +270,7 @@ export class PostgresLedgerRepository implements ILedgerRepository {
             throw new Error('Transaction has no entry account IDs');
           }
 
-          // Lock accounts using SELECT ... FOR UPDATE
+          // Lock accounts using SELECT ... FOR UPDATE in deterministic sorted order
           const placeholders = accountIds.map((_, i) => `$${i + 1}`).join(', ');
           const lockSql = `
             SELECT id, name, type, currency, status, balance
@@ -273,7 +300,7 @@ export class PostgresLedgerRepository implements ILedgerRepository {
             }
           }
 
-          // Verify transaction currency matches accounts
+          // Verify transaction currency matches account currencies
           const txCurrency = transaction.getCurrency();
           for (const accountId of accountIds) {
             const accountRow = lockedAccountsMap.get(accountId)!;
@@ -294,6 +321,7 @@ export class PostgresLedgerRepository implements ILedgerRepository {
             ON CONFLICT (id) DO UPDATE SET
               status = EXCLUDED.status,
               posted_at = EXCLUDED.posted_at
+            WHERE ledger_transactions.status != 'POSTED'
             RETURNING *
           `;
           const txValues = [
@@ -313,7 +341,7 @@ export class PostgresLedgerRepository implements ILedgerRepository {
             transaction.id,
           ]);
 
-          // Save entries and apply balance updates
+          // Save entries and apply exact BigInt balance updates
           for (const entry of transaction.entries) {
             const saveEntrySql = `
               INSERT INTO ledger_entries (
@@ -406,10 +434,48 @@ export class PostgresLedgerRepository implements ILedgerRepository {
           throw new Error(`Failed to retrieve saved transaction '${transaction.id}'`);
         }
         return savedTx;
-      } catch (err) {
-        throw mapWalletPgError(err, `Failed to save ledger transaction '${transaction.id}'`);
+      });
+    } catch (err) {
+      // Check if error is due to a PostgreSQL unique violation (code 23505) during concurrent duplicate requests
+      const pgErr = err as { code?: string };
+      if (pgErr.code === '23505') {
+        // Fallback check: If concurrent duplicate request raced and failed on constraint, re-fetch posted transaction
+        if (transaction.idempotencyKey) {
+          let existingByKey = await this.getTransactionByIdempotencyKey(transaction.idempotencyKey);
+          for (let i = 0; i < 10 && existingByKey && existingByKey.entries.length < 2; i++) {
+            await new Promise((resolve) => setTimeout(resolve, 10));
+            existingByKey = await this.getTransactionByIdempotencyKey(transaction.idempotencyKey);
+          }
+          if (existingByKey && existingByKey.entries.length >= 2) {
+            if (this.areTransactionsPayloadEqual(existingByKey, transaction)) {
+              return existingByKey;
+            } else {
+              throw new PersistenceConflictError(
+                `Idempotency key conflict: key '${transaction.idempotencyKey}' was previously used with different transaction payload`,
+                { idempotencyKey: transaction.idempotencyKey },
+                err,
+              );
+            }
+          }
+        }
+
+        let existingById = await this.getTransactionById(transaction.id);
+        for (let i = 0; i < 10 && existingById && existingById.entries.length < 2; i++) {
+          await new Promise((resolve) => setTimeout(resolve, 10));
+          existingById = await this.getTransactionById(transaction.id);
+        }
+        if (existingById && existingById.entries.length >= 2) {
+          if (
+            existingById.status === TransactionStatus.POSTED &&
+            this.areTransactionsPayloadEqual(existingById, transaction)
+          ) {
+            return existingById;
+          }
+        }
       }
-    });
+
+      throw mapWalletPgError(err, `Failed to save ledger transaction '${transaction.id}'`);
+    }
   }
 
   private areTransactionsEqual(a: LedgerTransaction, b: LedgerTransaction): boolean {
@@ -423,9 +489,18 @@ export class PostgresLedgerRepository implements ILedgerRepository {
     if (a.description !== b.description || a.entries.length !== b.entries.length) {
       return false;
     }
-    for (let i = 0; i < a.entries.length; i++) {
-      const ea = a.entries[i]!;
-      const eb = b.entries[i]!;
+
+    const sortEntries = (entries: readonly LedgerEntry[]) =>
+      [...entries].sort((x, y) =>
+        `${x.accountId}_${x.direction}`.localeCompare(`${y.accountId}_${y.direction}`),
+      );
+
+    const sortedA = sortEntries(a.entries);
+    const sortedB = sortEntries(b.entries);
+
+    for (let i = 0; i < sortedA.length; i++) {
+      const ea = sortedA[i]!;
+      const eb = sortedB[i]!;
       if (
         ea.accountId !== eb.accountId ||
         ea.direction !== eb.direction ||
