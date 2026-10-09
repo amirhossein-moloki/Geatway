@@ -1,8 +1,4 @@
-import {
-  IWalletRepository,
-  Wallet,
-  WalletStatus,
-} from '@amirhossein-moloki/wallet-core';
+import { IWalletRepository, Wallet, WalletStatus } from '@amirhossein-moloki/wallet-core';
 import { RepositoryNotFoundError } from '@amirhossein-moloki/payment-core';
 import { PgExecutor } from '../migrator.js';
 import { mapWalletPgError } from '../error-mapper.js';

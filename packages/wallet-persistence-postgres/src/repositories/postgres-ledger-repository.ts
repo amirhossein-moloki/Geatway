@@ -140,10 +140,7 @@ export class PostgresLedgerRepository implements ILedgerRepository {
         this.mapRowToEntry(row as Record<string, unknown>),
       );
 
-      return this.mapRowToTransaction(
-        txRes.rows[0] as Record<string, unknown>,
-        entries,
-      );
+      return this.mapRowToTransaction(txRes.rows[0] as Record<string, unknown>, entries);
     } catch (err) {
       throw mapWalletPgError(err, `Failed to find ledger transaction by id '${id}'`);
     }
@@ -168,10 +165,7 @@ export class PostgresLedgerRepository implements ILedgerRepository {
 
       return this.mapRowToTransaction(txRow, entries);
     } catch (err) {
-      throw mapWalletPgError(
-        err,
-        `Failed to find ledger transaction by idempotency key '${key}'`,
-      );
+      throw mapWalletPgError(err, `Failed to find ledger transaction by idempotency key '${key}'`);
     }
   }
 
@@ -413,10 +407,7 @@ export class PostgresLedgerRepository implements ILedgerRepository {
         }
         return savedTx;
       } catch (err) {
-        throw mapWalletPgError(
-          err,
-          `Failed to save ledger transaction '${transaction.id}'`,
-        );
+        throw mapWalletPgError(err, `Failed to save ledger transaction '${transaction.id}'`);
       }
     });
   }
@@ -472,8 +463,7 @@ export class PostgresLedgerRepository implements ILedgerRepository {
   }
 
   private mapRowToEntry(row: Record<string, unknown>): LedgerEntry {
-    const amountStr =
-      typeof row.amount === 'bigint' ? row.amount.toString() : String(row.amount);
+    const amountStr = typeof row.amount === 'bigint' ? row.amount.toString() : String(row.amount);
     return new LedgerEntry({
       id: row.id as string,
       transactionId: (row.transaction_id as string) || undefined,
