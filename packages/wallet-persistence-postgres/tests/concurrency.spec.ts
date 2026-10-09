@@ -218,7 +218,10 @@ describe('Concurrency and Deterministic Lock Ordering', () => {
     expect(mappedDeadlock).toBeInstanceOf(PersistenceConflictError);
     expect(mappedDeadlock.message).toContain('40P01');
 
-    const serializationErr = { code: '40001', message: 'could not serialize access due to concurrent update' };
+    const serializationErr = {
+      code: '40001',
+      message: 'could not serialize access due to concurrent update',
+    };
     const mappedSerialization = mapWalletPgError(serializationErr);
     expect(mappedSerialization).toBeInstanceOf(PersistenceConflictError);
     expect(mappedSerialization.message).toContain('40001');

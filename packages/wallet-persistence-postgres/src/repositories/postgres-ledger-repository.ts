@@ -441,14 +441,10 @@ export class PostgresLedgerRepository implements ILedgerRepository {
       if (pgErr.code === '23505') {
         // Fallback check: If concurrent duplicate request raced and failed on constraint, re-fetch posted transaction
         if (transaction.idempotencyKey) {
-          let existingByKey = await this.getTransactionByIdempotencyKey(
-            transaction.idempotencyKey,
-          );
+          let existingByKey = await this.getTransactionByIdempotencyKey(transaction.idempotencyKey);
           for (let i = 0; i < 10 && existingByKey && existingByKey.entries.length < 2; i++) {
             await new Promise((resolve) => setTimeout(resolve, 10));
-            existingByKey = await this.getTransactionByIdempotencyKey(
-              transaction.idempotencyKey,
-            );
+            existingByKey = await this.getTransactionByIdempotencyKey(transaction.idempotencyKey);
           }
           if (existingByKey && existingByKey.entries.length >= 2) {
             if (this.areTransactionsPayloadEqual(existingByKey, transaction)) {
