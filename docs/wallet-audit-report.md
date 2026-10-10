@@ -1,3 +1,8 @@
+> **HISTORICAL AUDIT REPORT**
+> _This document is a historical audit report generated on March 6, 2026. For active development and integration specifications, refer to [Wallet Architecture](./wallet-architecture.md), [Wallet Integration Guide](./wallet-integration-guide.md), and [AI Implementation Guide](./AI_IMPLEMENTATION_GUIDE.md)._
+
+---
+
 # Wallet Project — Current State Audit and Next-Step Planning Report
 
 **Date:** March 6, 2026

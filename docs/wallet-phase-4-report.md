@@ -1,3 +1,8 @@
+> **HISTORICAL AUDIT REPORT**
+> _This document is a historical report generated on March 6, 2026 for Phase 4 audit tracking. For active development and integration specifications, refer to [Wallet Architecture](./wallet-architecture.md), [Wallet Integration Guide](./wallet-integration-guide.md), and [AI Implementation Guide](./AI_IMPLEMENTATION_GUIDE.md)._
+
+---
+
 # Phase 4 — Wallet Integration Testing, Security & Production Readiness Report
 
 **Date:** March 6, 2026
