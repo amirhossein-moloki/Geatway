@@ -1,13 +1,14 @@
-# Payment & SMS Platform Ecosystem
+# Payment, SMS & Wallet Platform Ecosystem
 
-Professional, modular, provider-agnostic multi-gateway payment orchestration and SMS panel platform built with Node.js, pnpm workspaces, and TypeScript (Strict Mode).
+Professional, modular, provider-agnostic multi-gateway payment orchestration, SMS panel platform, and stored-value wallet ledger system built with Node.js, pnpm workspaces, and TypeScript (Strict Mode).
 
 ## Project Goal
 
-The monorepo contains two primary capability-driven platform ecosystems:
+The monorepo contains three primary capability-driven platform ecosystems:
 
 1. **Payment Platform Ecosystem:** Standardizes payment processing across Iranian (Mellat, Zarinpal, Zibal, Saman, etc.) and international payment gateways.
 2. **SMS Platform Ecosystem:** Standardizes SMS sending, pattern/OTP dispatch, balance queries, line retrieval, and inbox message receiving across Iranian SMS panels (Melipayamak, SMS.ir).
+3. **Wallet Platform Ecosystem:** Framework-agnostic double-entry financial ledger, exact minor-unit monetary math (`bigint`), PostgreSQL persistent storage, and Medusa v2 integration adapters (`pp_wallet`).
 
 ---
 
@@ -54,6 +55,13 @@ All packages belong to the `@amirhossein-moloki` scope and can be independently 
 | `@amirhossein-moloki/sms-melipayamak` | Melipayamak SMS Panel provider integration.                                        |
 | `@amirhossein-moloki/sms-smsir`       | SMS.ir Panel V2 provider integration.                                              |
 
+### Wallet Packages
+
+| Package Name                                      | Purpose                                                                                                                                 |
+| :------------------------------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------- |
+| `@amirhossein-moloki/wallet-core`                 | Wallet aggregate, exact monetary math (`bigint`), double-entry ledger, `WalletService`, and Medusa v2 adapters (`pp_wallet`).           |
+| `@amirhossein-moloki/wallet-persistence-postgres` | PostgreSQL persistence repositories, deterministic locking, exact `BIGINT` balance updates, and schema migrations (`DatabaseMigrator`). |
+
 ---
 
 ## Consumer Package Installation
@@ -73,6 +81,9 @@ pnpm add @amirhossein-moloki/payment-core @amirhossein-moloki/payment-service @a
 
 # SMS platform packages
 pnpm add @amirhossein-moloki/sms-core @amirhossein-moloki/sms-melipayamak @amirhossein-moloki/sms-smsir
+
+# Wallet platform packages
+pnpm add @amirhossein-moloki/wallet-core @amirhossein-moloki/wallet-persistence-postgres pg
 ```
 
 ---
@@ -124,3 +135,11 @@ python3 scripts/validate-consumer-packages.py
 - [SMS Architecture (`docs/sms-architecture.md`)](./docs/sms-architecture.md) — Component responsibilities, layer isolation, and capability matrix.
 - [SMS Integration Guide (`docs/sms-integration-guide.md`)](./docs/sms-integration-guide.md) — Comprehensive developer guide for SMS setup and usage.
 - [SMS Testing Strategy (`docs/sms-testing.md`)](./docs/sms-testing.md) — Unit testing patterns and mock provider implementation.
+
+### Wallet Ecosystem
+
+- [Wallet AI Implementation Guide (`docs/AI_IMPLEMENTATION_GUIDE.md`)](./docs/AI_IMPLEMENTATION_GUIDE.md) / [`AI-WALLET-INTEGRATION.md`](./AI-WALLET-INTEGRATION.md) — Single source of truth for AI coding agents integrating the wallet into `depix-ecommerce`.
+- [Wallet Architecture (`docs/wallet-architecture.md`)](./docs/wallet-architecture.md) — Double-entry ledger design, state machines, row locking, and Medusa v2 adapters.
+- [Wallet Integration Guide (`docs/wallet-integration-guide.md`)](./docs/wallet-integration-guide.md) — Developer setup, API usage examples, PostgreSQL schema, and Medusa v2 integration.
+- [Wallet Testing Strategy (`docs/wallet-testing.md`)](./docs/wallet-testing.md) — Test suites, vitest coverage, and distinction between `pg-mem` emulator and real PostgreSQL.
+- [Wallet Troubleshooting Guide (`docs/wallet-troubleshooting.md`)](./docs/wallet-troubleshooting.md) — Evidence-based diagnostic steps for common balance, idempotency, and concurrency errors.
