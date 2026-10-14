@@ -41,6 +41,11 @@ Packages belong to the `@amirhossein-moloki` scope and are configured as private
 | `@amirhossein-moloki/payment-zibal`                | `packages/payment-zibal`                | IPG Provider         | Zibal payment gateway provider implementation.                                                          |
 | `@amirhossein-moloki/payment-zarinpal`             | `packages/payment-zarinpal`             | IPG Provider         | Zarinpal GraphQL v4 payment gateway provider implementation.                                            |
 | `@amirhossein-moloki/payment-saman`                | `packages/payment-saman`                | PSP Provider         | Saman (SEP) payment gateway provider implementation.                                                    |
+| `@amirhossein-moloki/sms-core`                     | `packages/sms-core`                     | Standard Library     | Provider-agnostic SMS domain model, capability contracts, registry, and service orchestrator.           |
+| `@amirhossein-moloki/sms-melipayamak`              | `packages/sms-melipayamak`              | SMS Provider         | Melipayamak SMS provider implementation.                                                                |
+| `@amirhossein-moloki/sms-smsir`                    | `packages/sms-smsir`                    | SMS Provider         | SMS.ir Panel V2 provider implementation.                                                                |
+| `@amirhossein-moloki/wallet-core`                  | `packages/wallet-core`                  | Standard Library     | Framework-agnostic wallet domain model, exact monetary precision, and double-entry ledger primitives.   |
+| `@amirhossein-moloki/wallet-persistence-postgres`  | `packages/wallet-persistence-postgres`  | Adapter              | PostgreSQL persistence implementation for the wallet domain and SQL schema migrations.                  |
 
 ---
 
@@ -101,6 +106,11 @@ Each package has a dedicated publish workflow:
 - `.github/workflows/publish-payment-zibal.yml`
 - `.github/workflows/publish-payment-zarinpal.yml`
 - `.github/workflows/publish-payment-saman.yml`
+- `.github/workflows/publish-sms-core.yml`
+- `.github/workflows/publish-sms-melipayamak.yml`
+- `.github/workflows/publish-sms-smsir.yml`
+- `.github/workflows/publish-wallet-core.yml`
+- `.github/workflows/publish-wallet-persistence-postgres.yml`
 
 #### Workflow Triggering Principles:
 
