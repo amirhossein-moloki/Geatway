@@ -96,7 +96,16 @@ export class TicketingHttpController {
   public async handleCreateTicket(req: HttpRequest): Promise<HttpResponse> {
     try {
       const ctx = this.extractTenantContext(req);
-      const { title, description, priority, categoryId, requesterId, customerId, relatedEntity, attachments } = req.body as {
+      const {
+        title,
+        description,
+        priority,
+        categoryId,
+        requesterId,
+        customerId,
+        relatedEntity,
+        attachments,
+      } = req.body as {
         title: string;
         description: string;
         priority?: TicketPriority;

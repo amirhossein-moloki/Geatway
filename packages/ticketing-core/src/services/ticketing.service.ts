@@ -394,7 +394,10 @@ export class TicketingService {
     const ticket = await this.getTicket(resolvedCtx, ticketId);
 
     const requestedVisibility = input.visibility ?? MessageVisibility.PUBLIC;
-    if (this.isRequesterRole(resolvedCtx.userRole) && requestedVisibility === MessageVisibility.INTERNAL) {
+    if (
+      this.isRequesterRole(resolvedCtx.userRole) &&
+      requestedVisibility === MessageVisibility.INTERNAL
+    ) {
       throw new UnauthorizedAccessError('Requesters are not permitted to create internal notes');
     }
 
