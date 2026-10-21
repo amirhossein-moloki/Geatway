@@ -30,7 +30,9 @@ def main():
         "sms-melipayamak",
         "sms-smsir",
         "wallet-core",
-        "wallet-persistence-postgres"
+        "wallet-persistence-postgres",
+        "ticketing-core",
+        "ticketing-persistence-postgres"
     ]
 
     for p in pkgs:
@@ -117,7 +119,9 @@ def main():
             "@amirhossein-moloki/sms-melipayamak": tarballs["@amirhossein-moloki/sms-melipayamak"],
             "@amirhossein-moloki/sms-smsir": tarballs["@amirhossein-moloki/sms-smsir"],
             "@amirhossein-moloki/wallet-core": tarballs["@amirhossein-moloki/wallet-core"],
-            "@amirhossein-moloki/wallet-persistence-postgres": tarballs["@amirhossein-moloki/wallet-persistence-postgres"]
+            "@amirhossein-moloki/wallet-persistence-postgres": tarballs["@amirhossein-moloki/wallet-persistence-postgres"],
+            "@amirhossein-moloki/ticketing-core": tarballs["@amirhossein-moloki/ticketing-core"],
+            "@amirhossein-moloki/ticketing-persistence-postgres": tarballs["@amirhossein-moloki/ticketing-persistence-postgres"]
         },
         "devDependencies": {
             "typescript": "^5.4.5",
@@ -149,6 +153,8 @@ import { MelipayamakProvider } from '@amirhossein-moloki/sms-melipayamak';
 import { SmsirProvider } from '@amirhossein-moloki/sms-smsir';
 import { Wallet } from '@amirhossein-moloki/wallet-core';
 import { PostgresWalletRepository } from '@amirhossein-moloki/wallet-persistence-postgres';
+import { TicketingService, Ticket } from '@amirhossein-moloki/ticketing-core';
+import { PostgresTicketRepository } from '@amirhossein-moloki/ticketing-persistence-postgres';
 
 const registry = new GatewayRegistry();
 const mellat = new MellatGateway({ terminalId: '123', userName: 'u', userPassword: 'p', callbackUrl: 'https://example.com/mellat' });
@@ -175,6 +181,8 @@ console.log("Registered Gateways:", registry.listGateways().map(g => g.id));
 console.log("Registered SMS Providers:", smsRegistry.listProviders().map(p => p.id));
 console.log("Wallet Class:", typeof Wallet);
 console.log("PostgresWalletRepository Class:", typeof PostgresWalletRepository);
+console.log("TicketingService Class:", typeof TicketingService);
+console.log("PostgresTicketRepository Class:", typeof PostgresTicketRepository);
 console.log("CONSUMER_PACKAGE_VERIFICATION_SUCCESS");
 """
     with open(os.path.join(test_dir, "index.ts"), "w") as f:

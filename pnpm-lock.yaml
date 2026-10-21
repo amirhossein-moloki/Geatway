@@ -128,6 +128,31 @@ importers:
         specifier: ^1.0.0
         version: 1.6.1(@types/node@20.19.43)
 
+  examples/ticketing-integration:
+    dependencies:
+      '@amirhossein-moloki/payment-core':
+        specifier: workspace:*
+        version: link:../../packages/payment-core
+      '@amirhossein-moloki/ticketing-core':
+        specifier: workspace:*
+        version: link:../../packages/ticketing-core
+      '@amirhossein-moloki/ticketing-persistence-postgres':
+        specifier: workspace:*
+        version: link:../../packages/ticketing-persistence-postgres
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.0
+        version: 20.19.43
+      pg-mem:
+        specifier: ^3.0.4
+        version: 3.0.14
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+      vitest:
+        specifier: ^1.0.0
+        version: 1.6.1(@types/node@20.19.43)
+
   packages/payment-core: {}
 
   packages/payment-mellat:
@@ -246,6 +271,44 @@ importers:
       '@types/node':
         specifier: ^20.12.0
         version: 20.19.43
+      typescript:
+        specifier: ^5.4.5
+        version: 5.9.3
+      vitest:
+        specifier: ^1.6.0
+        version: 1.6.1(@types/node@20.19.43)
+
+  packages/ticketing-core:
+    dependencies:
+      '@amirhossein-moloki/payment-core':
+        specifier: workspace:*
+        version: link:../payment-core
+    devDependencies:
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.43
+
+  packages/ticketing-persistence-postgres:
+    dependencies:
+      '@amirhossein-moloki/payment-core':
+        specifier: workspace:*
+        version: link:../payment-core
+      '@amirhossein-moloki/ticketing-core':
+        specifier: workspace:*
+        version: link:../ticketing-core
+      pg:
+        specifier: ^8.11.5
+        version: 8.23.1
+    devDependencies:
+      '@types/node':
+        specifier: ^20.19.43
+        version: 20.19.43
+      '@types/pg':
+        specifier: ^8.11.6
+        version: 8.23.1
+      pg-mem:
+        specifier: ^3.0.4
+        version: 3.0.14
       typescript:
         specifier: ^5.4.5
         version: 5.9.3

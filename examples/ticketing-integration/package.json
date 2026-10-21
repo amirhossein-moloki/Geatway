@@ -1,0 +1,21 @@
+{
+  "name": "ticketing-integration-example",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@amirhossein-moloki/payment-core": "workspace:*",
+    "@amirhossein-moloki/ticketing-core": "workspace:*",
+    "@amirhossein-moloki/ticketing-persistence-postgres": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "pg-mem": "^3.0.4",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  }
+}
