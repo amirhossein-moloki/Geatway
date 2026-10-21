@@ -43,6 +43,7 @@ export interface CreateTicketInput {
   description: string;
   priority?: TicketPriority;
   categoryId?: string;
+  requesterId?: string;
   customerId?: string;
   relatedEntity?: RelatedEntity;
   metadata?: Record<string, unknown>;
@@ -70,6 +71,10 @@ export interface BulkUpdateResult {
   error?: string;
 }
 
+export interface SlaConfig {
+  targetHours?: Partial<Record<TicketPriority, number>>;
+}
+
 export interface TicketingServiceDependencies {
   ticketRepository: ITicketRepository;
   messageRepository: ITicketMessageRepository;
@@ -83,6 +88,7 @@ export interface TicketingServiceDependencies {
   eventEmitter?: ITicketingEventEmitter;
   idGenerator?: () => string;
   tenancyConfig?: TenancyConfig;
+  slaConfig?: SlaConfig;
 }
 
 export class TicketingService {
@@ -92,6 +98,10 @@ export class TicketingService {
   constructor(private readonly deps: TicketingServiceDependencies) {
     this.generateId = deps.idGenerator ?? (() => randomUUID());
     this.tenancyConfig = this.validateAndNormalizeTenancyConfig(deps.tenancyConfig);
+  }
+
+  private isRequesterRole(role: string): boolean {
+    return role === 'CUSTOMER' || role === 'REQUESTER';
   }
 
   private validateAndNormalizeTenancyConfig(config?: TenancyConfig): Required<TenancyConfig> {
@@ -145,8 +155,8 @@ export class TicketingService {
     input: { name: string; description?: string },
   ): Promise<TicketCategory> {
     const resolvedCtx = this.resolveTenantContext(ctx);
-    if (resolvedCtx.userRole === 'CUSTOMER') {
-      throw new UnauthorizedAccessError('Customers are not permitted to create ticket categories');
+    if (this.isRequesterRole(resolvedCtx.userRole)) {
+      throw new UnauthorizedAccessError('Requesters are not permitted to create ticket categories');
     }
 
     if (!this.deps.categoryRepository) {
@@ -169,8 +179,8 @@ export class TicketingService {
     input: { name?: string; description?: string; isActive?: boolean },
   ): Promise<TicketCategory> {
     const resolvedCtx = this.resolveTenantContext(ctx);
-    if (resolvedCtx.userRole === 'CUSTOMER') {
-      throw new UnauthorizedAccessError('Customers are not permitted to update ticket categories');
+    if (this.isRequesterRole(resolvedCtx.userRole)) {
+      throw new UnauthorizedAccessError('Requesters are not permitted to update ticket categories');
     }
 
     if (!this.deps.categoryRepository) {
@@ -200,10 +210,9 @@ export class TicketingService {
   ): Promise<{ ticket: Ticket; message: TicketMessage }> {
     const resolvedCtx = this.resolveTenantContext(ctx);
 
-    const customerId =
-      resolvedCtx.userRole === 'CUSTOMER'
-        ? resolvedCtx.userId
-        : (input.customerId ?? resolvedCtx.userId);
+    const requesterId = this.isRequesterRole(resolvedCtx.userRole)
+      ? resolvedCtx.userId
+      : (input.requesterId ?? input.customerId ?? resolvedCtx.userId);
 
     if (input.categoryId && this.deps.categoryRepository) {
       const category = await this.deps.categoryRepository.findById(
@@ -219,7 +228,7 @@ export class TicketingService {
     const ticket = Ticket.create(
       ticketId,
       resolvedCtx.tenantId,
-      customerId,
+      requesterId,
       input.title,
       input.description,
       input.priority ?? TicketPriority.MEDIUM,
@@ -231,8 +240,11 @@ export class TicketingService {
     const createdTicket = await this.deps.ticketRepository.create(ticket);
 
     const messageId = this.generateId();
-    const authorRole =
-      resolvedCtx.userRole === 'CUSTOMER' ? MessageAuthorRole.CUSTOMER : MessageAuthorRole.AGENT;
+    const authorRole = this.isRequesterRole(resolvedCtx.userRole)
+      ? resolvedCtx.userRole === 'REQUESTER'
+        ? MessageAuthorRole.REQUESTER
+        : MessageAuthorRole.CUSTOMER
+      : MessageAuthorRole.AGENT;
 
     const attachmentEntities: TicketAttachment[] = [];
     if (input.attachments && input.attachments.length > 0) {
@@ -285,7 +297,7 @@ export class TicketingService {
       TicketingEventType.TICKET_CREATED,
       resolvedCtx.userId,
       resolvedCtx.userRole,
-      { title: ticket.title, priority: ticket.priority, customerId },
+      { title: ticket.title, priority: ticket.priority, requesterId, customerId: requesterId },
     );
 
     if (this.deps.eventRepository) {
@@ -316,7 +328,7 @@ export class TicketingService {
       throw new TicketNotFoundError(ticketId, resolvedCtx.tenantId);
     }
 
-    if (resolvedCtx.userRole === 'CUSTOMER' && ticket.customerId !== resolvedCtx.userId) {
+    if (this.isRequesterRole(resolvedCtx.userRole) && ticket.customerId !== resolvedCtx.userId) {
       throw new TicketNotFoundError(ticketId, resolvedCtx.tenantId);
     }
 
@@ -330,7 +342,7 @@ export class TicketingService {
     const resolvedCtx = this.resolveTenantContext(ctx);
     const ticket = await this.getTicket(resolvedCtx, ticketId);
 
-    const includeInternal = resolvedCtx.userRole !== 'CUSTOMER';
+    const includeInternal = !this.isRequesterRole(resolvedCtx.userRole);
 
     const messages = await this.deps.messageRepository.findByTicketId(
       resolvedCtx.tenantId,
@@ -353,7 +365,8 @@ export class TicketingService {
     const resolvedCtx = this.resolveTenantContext(ctx);
 
     const scopedFilter: TicketFilterOptions = { ...filter };
-    if (resolvedCtx.userRole === 'CUSTOMER') {
+    if (this.isRequesterRole(resolvedCtx.userRole)) {
+      scopedFilter.requesterId = resolvedCtx.userId;
       scopedFilter.customerId = resolvedCtx.userId;
     } else if (
       resolvedCtx.teamIds &&
@@ -381,12 +394,16 @@ export class TicketingService {
     const ticket = await this.getTicket(resolvedCtx, ticketId);
 
     const requestedVisibility = input.visibility ?? MessageVisibility.PUBLIC;
-    if (resolvedCtx.userRole === 'CUSTOMER' && requestedVisibility === MessageVisibility.INTERNAL) {
-      throw new UnauthorizedAccessError('Customers are not permitted to create internal notes');
+    if (this.isRequesterRole(resolvedCtx.userRole) && requestedVisibility === MessageVisibility.INTERNAL) {
+      throw new UnauthorizedAccessError('Requesters are not permitted to create internal notes');
     }
 
-    const isCustomer = resolvedCtx.userRole === 'CUSTOMER';
-    const authorRole = isCustomer ? MessageAuthorRole.CUSTOMER : MessageAuthorRole.AGENT;
+    const isRequester = this.isRequesterRole(resolvedCtx.userRole);
+    const authorRole = isRequester
+      ? resolvedCtx.userRole === 'REQUESTER'
+        ? MessageAuthorRole.REQUESTER
+        : MessageAuthorRole.CUSTOMER
+      : MessageAuthorRole.AGENT;
 
     // Idempotency check if idempotencyKey provided
     if (input.idempotencyKey) {
@@ -450,11 +467,11 @@ export class TicketingService {
     const savedMessage = await this.deps.messageRepository.create(message);
 
     const previousStatus = ticket.status;
-    ticket.recordResponse(!isCustomer);
+    ticket.recordResponse(!isRequester);
 
     let isReopened = false;
     if (requestedVisibility === MessageVisibility.PUBLIC) {
-      if (isCustomer) {
+      if (isRequester) {
         if (ticket.status === TicketStatus.RESOLVED || ticket.status === TicketStatus.CLOSED) {
           ticket.transitionTo(TicketStatus.OPEN, resolvedCtx.userRole);
           isReopened = true;
@@ -526,9 +543,9 @@ export class TicketingService {
     const resolvedCtx = this.resolveTenantContext(ctx);
     const ticket = await this.getTicket(resolvedCtx, ticketId);
 
-    if (resolvedCtx.userRole === 'CUSTOMER') {
+    if (this.isRequesterRole(resolvedCtx.userRole)) {
       if (input.priority || input.categoryId) {
-        throw new UnauthorizedAccessError('Customers cannot alter ticket priority or category');
+        throw new UnauthorizedAccessError('Requesters cannot alter ticket priority or category');
       }
     }
 
@@ -620,8 +637,8 @@ export class TicketingService {
     input: { agentId?: string; teamId?: string },
   ): Promise<{ ticket: Ticket; assignment: TicketAssignment }> {
     const resolvedCtx = this.resolveTenantContext(ctx);
-    if (resolvedCtx.userRole === 'CUSTOMER') {
-      throw new UnauthorizedAccessError('Customers are not permitted to assign tickets');
+    if (this.isRequesterRole(resolvedCtx.userRole)) {
+      throw new UnauthorizedAccessError('Requesters are not permitted to assign tickets');
     }
 
     const ticket = await this.getTicket(resolvedCtx, ticketId);
@@ -678,8 +695,8 @@ export class TicketingService {
     updates: BulkUpdateTicketsInput,
   ): Promise<{ results: BulkUpdateResult[] }> {
     const resolvedCtx = this.resolveTenantContext(ctx);
-    if (resolvedCtx.userRole === 'CUSTOMER') {
-      throw new UnauthorizedAccessError('Customers are not permitted to execute bulk updates');
+    if (this.isRequesterRole(resolvedCtx.userRole)) {
+      throw new UnauthorizedAccessError('Requesters are not permitted to execute bulk updates');
     }
 
     const results: BulkUpdateResult[] = [];
@@ -729,7 +746,7 @@ export class TicketingService {
     return this.deps.readStateRepository.getUnreadCount(
       resolvedCtx.tenantId,
       resolvedCtx.userId,
-      resolvedCtx.userRole === 'CUSTOMER',
+      this.isRequesterRole(resolvedCtx.userRole),
     );
   }
 
@@ -740,8 +757,8 @@ export class TicketingService {
     avgResolutionTimeMs: number;
   }> {
     const resolvedCtx = this.resolveTenantContext(ctx);
-    if (resolvedCtx.userRole === 'CUSTOMER') {
-      throw new UnauthorizedAccessError('Customers are not permitted to access SLA metrics');
+    if (this.isRequesterRole(resolvedCtx.userRole)) {
+      throw new UnauthorizedAccessError('Requesters are not permitted to access SLA metrics');
     }
 
     const { items } = await this.deps.ticketRepository.findMany(resolvedCtx.tenantId, {
@@ -757,7 +774,8 @@ export class TicketingService {
     const now = new Date();
 
     for (const ticket of items) {
-      if (ticket.isOverdue(undefined, now)) {
+      const targetHours = this.deps.slaConfig?.targetHours?.[ticket.priority];
+      if (ticket.isOverdue(targetHours, now)) {
         overdueCount++;
       }
       if (ticket.firstResponseAt) {
@@ -787,9 +805,9 @@ export class TicketingService {
     overdueCount: number;
   }> {
     const resolvedCtx = this.resolveTenantContext(ctx);
-    if (resolvedCtx.userRole === 'CUSTOMER') {
+    if (this.isRequesterRole(resolvedCtx.userRole)) {
       throw new UnauthorizedAccessError(
-        'Customers are not permitted to access operational reports',
+        'Requesters are not permitted to access operational reports',
       );
     }
 
@@ -811,7 +829,8 @@ export class TicketingService {
       if (!ticket.assignedAgentId && !ticket.assignedTeamId) {
         unassignedCount++;
       }
-      if (ticket.isOverdue(undefined, now)) {
+      const targetHours = this.deps.slaConfig?.targetHours?.[ticket.priority];
+      if (ticket.isOverdue(targetHours, now)) {
         overdueCount++;
       }
     }
@@ -828,8 +847,8 @@ export class TicketingService {
     ctx: TenantContext,
   ): Promise<Array<{ agentId?: string; teamId?: string; openTicketCount: number }>> {
     const resolvedCtx = this.resolveTenantContext(ctx);
-    if (resolvedCtx.userRole === 'CUSTOMER') {
-      throw new UnauthorizedAccessError('Customers are not permitted to access agent workload');
+    if (this.isRequesterRole(resolvedCtx.userRole)) {
+      throw new UnauthorizedAccessError('Requesters are not permitted to access agent workload');
     }
 
     const { items } = await this.deps.ticketRepository.findMany(resolvedCtx.tenantId, {
@@ -862,22 +881,22 @@ export class TicketingService {
     }));
   }
 
-  public async anonymizeCustomerData(
+  public async anonymizeUserData(
     ctx: TenantContext,
-    customerId: string,
+    userId: string,
   ): Promise<{ anonymizedTicketCount: number }> {
     const resolvedCtx = this.resolveTenantContext(ctx);
     if (resolvedCtx.userRole !== 'TENANT_ADMIN' && resolvedCtx.userRole !== 'PLATFORM_ADMIN') {
       throw new UnauthorizedAccessError(
-        'Only tenant or platform administrators can anonymize customer data',
+        'Only tenant or platform administrators can anonymize user data',
       );
     }
 
     const { items } = await this.deps.ticketRepository.findMany(resolvedCtx.tenantId, {
-      customerId,
+      requesterId: userId,
       limit: 1000,
     });
-    const anonymizedId = `anonymized-${customerId.slice(0, 8)}`;
+    const anonymizedId = `anonymized-${userId.slice(0, 8)}`;
 
     let count = 0;
     for (const ticket of items) {
@@ -894,14 +913,21 @@ export class TicketingService {
     return { anonymizedTicketCount: count };
   }
 
+  public async anonymizeCustomerData(
+    ctx: TenantContext,
+    customerId: string,
+  ): Promise<{ anonymizedTicketCount: number }> {
+    return this.anonymizeUserData(ctx, customerId);
+  }
+
   public async getAssignmentHistory(
     ctx: TenantContext,
     ticketId: string,
   ): Promise<TicketAssignment[]> {
     const resolvedCtx = this.resolveTenantContext(ctx);
     await this.getTicket(resolvedCtx, ticketId);
-    if (resolvedCtx.userRole === 'CUSTOMER') {
-      throw new UnauthorizedAccessError('Customers are not permitted to view assignment history');
+    if (this.isRequesterRole(resolvedCtx.userRole)) {
+      throw new UnauthorizedAccessError('Requesters are not permitted to view assignment history');
     }
     if (!this.deps.assignmentRepository) {
       return [];

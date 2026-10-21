@@ -1,4 +1,4 @@
-export type UserRole = 'CUSTOMER' | 'AGENT' | 'TENANT_ADMIN' | 'PLATFORM_ADMIN';
+export type UserRole = 'CUSTOMER' | 'REQUESTER' | 'AGENT' | 'TENANT_ADMIN' | 'PLATFORM_ADMIN';
 
 export type TenancyMode = 'SINGLE_TENANT' | 'MULTI_TENANT';
 

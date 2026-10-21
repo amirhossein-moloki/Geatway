@@ -83,6 +83,11 @@ describe('Ticketing PostgreSQL Persistence & Multi-Tenant Security', () => {
     expect(fetched?.status).toBe(TicketStatus.IN_PROGRESS);
     expect(fetched?.assignedAgentId).toBe('agent-1');
     expect(fetched?.assignedTeamId).toBe('billing-team');
+
+    // Test querying by requesterId filter
+    const queryRes = await ticketRepo.findMany('tenant-a', { requesterId: 'cust-1' });
+    expect(queryRes.items).toHaveLength(1);
+    expect(queryRes.items[0]?.requesterId).toBe('cust-1');
   });
 
   it('should explicitly prevent cross-tenant reading or modifying of tickets', async () => {
