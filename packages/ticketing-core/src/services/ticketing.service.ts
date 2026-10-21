@@ -6,6 +6,7 @@ import { TicketAttachment } from '../domain/entities/ticket-attachment.entity.js
 import { TicketAssignment } from '../domain/entities/ticket-assignment.entity.js';
 import { TicketEvent } from '../domain/entities/ticket-event.entity.js';
 import { RelatedEntity, Ticket } from '../domain/entities/ticket.entity.js';
+import { TicketReadState } from '../domain/entities/ticket-read-state.entity.js';
 import { MessageAuthorRole } from '../domain/enums/message-author-role.enum.js';
 import { MessageVisibility } from '../domain/enums/message-visibility.enum.js';
 import { TicketPriority } from '../domain/enums/ticket-priority.enum.js';
@@ -16,6 +17,7 @@ import {
   InvalidCategoryError,
   TenantMismatchError,
   TicketNotFoundError,
+  TicketingError,
   UnauthorizedAccessError,
 } from '../errors/ticketing.errors.js';
 import { INotificationHandler } from '../ports/notification-handler.port.js';
@@ -26,6 +28,7 @@ import { ITicketAttachmentRepository } from '../ports/ticket-attachment-reposito
 import { ITicketCategoryRepository } from '../ports/ticket-category-repository.port.js';
 import { ITicketEventRepository } from '../ports/ticket-event-repository.port.js';
 import { ITicketMessageRepository } from '../ports/ticket-message-repository.port.js';
+import { ITicketReadStateRepository } from '../ports/ticket-read-state-repository.port.js';
 import { ITicketRepository, TicketFilterOptions } from '../ports/ticket-repository.port.js';
 
 export interface TicketAttachmentUploadInput {
@@ -49,11 +52,27 @@ export interface AddMessageInput {
   content: string;
   visibility?: MessageVisibility;
   attachments?: TicketAttachmentUploadInput[];
+  idempotencyKey?: string;
+}
+
+export interface BulkUpdateTicketsInput {
+  status?: TicketStatus;
+  assignedAgentId?: string;
+  assignedTeamId?: string;
+  priority?: TicketPriority;
+  categoryId?: string;
+}
+
+export interface BulkUpdateResult {
+  ticketId: string;
+  success: boolean;
+  error?: string;
 }
 
 export interface TicketingServiceDependencies {
   ticketRepository: ITicketRepository;
   messageRepository: ITicketMessageRepository;
+  readStateRepository?: ITicketReadStateRepository;
   attachmentRepository?: ITicketAttachmentRepository;
   assignmentRepository?: ITicketAssignmentRepository;
   categoryRepository?: ITicketCategoryRepository;
@@ -101,6 +120,29 @@ export class TicketingService {
     );
 
     return this.deps.categoryRepository.create(category);
+  }
+
+  public async updateCategory(
+    ctx: TenantContext,
+    categoryId: string,
+    input: { name?: string; description?: string; isActive?: boolean },
+  ): Promise<TicketCategory> {
+    this.validateTenantContext(ctx);
+    if (ctx.userRole === 'CUSTOMER') {
+      throw new UnauthorizedAccessError('Customers are not permitted to update ticket categories');
+    }
+
+    if (!this.deps.categoryRepository) {
+      throw new InvalidCategoryError('Category repository is not configured');
+    }
+
+    const category = await this.deps.categoryRepository.findById(ctx.tenantId, categoryId);
+    if (!category) {
+      throw new InvalidCategoryError(`Category '${categoryId}' not found`);
+    }
+
+    category.update(input.name, input.description, input.isActive);
+    return this.deps.categoryRepository.update(category);
   }
 
   public async listCategories(ctx: TenantContext, activeOnly = true): Promise<TicketCategory[]> {
@@ -211,6 +253,11 @@ export class TicketingService {
       await this.deps.notificationHandler.notifyTicketCreated(createdTicket).catch(() => {});
     }
 
+    if (this.deps.readStateRepository) {
+      const readState = TicketReadState.create(ctx.tenantId, ticketId, ctx.userId);
+      await this.deps.readStateRepository.upsert(readState).catch(() => {});
+    }
+
     return { ticket: createdTicket, message: createdMessage };
   }
 
@@ -243,6 +290,11 @@ export class TicketingService {
       includeInternal,
     );
 
+    if (this.deps.readStateRepository) {
+      const readState = TicketReadState.create(ctx.tenantId, ticketId, ctx.userId);
+      await this.deps.readStateRepository.upsert(readState).catch(() => {});
+    }
+
     return { ticket, messages };
   }
 
@@ -255,6 +307,13 @@ export class TicketingService {
     const scopedFilter: TicketFilterOptions = { ...filter };
     if (ctx.userRole === 'CUSTOMER') {
       scopedFilter.customerId = ctx.userId;
+    } else if (
+      ctx.teamIds &&
+      ctx.teamIds.length > 0 &&
+      !scopedFilter.assignedAgentId &&
+      !scopedFilter.assignedTeamId
+    ) {
+      scopedFilter.teamIds = ctx.teamIds;
     }
 
     return this.deps.ticketRepository.findMany(ctx.tenantId, scopedFilter);
@@ -265,6 +324,10 @@ export class TicketingService {
     ticketId: string,
     input: AddMessageInput,
   ): Promise<TicketMessage> {
+    if (!input.content || !input.content.trim()) {
+      throw new TicketingError('Message content cannot be empty or blank', 400);
+    }
+
     const ticket = await this.getTicket(ctx, ticketId);
 
     const requestedVisibility = input.visibility ?? MessageVisibility.PUBLIC;
@@ -272,9 +335,25 @@ export class TicketingService {
       throw new UnauthorizedAccessError('Customers are not permitted to create internal notes');
     }
 
-    const messageId = this.generateId();
     const isCustomer = ctx.userRole === 'CUSTOMER';
     const authorRole = isCustomer ? MessageAuthorRole.CUSTOMER : MessageAuthorRole.AGENT;
+
+    // Idempotency check if idempotencyKey provided
+    if (input.idempotencyKey) {
+      const existingMessages = await this.deps.messageRepository.findByTicketId(
+        ctx.tenantId,
+        ticketId,
+        true,
+      );
+      const match = existingMessages.find(
+        (m) => m.content === input.content && m.authorId === ctx.userId,
+      );
+      if (match) {
+        return match;
+      }
+    }
+
+    const messageId = this.generateId();
 
     const attachmentEntities: TicketAttachment[] = [];
     if (input.attachments && input.attachments.length > 0) {
@@ -323,19 +402,26 @@ export class TicketingService {
     const previousStatus = ticket.status;
     ticket.recordResponse(!isCustomer);
 
+    let isReopened = false;
     if (requestedVisibility === MessageVisibility.PUBLIC) {
-      if (
-        isCustomer &&
-        (ticket.status === TicketStatus.WAITING_FOR_CUSTOMER || ticket.status === TicketStatus.OPEN)
-      ) {
-        ticket.transitionTo(TicketStatus.WAITING_FOR_AGENT);
-      } else if (
-        !isCustomer &&
-        (ticket.status === TicketStatus.WAITING_FOR_AGENT ||
+      if (isCustomer) {
+        if (ticket.status === TicketStatus.RESOLVED || ticket.status === TicketStatus.CLOSED) {
+          ticket.transitionTo(TicketStatus.OPEN, ctx.userRole);
+          isReopened = true;
+        } else if (
+          ticket.status === TicketStatus.WAITING_FOR_CUSTOMER ||
+          ticket.status === TicketStatus.OPEN
+        ) {
+          ticket.transitionTo(TicketStatus.WAITING_FOR_AGENT, ctx.userRole);
+        }
+      } else {
+        if (
+          ticket.status === TicketStatus.WAITING_FOR_AGENT ||
           ticket.status === TicketStatus.OPEN ||
-          ticket.status === TicketStatus.IN_PROGRESS)
-      ) {
-        ticket.transitionTo(TicketStatus.WAITING_FOR_CUSTOMER);
+          ticket.status === TicketStatus.IN_PROGRESS
+        ) {
+          ticket.transitionTo(TicketStatus.WAITING_FOR_CUSTOMER, ctx.userRole);
+        }
       }
     }
 
@@ -345,10 +431,10 @@ export class TicketingService {
       this.generateId(),
       ticketId,
       ctx.tenantId,
-      TicketingEventType.MESSAGE_ADDED,
+      isReopened ? TicketingEventType.TICKET_REOPENED : TicketingEventType.MESSAGE_ADDED,
       ctx.userId,
       ctx.userRole,
-      { messageId: savedMessage.id, visibility: savedMessage.visibility },
+      { messageId: savedMessage.id, visibility: savedMessage.visibility, isReopened },
     );
 
     if (this.deps.eventRepository) {
@@ -366,6 +452,11 @@ export class TicketingService {
           .notifyStatusChanged(ticket, previousStatus)
           .catch(() => {});
       }
+    }
+
+    if (this.deps.readStateRepository) {
+      const readState = TicketReadState.create(ctx.tenantId, ticketId, ctx.userId);
+      await this.deps.readStateRepository.upsert(readState).catch(() => {});
     }
 
     return savedMessage;
@@ -429,7 +520,7 @@ export class TicketingService {
       return ticket;
     }
 
-    ticket.transitionTo(targetStatus);
+    ticket.transitionTo(targetStatus, ctx.userRole);
     const updatedTicket = await this.deps.ticketRepository.update(ticket);
 
     let eventType = TicketingEventType.TICKET_STATUS_CHANGED;
@@ -524,6 +615,223 @@ export class TicketingService {
     }
 
     return { ticket: updatedTicket, assignment: savedAssignment };
+  }
+
+  public async bulkUpdateTickets(
+    ctx: TenantContext,
+    ticketIds: string[],
+    updates: BulkUpdateTicketsInput,
+  ): Promise<{ results: BulkUpdateResult[] }> {
+    this.validateTenantContext(ctx);
+    if (ctx.userRole === 'CUSTOMER') {
+      throw new UnauthorizedAccessError('Customers are not permitted to execute bulk updates');
+    }
+
+    const results: BulkUpdateResult[] = [];
+
+    for (const ticketId of ticketIds) {
+      try {
+        if (updates.status) {
+          await this.changeTicketStatus(ctx, ticketId, updates.status);
+        }
+        if (updates.assignedAgentId !== undefined || updates.assignedTeamId !== undefined) {
+          await this.assignTicket(ctx, ticketId, {
+            agentId: updates.assignedAgentId,
+            teamId: updates.assignedTeamId,
+          });
+        }
+        if (updates.priority || updates.categoryId) {
+          await this.updateTicketMetadata(ctx, ticketId, {
+            priority: updates.priority,
+            categoryId: updates.categoryId,
+          });
+        }
+        results.push({ ticketId, success: true });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        results.push({ ticketId, success: false, error: msg });
+      }
+    }
+
+    return { results };
+  }
+
+  public async markTicketAsRead(ctx: TenantContext, ticketId: string): Promise<TicketReadState> {
+    await this.getTicket(ctx, ticketId);
+    if (!this.deps.readStateRepository) {
+      return TicketReadState.create(ctx.tenantId, ticketId, ctx.userId);
+    }
+    const readState = TicketReadState.create(ctx.tenantId, ticketId, ctx.userId);
+    return this.deps.readStateRepository.upsert(readState);
+  }
+
+  public async getUnreadCount(ctx: TenantContext): Promise<number> {
+    this.validateTenantContext(ctx);
+    if (!this.deps.readStateRepository) {
+      return 0;
+    }
+    return this.deps.readStateRepository.getUnreadCount(
+      ctx.tenantId,
+      ctx.userId,
+      ctx.userRole === 'CUSTOMER',
+    );
+  }
+
+  public async getSlaMetrics(ctx: TenantContext): Promise<{
+    totalTickets: number;
+    overdueCount: number;
+    avgFirstResponseTimeMs: number;
+    avgResolutionTimeMs: number;
+  }> {
+    this.validateTenantContext(ctx);
+    if (ctx.userRole === 'CUSTOMER') {
+      throw new UnauthorizedAccessError('Customers are not permitted to access SLA metrics');
+    }
+
+    const { items } = await this.deps.ticketRepository.findMany(ctx.tenantId, { limit: 1000 });
+
+    let overdueCount = 0;
+    let firstResponseTotalMs = 0;
+    let firstResponseCount = 0;
+    let resolutionTotalMs = 0;
+    let resolutionCount = 0;
+
+    const now = new Date();
+
+    for (const ticket of items) {
+      if (ticket.isOverdue(undefined, now)) {
+        overdueCount++;
+      }
+      if (ticket.firstResponseAt) {
+        firstResponseTotalMs += ticket.firstResponseAt.getTime() - ticket.createdAt.getTime();
+        firstResponseCount++;
+      }
+      if (ticket.resolvedAt) {
+        resolutionTotalMs += ticket.resolvedAt.getTime() - ticket.createdAt.getTime();
+        resolutionCount++;
+      }
+    }
+
+    return {
+      totalTickets: items.length,
+      overdueCount,
+      avgFirstResponseTimeMs:
+        firstResponseCount > 0 ? Math.round(firstResponseTotalMs / firstResponseCount) : 0,
+      avgResolutionTimeMs:
+        resolutionCount > 0 ? Math.round(resolutionTotalMs / resolutionCount) : 0,
+    };
+  }
+
+  public async getOperationalReport(ctx: TenantContext): Promise<{
+    byStatus: Record<string, number>;
+    byPriority: Record<string, number>;
+    unassignedCount: number;
+    overdueCount: number;
+  }> {
+    this.validateTenantContext(ctx);
+    if (ctx.userRole === 'CUSTOMER') {
+      throw new UnauthorizedAccessError(
+        'Customers are not permitted to access operational reports',
+      );
+    }
+
+    const { items } = await this.deps.ticketRepository.findMany(ctx.tenantId, { limit: 1000 });
+
+    const byStatus: Record<string, number> = {};
+    const byPriority: Record<string, number> = {};
+    let unassignedCount = 0;
+    let overdueCount = 0;
+
+    const now = new Date();
+
+    for (const ticket of items) {
+      byStatus[ticket.status] = (byStatus[ticket.status] ?? 0) + 1;
+      byPriority[ticket.priority] = (byPriority[ticket.priority] ?? 0) + 1;
+
+      if (!ticket.assignedAgentId && !ticket.assignedTeamId) {
+        unassignedCount++;
+      }
+      if (ticket.isOverdue(undefined, now)) {
+        overdueCount++;
+      }
+    }
+
+    return {
+      byStatus,
+      byPriority,
+      unassignedCount,
+      overdueCount,
+    };
+  }
+
+  public async getAgentWorkload(
+    ctx: TenantContext,
+  ): Promise<Array<{ agentId?: string; teamId?: string; openTicketCount: number }>> {
+    this.validateTenantContext(ctx);
+    if (ctx.userRole === 'CUSTOMER') {
+      throw new UnauthorizedAccessError('Customers are not permitted to access agent workload');
+    }
+
+    const { items } = await this.deps.ticketRepository.findMany(ctx.tenantId, {
+      status: [
+        TicketStatus.OPEN,
+        TicketStatus.IN_PROGRESS,
+        TicketStatus.WAITING_FOR_CUSTOMER,
+        TicketStatus.WAITING_FOR_AGENT,
+      ],
+      limit: 1000,
+    });
+
+    const workloadMap = new Map<string, { agentId?: string; teamId?: string; count: number }>();
+
+    for (const ticket of items) {
+      const key = `${ticket.assignedAgentId ?? ''}:${ticket.assignedTeamId ?? ''}`;
+      const existing = workloadMap.get(key) ?? {
+        agentId: ticket.assignedAgentId,
+        teamId: ticket.assignedTeamId,
+        count: 0,
+      };
+      existing.count++;
+      workloadMap.set(key, existing);
+    }
+
+    return Array.from(workloadMap.values()).map((w) => ({
+      agentId: w.agentId,
+      teamId: w.teamId,
+      openTicketCount: w.count,
+    }));
+  }
+
+  public async anonymizeCustomerData(
+    ctx: TenantContext,
+    customerId: string,
+  ): Promise<{ anonymizedTicketCount: number }> {
+    this.validateTenantContext(ctx);
+    if (ctx.userRole !== 'TENANT_ADMIN' && ctx.userRole !== 'PLATFORM_ADMIN') {
+      throw new UnauthorizedAccessError(
+        'Only tenant or platform administrators can anonymize customer data',
+      );
+    }
+
+    const { items } = await this.deps.ticketRepository.findMany(ctx.tenantId, {
+      customerId,
+      limit: 1000,
+    });
+    const anonymizedId = `anonymized-${customerId.slice(0, 8)}`;
+
+    let count = 0;
+    for (const ticket of items) {
+      ticket.customerId = anonymizedId;
+      ticket.updateMetadata({
+        title: '[Anonymized Ticket]',
+        description: '[Anonymized Description]',
+        metadata: { anonymizedAt: new Date().toISOString() },
+      });
+      await this.deps.ticketRepository.update(ticket);
+      count++;
+    }
+
+    return { anonymizedTicketCount: count };
   }
 
   public async getAssignmentHistory(

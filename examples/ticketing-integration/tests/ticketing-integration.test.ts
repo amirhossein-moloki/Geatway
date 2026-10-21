@@ -13,6 +13,7 @@ import {
   PostgresTicketCategoryRepository,
   PostgresTicketEventRepository,
   PostgresTicketMessageRepository,
+  PostgresTicketReadStateRepository,
   PostgresTicketRepository,
 } from '@amirhossein-moloki/ticketing-persistence-postgres';
 import { TicketingHttpController } from '../src/server.js';
@@ -50,6 +51,7 @@ describe('Ticketing Integration Example Test', () => {
     const attachmentRepo = new PostgresTicketAttachmentRepository(db);
     const assignmentRepo = new PostgresTicketAssignmentRepository(db);
     const eventRepo = new PostgresTicketEventRepository(db);
+    const readStateRepo = new PostgresTicketReadStateRepository(db);
 
     const ticketingService = new TicketingService({
       ticketRepository: ticketRepo,
@@ -58,6 +60,7 @@ describe('Ticketing Integration Example Test', () => {
       attachmentRepository: attachmentRepo,
       assignmentRepository: assignmentRepo,
       eventRepository: eventRepo,
+      readStateRepository: readStateRepo,
     });
 
     controller = new TicketingHttpController(ticketingService);
@@ -143,5 +146,68 @@ describe('Ticketing Integration Example Test', () => {
 
     const crossRes = await controller.handleGetTicket(crossReq);
     expect(crossRes.status).toBe(404);
+  });
+
+  it('should support category management, bulk updates, SLA metrics, read states, and anonymization via controller', async () => {
+    const adminHeaders = {
+      'x-tenant-id': 'store-alpha',
+      'x-user-id': 'admin-1',
+      'x-user-role': 'TENANT_ADMIN',
+    };
+
+    // Create Category
+    const catRes = await controller.handleCreateCategory({
+      headers: adminHeaders,
+      body: { name: 'Billing', description: 'Billing questions' },
+    });
+    expect(catRes.status).toBe(201);
+    const categoryId = (catRes.body as any).category.id;
+
+    // Create Ticket
+    const ticketRes = await controller.handleCreateTicket({
+      headers: {
+        'x-tenant-id': 'store-alpha',
+        'x-user-id': 'cust-200',
+        'x-user-role': 'CUSTOMER',
+      },
+      body: { title: 'Overcharge', description: 'Billed twice', categoryId },
+    });
+    const ticketId = (ticketRes.body as any).ticket.id;
+
+    // Mark as read & unread count
+    const markReadRes = await controller.handleMarkTicketAsRead({
+      headers: adminHeaders,
+      params: { ticketId },
+    });
+    expect(markReadRes.status).toBe(200);
+
+    const unreadRes = await controller.handleGetUnreadCount({
+      headers: adminHeaders,
+    });
+    expect(unreadRes.status).toBe(200);
+
+    // Bulk Update
+    const bulkRes = await controller.handleBulkUpdateTickets({
+      headers: adminHeaders,
+      body: {
+        ticketIds: [ticketId],
+        updates: { status: TicketStatus.IN_PROGRESS, assignedAgentId: 'agent-1' },
+      },
+    });
+    expect(bulkRes.status).toBe(200);
+
+    // SLA metrics & operational report
+    const slaRes = await controller.handleGetSlaMetrics({ headers: adminHeaders });
+    expect(slaRes.status).toBe(200);
+
+    const reportRes = await controller.handleGetOperationalReport({ headers: adminHeaders });
+    expect(reportRes.status).toBe(200);
+
+    // Customer anonymization
+    const anonRes = await controller.handleAnonymizeCustomerData({
+      headers: adminHeaders,
+      params: { customerId: 'cust-200' },
+    });
+    expect(anonRes.status).toBe(200);
   });
 });

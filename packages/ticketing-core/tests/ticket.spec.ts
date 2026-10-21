@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { Ticket } from '../src/domain/entities/ticket.entity.js';
 import { TicketPriority } from '../src/domain/enums/ticket-priority.enum.js';
 import { TicketStatus } from '../src/domain/enums/ticket-status.enum.js';
-import { InvalidTicketStateError } from '../src/errors/ticketing.errors.js';
+import {
+  InvalidTicketStateError,
+  UnauthorizedAccessError,
+} from '../src/errors/ticketing.errors.js';
 
 describe('Ticket Entity', () => {
   it('should create a new ticket in OPEN status', () => {
@@ -24,7 +27,7 @@ describe('Ticket Entity', () => {
     expect(ticket.createdAt).toBeInstanceOf(Date);
   });
 
-  it('should allow valid status transitions', () => {
+  it('should allow valid status transitions for staff', () => {
     const ticket = Ticket.create(
       'ticket-1',
       'tenant-a',
@@ -33,21 +36,37 @@ describe('Ticket Entity', () => {
       'Test Description',
     );
 
-    ticket.transitionTo(TicketStatus.IN_PROGRESS);
+    ticket.transitionTo(TicketStatus.IN_PROGRESS, 'AGENT');
     expect(ticket.status).toBe(TicketStatus.IN_PROGRESS);
 
-    ticket.transitionTo(TicketStatus.WAITING_FOR_CUSTOMER);
+    ticket.transitionTo(TicketStatus.WAITING_FOR_CUSTOMER, 'AGENT');
     expect(ticket.status).toBe(TicketStatus.WAITING_FOR_CUSTOMER);
 
-    ticket.transitionTo(TicketStatus.RESOLVED);
+    ticket.transitionTo(TicketStatus.RESOLVED, 'AGENT');
     expect(ticket.status).toBe(TicketStatus.RESOLVED);
     expect(ticket.resolvedAt).toBeInstanceOf(Date);
 
-    ticket.transitionTo(TicketStatus.CLOSED);
+    ticket.transitionTo(TicketStatus.CLOSED, 'AGENT');
     expect(ticket.status).toBe(TicketStatus.CLOSED);
     expect(ticket.closedAt).toBeInstanceOf(Date);
 
-    ticket.transitionTo(TicketStatus.OPEN);
+    ticket.transitionTo(TicketStatus.OPEN, 'AGENT');
+    expect(ticket.status).toBe(TicketStatus.OPEN);
+    expect(ticket.resolvedAt).toBeUndefined();
+    expect(ticket.closedAt).toBeUndefined();
+  });
+
+  it('should restrict customer status transitions to CLOSED or OPEN', () => {
+    const ticket = Ticket.create('ticket-1', 'tenant-a', 'customer-1', 'Title', 'Desc');
+
+    expect(() => ticket.transitionTo(TicketStatus.IN_PROGRESS, 'CUSTOMER')).toThrow(
+      UnauthorizedAccessError,
+    );
+
+    ticket.transitionTo(TicketStatus.CLOSED, 'CUSTOMER');
+    expect(ticket.status).toBe(TicketStatus.CLOSED);
+
+    ticket.transitionTo(TicketStatus.OPEN, 'CUSTOMER');
     expect(ticket.status).toBe(TicketStatus.OPEN);
   });
 
@@ -60,12 +79,37 @@ describe('Ticket Entity', () => {
       'Test Description',
     );
 
-    ticket.transitionTo(TicketStatus.CLOSED);
+    ticket.transitionTo(TicketStatus.CLOSED, 'AGENT');
     expect(ticket.status).toBe(TicketStatus.CLOSED);
 
-    expect(() => ticket.transitionTo(TicketStatus.WAITING_FOR_CUSTOMER)).toThrow(
+    expect(() => ticket.transitionTo(TicketStatus.WAITING_FOR_CUSTOMER, 'AGENT')).toThrow(
       InvalidTicketStateError,
     );
+  });
+
+  it('should calculate SLA deadline and determine overdue status correctly', () => {
+    const ticket = Ticket.create(
+      'ticket-1',
+      'tenant-a',
+      'customer-1',
+      'Urgent bug',
+      'System down',
+      TicketPriority.URGENT,
+    );
+
+    const slaDeadline = ticket.getSlaDeadline();
+    expect(slaDeadline.getTime() - ticket.createdAt.getTime()).toBe(1 * 60 * 60 * 1000);
+
+    // Right now, not overdue
+    expect(ticket.isOverdue(undefined, ticket.createdAt)).toBe(false);
+
+    // 2 hours later without response -> overdue
+    const twoHoursLater = new Date(ticket.createdAt.getTime() + 2 * 60 * 60 * 1000);
+    expect(ticket.isOverdue(undefined, twoHoursLater)).toBe(true);
+
+    // Once response recorded -> no longer overdue
+    ticket.recordResponse(true);
+    expect(ticket.isOverdue(undefined, twoHoursLater)).toBe(false);
   });
 
   it('should update metadata and assignees correctly', () => {

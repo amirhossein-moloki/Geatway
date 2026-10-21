@@ -9,6 +9,7 @@ import {
   TicketEvent,
   TicketMessage,
   TicketPriority,
+  TicketReadState,
   TicketStatus,
   TicketingEventType,
 } from '@amirhossein-moloki/ticketing-core';
@@ -19,6 +20,7 @@ import { PostgresTicketAttachmentRepository } from '../src/repositories/postgres
 import { PostgresTicketCategoryRepository } from '../src/repositories/postgres-ticket-category-repository.js';
 import { PostgresTicketEventRepository } from '../src/repositories/postgres-ticket-event-repository.js';
 import { PostgresTicketMessageRepository } from '../src/repositories/postgres-ticket-message-repository.js';
+import { PostgresTicketReadStateRepository } from '../src/repositories/postgres-ticket-read-state-repository.js';
 import { PostgresTicketRepository } from '../src/repositories/postgres-ticket-repository.js';
 
 describe('Ticketing PostgreSQL Persistence & Multi-Tenant Security', () => {
@@ -29,6 +31,7 @@ describe('Ticketing PostgreSQL Persistence & Multi-Tenant Security', () => {
   let attachmentRepo: PostgresTicketAttachmentRepository;
   let assignmentRepo: PostgresTicketAssignmentRepository;
   let eventRepo: PostgresTicketEventRepository;
+  let readStateRepo: PostgresTicketReadStateRepository;
 
   beforeEach(async () => {
     db = await createTestDatabase();
@@ -38,6 +41,7 @@ describe('Ticketing PostgreSQL Persistence & Multi-Tenant Security', () => {
     attachmentRepo = new PostgresTicketAttachmentRepository(db);
     assignmentRepo = new PostgresTicketAssignmentRepository(db);
     eventRepo = new PostgresTicketEventRepository(db);
+    readStateRepo = new PostgresTicketReadStateRepository(db);
   });
 
   it('should persist and retrieve ticket categories with tenant isolation', async () => {
@@ -70,7 +74,7 @@ describe('Ticketing PostgreSQL Persistence & Multi-Tenant Security', () => {
     expect(created.id).toBe('ticket-1');
     expect(created.status).toBe(TicketStatus.OPEN);
 
-    created.transitionTo(TicketStatus.IN_PROGRESS);
+    created.transitionTo(TicketStatus.IN_PROGRESS, 'AGENT');
     created.assignTo('agent-1', 'billing-team');
     await ticketRepo.update(created);
 
@@ -190,5 +194,30 @@ describe('Ticketing PostgreSQL Persistence & Multi-Tenant Security', () => {
     const events = await eventRepo.findByTicketId('tenant-a', 'ticket-1');
     expect(events).toHaveLength(1);
     expect(events[0]?.eventType).toBe(TicketingEventType.TICKET_ASSIGNED);
+  });
+
+  it('should persist and query read states with unread count computation', async () => {
+    const ticket = Ticket.create('ticket-1', 'tenant-a', 'cust-1', 'Title', 'Desc');
+    await ticketRepo.create(ticket);
+
+    const message = TicketMessage.create(
+      'msg-1',
+      'ticket-1',
+      'tenant-a',
+      'agent-1',
+      MessageAuthorRole.AGENT,
+      'Reply from agent',
+      MessageVisibility.PUBLIC,
+    );
+    await messageRepo.create(message);
+
+    const initialUnread = await readStateRepo.getUnreadCount('tenant-a', 'cust-1', true);
+    expect(initialUnread).toBe(1);
+
+    const readState = TicketReadState.create('tenant-a', 'ticket-1', 'cust-1');
+    await readStateRepo.upsert(readState);
+
+    const postReadUnread = await readStateRepo.getUnreadCount('tenant-a', 'cust-1', true);
+    expect(postReadUnread).toBe(0);
   });
 });
