@@ -1,7 +1,8 @@
-import { PaymentPlatformError } from '@amirhossein-moloki/payment-core';
-
-export class TicketingError extends PaymentPlatformError {
-  public override readonly code: string = 'TICKETING_ERROR';
+export class TicketingError extends Error {
+  public readonly code: string = 'TICKETING_ERROR';
+  public readonly statusCode: number;
+  public readonly details?: Record<string, unknown>;
+  public override readonly cause?: Error | unknown;
 
   constructor(
     message: string,
@@ -9,7 +10,32 @@ export class TicketingError extends PaymentPlatformError {
     details?: Record<string, unknown>,
     cause?: Error | unknown,
   ) {
-    super(message, statusCode, details, cause);
+    super(message);
+    this.name = this.constructor.name;
+    this.statusCode = statusCode;
+    this.details = details;
+    this.cause = cause;
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+
+  public toJSON(): {
+    error: {
+      code: string;
+      message: string;
+      statusCode: number;
+      details?: Record<string, unknown>;
+    };
+  } {
+    return {
+      error: {
+        code: this.code,
+        message: this.message,
+        statusCode: this.statusCode,
+        ...(this.details && Object.keys(this.details).length > 0
+          ? { details: this.details }
+          : {}),
+      },
+    };
   }
 }
 
