@@ -9,11 +9,7 @@ import { MessageVisibility } from '../src/domain/enums/message-visibility.enum.j
 import { TicketPriority } from '../src/domain/enums/ticket-priority.enum.js';
 import { TicketStatus } from '../src/domain/enums/ticket-status.enum.js';
 import { TenantContext } from '../src/domain/context/tenant-context.js';
-import {
-  TicketNotFoundError,
-  TicketingError,
-  UnauthorizedAccessError,
-} from '../src/errors/ticketing.errors.js';
+import { TicketingError } from '../src/errors/ticketing.errors.js';
 import { ITicketAssignmentRepository } from '../src/ports/ticket-assignment-repository.port.js';
 import { ITicketCategoryRepository } from '../src/ports/ticket-category-repository.port.js';
 import { ITicketEventRepository } from '../src/ports/ticket-event-repository.port.js';
@@ -256,6 +252,16 @@ describe('TicketingService', () => {
     });
 
     expect(msg1.id).toBe(msg2.id);
+  });
+
+  it('should enforce customer and tenant isolation', async () => {
+    const { ticket } = await service.createTicket(customer1Ctx, {
+      title: 'Cust 1 Ticket',
+      description: 'Private info',
+    });
+
+    await expect(service.getTicket(customer2Ctx, ticket.id)).rejects.toThrow();
+    await expect(service.getTicket(tenantBCustomerCtx, ticket.id)).rejects.toThrow();
   });
 
   it('should automatically reopen resolved/closed tickets when customer replies', async () => {
