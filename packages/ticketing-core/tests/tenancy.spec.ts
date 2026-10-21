@@ -1,25 +1,18 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import { TicketCategory } from '../src/domain/entities/ticket-category.entity.js';
 import { TicketMessage } from '../src/domain/entities/ticket-message.entity.js';
-import { TicketAssignment } from '../src/domain/entities/ticket-assignment.entity.js';
 import { TicketEvent } from '../src/domain/entities/ticket-event.entity.js';
 import { Ticket } from '../src/domain/entities/ticket.entity.js';
-import { TicketReadState } from '../src/domain/entities/ticket-read-state.entity.js';
 import { MessageVisibility } from '../src/domain/enums/message-visibility.enum.js';
-import { TicketPriority } from '../src/domain/enums/ticket-priority.enum.js';
-import { TicketStatus } from '../src/domain/enums/ticket-status.enum.js';
-import { TenantContext } from '../src/domain/context/tenant-context.js';
+import { TenancyMode, TenantContext } from '../src/domain/context/tenant-context.js';
 import {
   InvalidTenancyConfigError,
-  TenantMismatchError,
   TicketNotFoundError,
   UnauthorizedAccessError,
 } from '../src/errors/ticketing.errors.js';
-import { ITicketAssignmentRepository } from '../src/ports/ticket-assignment-repository.port.js';
 import { ITicketCategoryRepository } from '../src/ports/ticket-category-repository.port.js';
 import { ITicketEventRepository } from '../src/ports/ticket-event-repository.port.js';
 import { ITicketMessageRepository } from '../src/ports/ticket-message-repository.port.js';
-import { ITicketReadStateRepository } from '../src/ports/ticket-read-state-repository.port.js';
 import { ITicketRepository, TicketFilterOptions } from '../src/ports/ticket-repository.port.js';
 import { ITicketingEventEmitter } from '../src/ports/ticketing-event-emitter.port.js';
 import { TicketingService } from '../src/services/ticketing.service.js';
@@ -146,7 +139,7 @@ describe('Tenancy Mode Configuration and Behaviors', () => {
           new TicketingService({
             ticketRepository: new InMemoryTicketRepository(),
             messageRepository: new InMemoryMessageRepository(),
-            tenancyConfig: { mode: 'INVALID_MODE' as any },
+            tenancyConfig: { mode: 'INVALID_MODE' as TenancyMode },
           }),
       ).toThrow(InvalidTenancyConfigError);
     });
