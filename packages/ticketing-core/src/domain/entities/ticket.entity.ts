@@ -1,0 +1,181 @@
+import { TicketPriority } from '../enums/ticket-priority.enum.js';
+import { TicketStatus } from '../enums/ticket-status.enum.js';
+import { InvalidTicketStateError } from '../../errors/ticketing.errors.js';
+
+export interface RelatedEntity {
+  entityType: string;
+  entityId: string;
+}
+
+export interface TicketProps {
+  id: string;
+  tenantId: string;
+  title: string;
+  description: string;
+  status: TicketStatus;
+  priority: TicketPriority;
+  categoryId?: string;
+  customerId: string;
+  assignedAgentId?: string;
+  assignedTeamId?: string;
+  relatedEntity?: RelatedEntity;
+  metadata?: Record<string, unknown>;
+  createdAt: Date;
+  updatedAt: Date;
+  firstResponseAt?: Date;
+  lastResponseAt?: Date;
+  resolvedAt?: Date;
+  closedAt?: Date;
+}
+
+const ALLOWED_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
+  [TicketStatus.OPEN]: [
+    TicketStatus.IN_PROGRESS,
+    TicketStatus.WAITING_FOR_CUSTOMER,
+    TicketStatus.WAITING_FOR_AGENT,
+    TicketStatus.RESOLVED,
+    TicketStatus.CLOSED,
+  ],
+  [TicketStatus.IN_PROGRESS]: [
+    TicketStatus.WAITING_FOR_CUSTOMER,
+    TicketStatus.WAITING_FOR_AGENT,
+    TicketStatus.RESOLVED,
+    TicketStatus.CLOSED,
+  ],
+  [TicketStatus.WAITING_FOR_CUSTOMER]: [
+    TicketStatus.IN_PROGRESS,
+    TicketStatus.WAITING_FOR_AGENT,
+    TicketStatus.RESOLVED,
+    TicketStatus.CLOSED,
+  ],
+  [TicketStatus.WAITING_FOR_AGENT]: [
+    TicketStatus.IN_PROGRESS,
+    TicketStatus.WAITING_FOR_CUSTOMER,
+    TicketStatus.RESOLVED,
+    TicketStatus.CLOSED,
+  ],
+  [TicketStatus.RESOLVED]: [TicketStatus.OPEN, TicketStatus.IN_PROGRESS, TicketStatus.CLOSED],
+  [TicketStatus.CLOSED]: [TicketStatus.OPEN, TicketStatus.IN_PROGRESS],
+};
+
+export class Ticket {
+  public readonly id: string;
+  public readonly tenantId: string;
+  public title: string;
+  public description: string;
+  public status: TicketStatus;
+  public priority: TicketPriority;
+  public categoryId?: string;
+  public readonly customerId: string;
+  public assignedAgentId?: string;
+  public assignedTeamId?: string;
+  public relatedEntity?: RelatedEntity;
+  public metadata: Record<string, unknown>;
+  public readonly createdAt: Date;
+  public updatedAt: Date;
+  public firstResponseAt?: Date;
+  public lastResponseAt?: Date;
+  public resolvedAt?: Date;
+  public closedAt?: Date;
+
+  constructor(props: TicketProps) {
+    this.id = props.id;
+    this.tenantId = props.tenantId;
+    this.title = props.title;
+    this.description = props.description;
+    this.status = props.status;
+    this.priority = props.priority;
+    this.categoryId = props.categoryId;
+    this.customerId = props.customerId;
+    this.assignedAgentId = props.assignedAgentId;
+    this.assignedTeamId = props.assignedTeamId;
+    this.relatedEntity = props.relatedEntity;
+    this.metadata = props.metadata ?? {};
+    this.createdAt = props.createdAt;
+    this.updatedAt = props.updatedAt;
+    this.firstResponseAt = props.firstResponseAt;
+    this.lastResponseAt = props.lastResponseAt;
+    this.resolvedAt = props.resolvedAt;
+    this.closedAt = props.closedAt;
+  }
+
+  public static create(
+    id: string,
+    tenantId: string,
+    customerId: string,
+    title: string,
+    description: string,
+    priority: TicketPriority = TicketPriority.MEDIUM,
+    categoryId?: string,
+    relatedEntity?: RelatedEntity,
+    metadata?: Record<string, unknown>,
+  ): Ticket {
+    const now = new Date();
+    return new Ticket({
+      id,
+      tenantId,
+      customerId,
+      title,
+      description,
+      status: TicketStatus.OPEN,
+      priority,
+      categoryId,
+      relatedEntity,
+      metadata: metadata ?? {},
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+
+  public transitionTo(targetStatus: TicketStatus): void {
+    if (this.status === targetStatus) {
+      return;
+    }
+
+    const allowed = ALLOWED_TRANSITIONS[this.status] ?? [];
+    if (!allowed.includes(targetStatus)) {
+      throw new InvalidTicketStateError(this.status, targetStatus, { ticketId: this.id });
+    }
+
+    this.status = targetStatus;
+    this.updatedAt = new Date();
+
+    if (targetStatus === TicketStatus.RESOLVED && !this.resolvedAt) {
+      this.resolvedAt = this.updatedAt;
+    } else if (targetStatus === TicketStatus.CLOSED && !this.closedAt) {
+      this.closedAt = this.updatedAt;
+    }
+  }
+
+  public recordResponse(isAgentResponse: boolean): void {
+    const now = new Date();
+    this.lastResponseAt = now;
+    if (isAgentResponse && !this.firstResponseAt) {
+      this.firstResponseAt = now;
+    }
+    this.updatedAt = now;
+  }
+
+  public updateMetadata(props: {
+    title?: string;
+    description?: string;
+    priority?: TicketPriority;
+    categoryId?: string;
+    metadata?: Record<string, unknown>;
+  }): void {
+    if (props.title !== undefined) this.title = props.title;
+    if (props.description !== undefined) this.description = props.description;
+    if (props.priority !== undefined) this.priority = props.priority;
+    if (props.categoryId !== undefined) this.categoryId = props.categoryId;
+    if (props.metadata !== undefined) {
+      this.metadata = { ...this.metadata, ...props.metadata };
+    }
+    this.updatedAt = new Date();
+  }
+
+  public assignTo(agentId?: string, teamId?: string): void {
+    this.assignedAgentId = agentId;
+    this.assignedTeamId = teamId;
+    this.updatedAt = new Date();
+  }
+}
