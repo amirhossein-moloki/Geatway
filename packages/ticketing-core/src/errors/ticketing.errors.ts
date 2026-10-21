@@ -68,3 +68,11 @@ export class AttachmentNotFoundError extends TicketingError {
     super(`Attachment '${attachmentId}' was not found`, 404, { ...details, attachmentId });
   }
 }
+
+export class InvalidTenancyConfigError extends TicketingError {
+  public override readonly code: string = 'INVALID_TENANCY_CONFIG_ERROR';
+
+  constructor(message: string, details?: Record<string, unknown>) {
+    super(message, 400, details);
+  }
+}

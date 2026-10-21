@@ -28,7 +28,7 @@ export class TicketingHttpController {
     const userId = req.headers['x-user-id'];
     const userRole = (req.headers['x-user-role'] as UserRole) || 'CUSTOMER';
 
-    if (!tenantId) {
+    if (this.ticketingService.tenancyConfig.mode === 'MULTI_TENANT' && !tenantId) {
       throw new Error('Missing x-tenant-id header');
     }
     if (!userId) {
@@ -36,7 +36,7 @@ export class TicketingHttpController {
     }
 
     return {
-      tenantId,
+      tenantId: tenantId || undefined,
       userId,
       userRole,
     };
