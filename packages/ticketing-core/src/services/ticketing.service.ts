@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { TenantContext } from '../domain/context/tenant-context.js';
+import { TenancyConfig, TenantContext } from '../domain/context/tenant-context.js';
 import { TicketCategory } from '../domain/entities/ticket-category.entity.js';
 import { TicketMessage } from '../domain/entities/ticket-message.entity.js';
 import { TicketAttachment } from '../domain/entities/ticket-attachment.entity.js';
@@ -15,6 +15,7 @@ import { TicketingEventType } from '../domain/enums/ticketing-event-type.enum.js
 import {
   AttachmentNotFoundError,
   InvalidCategoryError,
+  InvalidTenancyConfigError,
   TenantMismatchError,
   TicketNotFoundError,
   TicketingError,
@@ -81,21 +82,61 @@ export interface TicketingServiceDependencies {
   storageService?: IStorageService;
   eventEmitter?: ITicketingEventEmitter;
   idGenerator?: () => string;
+  tenancyConfig?: TenancyConfig;
 }
 
 export class TicketingService {
   private readonly generateId: () => string;
+  public readonly tenancyConfig: Required<TenancyConfig>;
 
   constructor(private readonly deps: TicketingServiceDependencies) {
     this.generateId = deps.idGenerator ?? (() => randomUUID());
+    this.tenancyConfig = this.validateAndNormalizeTenancyConfig(deps.tenancyConfig);
   }
 
-  private validateTenantContext(ctx: TenantContext): void {
-    if (!ctx || !ctx.tenantId) {
-      throw new TenantMismatchError('unknown', 'missing');
+  private validateAndNormalizeTenancyConfig(config?: TenancyConfig): Required<TenancyConfig> {
+    const rawConfig = config ?? { mode: 'MULTI_TENANT' };
+    if (
+      !rawConfig ||
+      !rawConfig.mode ||
+      (rawConfig.mode !== 'SINGLE_TENANT' && rawConfig.mode !== 'MULTI_TENANT')
+    ) {
+      throw new InvalidTenancyConfigError(
+        `Invalid tenancy configuration: mode must be 'SINGLE_TENANT' or 'MULTI_TENANT', got '${rawConfig?.mode}'`,
+      );
+    }
+    const defaultTenantId = rawConfig.defaultTenantId?.trim() || 'default';
+    return {
+      mode: rawConfig.mode,
+      defaultTenantId,
+    };
+  }
+
+  private resolveTenantContext(ctx: TenantContext): TenantContext & { tenantId: string } {
+    if (!ctx) {
+      throw new UnauthorizedAccessError('TenantContext is required');
     }
     if (!ctx.userId) {
       throw new UnauthorizedAccessError('User ID is required in TenantContext');
+    }
+
+    if (this.tenancyConfig.mode === 'SINGLE_TENANT') {
+      const tenantId =
+        ctx.tenantId && ctx.tenantId.trim()
+          ? ctx.tenantId.trim()
+          : this.tenancyConfig.defaultTenantId;
+      return {
+        ...ctx,
+        tenantId,
+      };
+    } else {
+      if (!ctx.tenantId || !ctx.tenantId.trim()) {
+        throw new TenantMismatchError('unknown', 'missing');
+      }
+      return {
+        ...ctx,
+        tenantId: ctx.tenantId.trim(),
+      };
     }
   }
 
@@ -103,8 +144,8 @@ export class TicketingService {
     ctx: TenantContext,
     input: { name: string; description?: string },
   ): Promise<TicketCategory> {
-    this.validateTenantContext(ctx);
-    if (ctx.userRole === 'CUSTOMER') {
+    const resolvedCtx = this.resolveTenantContext(ctx);
+    if (resolvedCtx.userRole === 'CUSTOMER') {
       throw new UnauthorizedAccessError('Customers are not permitted to create ticket categories');
     }
 
@@ -114,7 +155,7 @@ export class TicketingService {
 
     const category = TicketCategory.create(
       this.generateId(),
-      ctx.tenantId,
+      resolvedCtx.tenantId,
       input.name,
       input.description,
     );
@@ -127,8 +168,8 @@ export class TicketingService {
     categoryId: string,
     input: { name?: string; description?: string; isActive?: boolean },
   ): Promise<TicketCategory> {
-    this.validateTenantContext(ctx);
-    if (ctx.userRole === 'CUSTOMER') {
+    const resolvedCtx = this.resolveTenantContext(ctx);
+    if (resolvedCtx.userRole === 'CUSTOMER') {
       throw new UnauthorizedAccessError('Customers are not permitted to update ticket categories');
     }
 
@@ -136,7 +177,7 @@ export class TicketingService {
       throw new InvalidCategoryError('Category repository is not configured');
     }
 
-    const category = await this.deps.categoryRepository.findById(ctx.tenantId, categoryId);
+    const category = await this.deps.categoryRepository.findById(resolvedCtx.tenantId, categoryId);
     if (!category) {
       throw new InvalidCategoryError(`Category '${categoryId}' not found`);
     }
@@ -146,23 +187,29 @@ export class TicketingService {
   }
 
   public async listCategories(ctx: TenantContext, activeOnly = true): Promise<TicketCategory[]> {
-    this.validateTenantContext(ctx);
+    const resolvedCtx = this.resolveTenantContext(ctx);
     if (!this.deps.categoryRepository) {
       return [];
     }
-    return this.deps.categoryRepository.findByTenantId(ctx.tenantId, activeOnly);
+    return this.deps.categoryRepository.findByTenantId(resolvedCtx.tenantId, activeOnly);
   }
 
   public async createTicket(
     ctx: TenantContext,
     input: CreateTicketInput,
   ): Promise<{ ticket: Ticket; message: TicketMessage }> {
-    this.validateTenantContext(ctx);
+    const resolvedCtx = this.resolveTenantContext(ctx);
 
-    const customerId = ctx.userRole === 'CUSTOMER' ? ctx.userId : (input.customerId ?? ctx.userId);
+    const customerId =
+      resolvedCtx.userRole === 'CUSTOMER'
+        ? resolvedCtx.userId
+        : (input.customerId ?? resolvedCtx.userId);
 
     if (input.categoryId && this.deps.categoryRepository) {
-      const category = await this.deps.categoryRepository.findById(ctx.tenantId, input.categoryId);
+      const category = await this.deps.categoryRepository.findById(
+        resolvedCtx.tenantId,
+        input.categoryId,
+      );
       if (!category || !category.isActive) {
         throw new InvalidCategoryError(`Category '${input.categoryId}' is invalid or inactive`);
       }
@@ -171,7 +218,7 @@ export class TicketingService {
     const ticketId = this.generateId();
     const ticket = Ticket.create(
       ticketId,
-      ctx.tenantId,
+      resolvedCtx.tenantId,
       customerId,
       input.title,
       input.description,
@@ -185,7 +232,7 @@ export class TicketingService {
 
     const messageId = this.generateId();
     const authorRole =
-      ctx.userRole === 'CUSTOMER' ? MessageAuthorRole.CUSTOMER : MessageAuthorRole.AGENT;
+      resolvedCtx.userRole === 'CUSTOMER' ? MessageAuthorRole.CUSTOMER : MessageAuthorRole.AGENT;
 
     const attachmentEntities: TicketAttachment[] = [];
     if (input.attachments && input.attachments.length > 0) {
@@ -197,14 +244,14 @@ export class TicketingService {
           fileName: file.fileName,
           content: file.content,
           mimeType: file.mimeType,
-          tenantId: ctx.tenantId,
+          tenantId: resolvedCtx.tenantId,
         });
 
         const attachment = TicketAttachment.create(
           this.generateId(),
           ticketId,
           messageId,
-          ctx.tenantId,
+          resolvedCtx.tenantId,
           file.fileName,
           uploadRes.fileKey,
           file.mimeType,
@@ -221,8 +268,8 @@ export class TicketingService {
     const message = TicketMessage.create(
       messageId,
       ticketId,
-      ctx.tenantId,
-      ctx.userId,
+      resolvedCtx.tenantId,
+      resolvedCtx.userId,
       authorRole,
       input.description,
       MessageVisibility.PUBLIC,
@@ -234,10 +281,10 @@ export class TicketingService {
     const event = TicketEvent.create(
       this.generateId(),
       ticketId,
-      ctx.tenantId,
+      resolvedCtx.tenantId,
       TicketingEventType.TICKET_CREATED,
-      ctx.userId,
-      ctx.userRole,
+      resolvedCtx.userId,
+      resolvedCtx.userRole,
       { title: ticket.title, priority: ticket.priority, customerId },
     );
 
@@ -254,7 +301,7 @@ export class TicketingService {
     }
 
     if (this.deps.readStateRepository) {
-      const readState = TicketReadState.create(ctx.tenantId, ticketId, ctx.userId);
+      const readState = TicketReadState.create(resolvedCtx.tenantId, ticketId, resolvedCtx.userId);
       await this.deps.readStateRepository.upsert(readState).catch(() => {});
     }
 
@@ -262,15 +309,15 @@ export class TicketingService {
   }
 
   public async getTicket(ctx: TenantContext, ticketId: string): Promise<Ticket> {
-    this.validateTenantContext(ctx);
+    const resolvedCtx = this.resolveTenantContext(ctx);
 
-    const ticket = await this.deps.ticketRepository.findById(ctx.tenantId, ticketId);
+    const ticket = await this.deps.ticketRepository.findById(resolvedCtx.tenantId, ticketId);
     if (!ticket) {
-      throw new TicketNotFoundError(ticketId, ctx.tenantId);
+      throw new TicketNotFoundError(ticketId, resolvedCtx.tenantId);
     }
 
-    if (ctx.userRole === 'CUSTOMER' && ticket.customerId !== ctx.userId) {
-      throw new TicketNotFoundError(ticketId, ctx.tenantId);
+    if (resolvedCtx.userRole === 'CUSTOMER' && ticket.customerId !== resolvedCtx.userId) {
+      throw new TicketNotFoundError(ticketId, resolvedCtx.tenantId);
     }
 
     return ticket;
@@ -280,18 +327,19 @@ export class TicketingService {
     ctx: TenantContext,
     ticketId: string,
   ): Promise<{ ticket: Ticket; messages: TicketMessage[] }> {
-    const ticket = await this.getTicket(ctx, ticketId);
+    const resolvedCtx = this.resolveTenantContext(ctx);
+    const ticket = await this.getTicket(resolvedCtx, ticketId);
 
-    const includeInternal = ctx.userRole !== 'CUSTOMER';
+    const includeInternal = resolvedCtx.userRole !== 'CUSTOMER';
 
     const messages = await this.deps.messageRepository.findByTicketId(
-      ctx.tenantId,
+      resolvedCtx.tenantId,
       ticketId,
       includeInternal,
     );
 
     if (this.deps.readStateRepository) {
-      const readState = TicketReadState.create(ctx.tenantId, ticketId, ctx.userId);
+      const readState = TicketReadState.create(resolvedCtx.tenantId, ticketId, resolvedCtx.userId);
       await this.deps.readStateRepository.upsert(readState).catch(() => {});
     }
 
@@ -302,21 +350,21 @@ export class TicketingService {
     ctx: TenantContext,
     filter: TicketFilterOptions = {},
   ): Promise<{ items: Ticket[]; total: number }> {
-    this.validateTenantContext(ctx);
+    const resolvedCtx = this.resolveTenantContext(ctx);
 
     const scopedFilter: TicketFilterOptions = { ...filter };
-    if (ctx.userRole === 'CUSTOMER') {
-      scopedFilter.customerId = ctx.userId;
+    if (resolvedCtx.userRole === 'CUSTOMER') {
+      scopedFilter.customerId = resolvedCtx.userId;
     } else if (
-      ctx.teamIds &&
-      ctx.teamIds.length > 0 &&
+      resolvedCtx.teamIds &&
+      resolvedCtx.teamIds.length > 0 &&
       !scopedFilter.assignedAgentId &&
       !scopedFilter.assignedTeamId
     ) {
-      scopedFilter.teamIds = ctx.teamIds;
+      scopedFilter.teamIds = resolvedCtx.teamIds;
     }
 
-    return this.deps.ticketRepository.findMany(ctx.tenantId, scopedFilter);
+    return this.deps.ticketRepository.findMany(resolvedCtx.tenantId, scopedFilter);
   }
 
   public async addMessage(
@@ -324,29 +372,31 @@ export class TicketingService {
     ticketId: string,
     input: AddMessageInput,
   ): Promise<TicketMessage> {
+    const resolvedCtx = this.resolveTenantContext(ctx);
+
     if (!input.content || !input.content.trim()) {
       throw new TicketingError('Message content cannot be empty or blank', 400);
     }
 
-    const ticket = await this.getTicket(ctx, ticketId);
+    const ticket = await this.getTicket(resolvedCtx, ticketId);
 
     const requestedVisibility = input.visibility ?? MessageVisibility.PUBLIC;
-    if (ctx.userRole === 'CUSTOMER' && requestedVisibility === MessageVisibility.INTERNAL) {
+    if (resolvedCtx.userRole === 'CUSTOMER' && requestedVisibility === MessageVisibility.INTERNAL) {
       throw new UnauthorizedAccessError('Customers are not permitted to create internal notes');
     }
 
-    const isCustomer = ctx.userRole === 'CUSTOMER';
+    const isCustomer = resolvedCtx.userRole === 'CUSTOMER';
     const authorRole = isCustomer ? MessageAuthorRole.CUSTOMER : MessageAuthorRole.AGENT;
 
     // Idempotency check if idempotencyKey provided
     if (input.idempotencyKey) {
       const existingMessages = await this.deps.messageRepository.findByTicketId(
-        ctx.tenantId,
+        resolvedCtx.tenantId,
         ticketId,
         true,
       );
       const match = existingMessages.find(
-        (m) => m.content === input.content && m.authorId === ctx.userId,
+        (m) => m.content === input.content && m.authorId === resolvedCtx.userId,
       );
       if (match) {
         return match;
@@ -365,14 +415,14 @@ export class TicketingService {
           fileName: file.fileName,
           content: file.content,
           mimeType: file.mimeType,
-          tenantId: ctx.tenantId,
+          tenantId: resolvedCtx.tenantId,
         });
 
         const attachment = TicketAttachment.create(
           this.generateId(),
           ticketId,
           messageId,
-          ctx.tenantId,
+          resolvedCtx.tenantId,
           file.fileName,
           uploadRes.fileKey,
           file.mimeType,
@@ -389,8 +439,8 @@ export class TicketingService {
     const message = TicketMessage.create(
       messageId,
       ticketId,
-      ctx.tenantId,
-      ctx.userId,
+      resolvedCtx.tenantId,
+      resolvedCtx.userId,
       authorRole,
       input.content,
       requestedVisibility,
@@ -406,13 +456,13 @@ export class TicketingService {
     if (requestedVisibility === MessageVisibility.PUBLIC) {
       if (isCustomer) {
         if (ticket.status === TicketStatus.RESOLVED || ticket.status === TicketStatus.CLOSED) {
-          ticket.transitionTo(TicketStatus.OPEN, ctx.userRole);
+          ticket.transitionTo(TicketStatus.OPEN, resolvedCtx.userRole);
           isReopened = true;
         } else if (
           ticket.status === TicketStatus.WAITING_FOR_CUSTOMER ||
           ticket.status === TicketStatus.OPEN
         ) {
-          ticket.transitionTo(TicketStatus.WAITING_FOR_AGENT, ctx.userRole);
+          ticket.transitionTo(TicketStatus.WAITING_FOR_AGENT, resolvedCtx.userRole);
         }
       } else {
         if (
@@ -420,7 +470,7 @@ export class TicketingService {
           ticket.status === TicketStatus.OPEN ||
           ticket.status === TicketStatus.IN_PROGRESS
         ) {
-          ticket.transitionTo(TicketStatus.WAITING_FOR_CUSTOMER, ctx.userRole);
+          ticket.transitionTo(TicketStatus.WAITING_FOR_CUSTOMER, resolvedCtx.userRole);
         }
       }
     }
@@ -430,10 +480,10 @@ export class TicketingService {
     const event = TicketEvent.create(
       this.generateId(),
       ticketId,
-      ctx.tenantId,
+      resolvedCtx.tenantId,
       isReopened ? TicketingEventType.TICKET_REOPENED : TicketingEventType.MESSAGE_ADDED,
-      ctx.userId,
-      ctx.userRole,
+      resolvedCtx.userId,
+      resolvedCtx.userRole,
       { messageId: savedMessage.id, visibility: savedMessage.visibility, isReopened },
     );
 
@@ -455,7 +505,7 @@ export class TicketingService {
     }
 
     if (this.deps.readStateRepository) {
-      const readState = TicketReadState.create(ctx.tenantId, ticketId, ctx.userId);
+      const readState = TicketReadState.create(resolvedCtx.tenantId, ticketId, resolvedCtx.userId);
       await this.deps.readStateRepository.upsert(readState).catch(() => {});
     }
 
@@ -473,16 +523,20 @@ export class TicketingService {
       metadata?: Record<string, unknown>;
     },
   ): Promise<Ticket> {
-    const ticket = await this.getTicket(ctx, ticketId);
+    const resolvedCtx = this.resolveTenantContext(ctx);
+    const ticket = await this.getTicket(resolvedCtx, ticketId);
 
-    if (ctx.userRole === 'CUSTOMER') {
+    if (resolvedCtx.userRole === 'CUSTOMER') {
       if (input.priority || input.categoryId) {
         throw new UnauthorizedAccessError('Customers cannot alter ticket priority or category');
       }
     }
 
     if (input.categoryId && this.deps.categoryRepository) {
-      const category = await this.deps.categoryRepository.findById(ctx.tenantId, input.categoryId);
+      const category = await this.deps.categoryRepository.findById(
+        resolvedCtx.tenantId,
+        input.categoryId,
+      );
       if (!category || !category.isActive) {
         throw new InvalidCategoryError(`Category '${input.categoryId}' is invalid or inactive`);
       }
@@ -494,10 +548,10 @@ export class TicketingService {
     const event = TicketEvent.create(
       this.generateId(),
       ticketId,
-      ctx.tenantId,
+      resolvedCtx.tenantId,
       TicketingEventType.TICKET_UPDATED,
-      ctx.userId,
-      ctx.userRole,
+      resolvedCtx.userId,
+      resolvedCtx.userRole,
       { changes: input },
     );
 
@@ -513,14 +567,15 @@ export class TicketingService {
     ticketId: string,
     targetStatus: TicketStatus,
   ): Promise<Ticket> {
-    const ticket = await this.getTicket(ctx, ticketId);
+    const resolvedCtx = this.resolveTenantContext(ctx);
+    const ticket = await this.getTicket(resolvedCtx, ticketId);
     const previousStatus = ticket.status;
 
     if (previousStatus === targetStatus) {
       return ticket;
     }
 
-    ticket.transitionTo(targetStatus, ctx.userRole);
+    ticket.transitionTo(targetStatus, resolvedCtx.userRole);
     const updatedTicket = await this.deps.ticketRepository.update(ticket);
 
     let eventType = TicketingEventType.TICKET_STATUS_CHANGED;
@@ -535,10 +590,10 @@ export class TicketingService {
     const event = TicketEvent.create(
       this.generateId(),
       ticketId,
-      ctx.tenantId,
+      resolvedCtx.tenantId,
       eventType,
-      ctx.userId,
-      ctx.userRole,
+      resolvedCtx.userId,
+      resolvedCtx.userRole,
       { previousStatus, newStatus: targetStatus },
     );
 
@@ -564,12 +619,12 @@ export class TicketingService {
     ticketId: string,
     input: { agentId?: string; teamId?: string },
   ): Promise<{ ticket: Ticket; assignment: TicketAssignment }> {
-    this.validateTenantContext(ctx);
-    if (ctx.userRole === 'CUSTOMER') {
+    const resolvedCtx = this.resolveTenantContext(ctx);
+    if (resolvedCtx.userRole === 'CUSTOMER') {
       throw new UnauthorizedAccessError('Customers are not permitted to assign tickets');
     }
 
-    const ticket = await this.getTicket(ctx, ticketId);
+    const ticket = await this.getTicket(resolvedCtx, ticketId);
     const previousAgentId = ticket.assignedAgentId;
 
     ticket.assignTo(input.agentId, input.teamId);
@@ -578,8 +633,8 @@ export class TicketingService {
     const assignment = TicketAssignment.create(
       this.generateId(),
       ticketId,
-      ctx.tenantId,
-      ctx.userId,
+      resolvedCtx.tenantId,
+      resolvedCtx.userId,
       input.agentId,
       input.teamId,
       previousAgentId,
@@ -593,10 +648,10 @@ export class TicketingService {
     const event = TicketEvent.create(
       this.generateId(),
       ticketId,
-      ctx.tenantId,
+      resolvedCtx.tenantId,
       TicketingEventType.TICKET_ASSIGNED,
-      ctx.userId,
-      ctx.userRole,
+      resolvedCtx.userId,
+      resolvedCtx.userRole,
       { assignedAgentId: input.agentId, assignedTeamId: input.teamId, previousAgentId },
     );
 
@@ -622,8 +677,8 @@ export class TicketingService {
     ticketIds: string[],
     updates: BulkUpdateTicketsInput,
   ): Promise<{ results: BulkUpdateResult[] }> {
-    this.validateTenantContext(ctx);
-    if (ctx.userRole === 'CUSTOMER') {
+    const resolvedCtx = this.resolveTenantContext(ctx);
+    if (resolvedCtx.userRole === 'CUSTOMER') {
       throw new UnauthorizedAccessError('Customers are not permitted to execute bulk updates');
     }
 
@@ -632,16 +687,16 @@ export class TicketingService {
     for (const ticketId of ticketIds) {
       try {
         if (updates.status) {
-          await this.changeTicketStatus(ctx, ticketId, updates.status);
+          await this.changeTicketStatus(resolvedCtx, ticketId, updates.status);
         }
         if (updates.assignedAgentId !== undefined || updates.assignedTeamId !== undefined) {
-          await this.assignTicket(ctx, ticketId, {
+          await this.assignTicket(resolvedCtx, ticketId, {
             agentId: updates.assignedAgentId,
             teamId: updates.assignedTeamId,
           });
         }
         if (updates.priority || updates.categoryId) {
-          await this.updateTicketMetadata(ctx, ticketId, {
+          await this.updateTicketMetadata(resolvedCtx, ticketId, {
             priority: updates.priority,
             categoryId: updates.categoryId,
           });
@@ -657,23 +712,24 @@ export class TicketingService {
   }
 
   public async markTicketAsRead(ctx: TenantContext, ticketId: string): Promise<TicketReadState> {
-    await this.getTicket(ctx, ticketId);
+    const resolvedCtx = this.resolveTenantContext(ctx);
+    await this.getTicket(resolvedCtx, ticketId);
     if (!this.deps.readStateRepository) {
-      return TicketReadState.create(ctx.tenantId, ticketId, ctx.userId);
+      return TicketReadState.create(resolvedCtx.tenantId, ticketId, resolvedCtx.userId);
     }
-    const readState = TicketReadState.create(ctx.tenantId, ticketId, ctx.userId);
+    const readState = TicketReadState.create(resolvedCtx.tenantId, ticketId, resolvedCtx.userId);
     return this.deps.readStateRepository.upsert(readState);
   }
 
   public async getUnreadCount(ctx: TenantContext): Promise<number> {
-    this.validateTenantContext(ctx);
+    const resolvedCtx = this.resolveTenantContext(ctx);
     if (!this.deps.readStateRepository) {
       return 0;
     }
     return this.deps.readStateRepository.getUnreadCount(
-      ctx.tenantId,
-      ctx.userId,
-      ctx.userRole === 'CUSTOMER',
+      resolvedCtx.tenantId,
+      resolvedCtx.userId,
+      resolvedCtx.userRole === 'CUSTOMER',
     );
   }
 
@@ -683,12 +739,14 @@ export class TicketingService {
     avgFirstResponseTimeMs: number;
     avgResolutionTimeMs: number;
   }> {
-    this.validateTenantContext(ctx);
-    if (ctx.userRole === 'CUSTOMER') {
+    const resolvedCtx = this.resolveTenantContext(ctx);
+    if (resolvedCtx.userRole === 'CUSTOMER') {
       throw new UnauthorizedAccessError('Customers are not permitted to access SLA metrics');
     }
 
-    const { items } = await this.deps.ticketRepository.findMany(ctx.tenantId, { limit: 1000 });
+    const { items } = await this.deps.ticketRepository.findMany(resolvedCtx.tenantId, {
+      limit: 1000,
+    });
 
     let overdueCount = 0;
     let firstResponseTotalMs = 0;
@@ -728,14 +786,16 @@ export class TicketingService {
     unassignedCount: number;
     overdueCount: number;
   }> {
-    this.validateTenantContext(ctx);
-    if (ctx.userRole === 'CUSTOMER') {
+    const resolvedCtx = this.resolveTenantContext(ctx);
+    if (resolvedCtx.userRole === 'CUSTOMER') {
       throw new UnauthorizedAccessError(
         'Customers are not permitted to access operational reports',
       );
     }
 
-    const { items } = await this.deps.ticketRepository.findMany(ctx.tenantId, { limit: 1000 });
+    const { items } = await this.deps.ticketRepository.findMany(resolvedCtx.tenantId, {
+      limit: 1000,
+    });
 
     const byStatus: Record<string, number> = {};
     const byPriority: Record<string, number> = {};
@@ -767,12 +827,12 @@ export class TicketingService {
   public async getAgentWorkload(
     ctx: TenantContext,
   ): Promise<Array<{ agentId?: string; teamId?: string; openTicketCount: number }>> {
-    this.validateTenantContext(ctx);
-    if (ctx.userRole === 'CUSTOMER') {
+    const resolvedCtx = this.resolveTenantContext(ctx);
+    if (resolvedCtx.userRole === 'CUSTOMER') {
       throw new UnauthorizedAccessError('Customers are not permitted to access agent workload');
     }
 
-    const { items } = await this.deps.ticketRepository.findMany(ctx.tenantId, {
+    const { items } = await this.deps.ticketRepository.findMany(resolvedCtx.tenantId, {
       status: [
         TicketStatus.OPEN,
         TicketStatus.IN_PROGRESS,
@@ -806,14 +866,14 @@ export class TicketingService {
     ctx: TenantContext,
     customerId: string,
   ): Promise<{ anonymizedTicketCount: number }> {
-    this.validateTenantContext(ctx);
-    if (ctx.userRole !== 'TENANT_ADMIN' && ctx.userRole !== 'PLATFORM_ADMIN') {
+    const resolvedCtx = this.resolveTenantContext(ctx);
+    if (resolvedCtx.userRole !== 'TENANT_ADMIN' && resolvedCtx.userRole !== 'PLATFORM_ADMIN') {
       throw new UnauthorizedAccessError(
         'Only tenant or platform administrators can anonymize customer data',
       );
     }
 
-    const { items } = await this.deps.ticketRepository.findMany(ctx.tenantId, {
+    const { items } = await this.deps.ticketRepository.findMany(resolvedCtx.tenantId, {
       customerId,
       limit: 1000,
     });
@@ -838,39 +898,44 @@ export class TicketingService {
     ctx: TenantContext,
     ticketId: string,
   ): Promise<TicketAssignment[]> {
-    await this.getTicket(ctx, ticketId);
-    if (ctx.userRole === 'CUSTOMER') {
+    const resolvedCtx = this.resolveTenantContext(ctx);
+    await this.getTicket(resolvedCtx, ticketId);
+    if (resolvedCtx.userRole === 'CUSTOMER') {
       throw new UnauthorizedAccessError('Customers are not permitted to view assignment history');
     }
     if (!this.deps.assignmentRepository) {
       return [];
     }
-    return this.deps.assignmentRepository.findByTicketId(ctx.tenantId, ticketId);
+    return this.deps.assignmentRepository.findByTicketId(resolvedCtx.tenantId, ticketId);
   }
 
   public async getTicketEvents(ctx: TenantContext, ticketId: string): Promise<TicketEvent[]> {
-    await this.getTicket(ctx, ticketId);
+    const resolvedCtx = this.resolveTenantContext(ctx);
+    await this.getTicket(resolvedCtx, ticketId);
     if (!this.deps.eventRepository) {
       return [];
     }
-    return this.deps.eventRepository.findByTicketId(ctx.tenantId, ticketId);
+    return this.deps.eventRepository.findByTicketId(resolvedCtx.tenantId, ticketId);
   }
 
   public async getAttachmentDownloadUrl(ctx: TenantContext, attachmentId: string): Promise<string> {
-    this.validateTenantContext(ctx);
+    const resolvedCtx = this.resolveTenantContext(ctx);
 
     if (!this.deps.attachmentRepository || !this.deps.storageService) {
       throw new AttachmentNotFoundError(attachmentId);
     }
 
-    const attachment = await this.deps.attachmentRepository.findById(ctx.tenantId, attachmentId);
+    const attachment = await this.deps.attachmentRepository.findById(
+      resolvedCtx.tenantId,
+      attachmentId,
+    );
 
     if (!attachment) {
       throw new AttachmentNotFoundError(attachmentId);
     }
 
-    await this.getTicket(ctx, attachment.ticketId);
+    await this.getTicket(resolvedCtx, attachment.ticketId);
 
-    return this.deps.storageService.getDownloadUrl(attachment.fileKey, ctx.tenantId);
+    return this.deps.storageService.getDownloadUrl(attachment.fileKey, resolvedCtx.tenantId);
   }
 }

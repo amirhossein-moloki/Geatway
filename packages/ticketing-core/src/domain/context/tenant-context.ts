@@ -1,7 +1,14 @@
 export type UserRole = 'CUSTOMER' | 'AGENT' | 'TENANT_ADMIN' | 'PLATFORM_ADMIN';
 
+export type TenancyMode = 'SINGLE_TENANT' | 'MULTI_TENANT';
+
+export interface TenancyConfig {
+  mode: TenancyMode;
+  defaultTenantId?: string;
+}
+
 export interface TenantContext {
-  tenantId: string;
+  tenantId?: string;
   userId: string;
   userRole: UserRole;
   teamIds?: string[];
