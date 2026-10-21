@@ -162,14 +162,21 @@ export class PostgresTicketRepository implements ITicketRepository {
       params.push(filter.customerId);
     }
 
-    if (filter.assignedAgentId) {
-      whereClauses.push(`assigned_agent_id = $${paramIdx++}`);
-      params.push(filter.assignedAgentId);
-    }
+    if (filter.unassignedOnly) {
+      whereClauses.push(`assigned_agent_id IS NULL AND assigned_team_id IS NULL`);
+    } else {
+      if (filter.assignedAgentId) {
+        whereClauses.push(`assigned_agent_id = $${paramIdx++}`);
+        params.push(filter.assignedAgentId);
+      }
 
-    if (filter.assignedTeamId) {
-      whereClauses.push(`assigned_team_id = $${paramIdx++}`);
-      params.push(filter.assignedTeamId);
+      if (filter.assignedTeamId) {
+        whereClauses.push(`assigned_team_id = $${paramIdx++}`);
+        params.push(filter.assignedTeamId);
+      } else if (filter.teamIds && filter.teamIds.length > 0) {
+        whereClauses.push(`assigned_team_id = ANY($${paramIdx++})`);
+        params.push(filter.teamIds);
+      }
     }
 
     if (filter.categoryId) {
@@ -203,6 +210,13 @@ export class PostgresTicketRepository implements ITicketRepository {
     if (filter.createdBefore) {
       whereClauses.push(`created_at <= $${paramIdx++}`);
       params.push(filter.createdBefore);
+    }
+
+    if (filter.overdueOnly) {
+      whereClauses.push(
+        `status NOT IN ('RESOLVED', 'CLOSED') AND first_response_at IS NULL AND created_at < NOW() - INTERVAL '1 hour' * COALESCE($${paramIdx++}, CASE priority WHEN 'URGENT' THEN 1 WHEN 'HIGH' THEN 4 WHEN 'MEDIUM' THEN 24 WHEN 'LOW' THEN 48 ELSE 24 END)`,
+      );
+      params.push(filter.slaResponseHours ?? null);
     }
 
     const whereSql = whereClauses.join(' AND ');

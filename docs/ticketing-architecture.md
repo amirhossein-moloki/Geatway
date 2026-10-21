@@ -6,7 +6,7 @@ This document details the architectural specification for the Ticketing platform
 
 ## 1. System Overview & Boundaries
 
-The Ticketing platform provides a framework-agnostic multi-tenant support ticketing aggregate, conversation history, internal note privacy, attachments support, assignment tracking, and event auditing system.
+The Ticketing platform provides a framework-agnostic multi-tenant support ticketing aggregate, conversation history, internal note privacy, attachments support, assignment tracking, SLA response management, read state tracking, bulk administrative operations, and event auditing system.
 
 ### Package Boundaries
 
@@ -16,7 +16,7 @@ The Ticketing platform provides a framework-agnostic multi-tenant support ticket
                  ▼
  ┌───────────────────────────────────────────────┐
  │   @amirhossein-moloki/ticketing-core          │
- │  - Domain Entities (Ticket, Message, etc.)    │
+ │  - Domain Entities (Ticket, Message, SLA, etc)│
  │  - TicketingService Domain Orchestrator       │
  │  - TenantContext Validation & Role Rules      │
  │  - Repository & Integration Ports             │
@@ -93,4 +93,31 @@ Multi-tenancy is strictly enforced across every layer:
                └──────────┘
 ```
 
-Allowed transitions are strictly validated by `ticket.transitionTo(targetStatus)`.
+Allowed transitions are strictly validated by `ticket.transitionTo(targetStatus, actorRole)`. Customer role is restricted to transition tickets to `CLOSED` or `OPEN` (reopen).
+
+---
+
+## 4. SLA & Response Management
+
+SLA target response hours per priority:
+- `URGENT`: 1 hour
+- `HIGH`: 4 hours
+- `MEDIUM`: 24 hours
+- `LOW`: 48 hours
+
+A ticket is considered overdue if it is not in `RESOLVED` or `CLOSED` state, has no `firstResponseAt`, and current time exceeds `createdAt + slaTargetHours`.
+
+---
+
+## 5. Read States & Unread Counting
+
+Read states are tracked per tenant, ticket, and user in table `ticket_read_states`:
+- `markTicketAsRead(ctx, ticketId)` upserts the timestamp when a user reads a ticket.
+- `getUnreadCount(ctx)` calculates tickets with messages newer than `last_read_at`.
+
+---
+
+## 6. Bulk Operations & Privacy
+
+- `bulkUpdateTickets`: Executes status, assignment, priority, or category updates across multiple tickets with per-record authorization and safe failure handling.
+- `anonymizeCustomerData`: Admin-only utility for GDPR/privacy compliance that redacts PII while retaining ticket audit structures.

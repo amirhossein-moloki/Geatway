@@ -1,6 +1,6 @@
 import { TicketPriority } from '../enums/ticket-priority.enum.js';
 import { TicketStatus } from '../enums/ticket-status.enum.js';
-import { InvalidTicketStateError } from '../../errors/ticketing.errors.js';
+import { InvalidTicketStateError, UnauthorizedAccessError } from '../../errors/ticketing.errors.js';
 
 export interface RelatedEntity {
   entityType: string;
@@ -27,6 +27,13 @@ export interface TicketProps {
   resolvedAt?: Date;
   closedAt?: Date;
 }
+
+export const DEFAULT_SLA_TARGET_HOURS: Record<TicketPriority, number> = {
+  [TicketPriority.URGENT]: 1,
+  [TicketPriority.HIGH]: 4,
+  [TicketPriority.MEDIUM]: 24,
+  [TicketPriority.LOW]: 48,
+};
 
 const ALLOWED_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
   [TicketStatus.OPEN]: [
@@ -66,7 +73,7 @@ export class Ticket {
   public status: TicketStatus;
   public priority: TicketPriority;
   public categoryId?: string;
-  public readonly customerId: string;
+  public customerId: string;
   public assignedAgentId?: string;
   public assignedTeamId?: string;
   public relatedEntity?: RelatedEntity;
@@ -127,9 +134,22 @@ export class Ticket {
     });
   }
 
-  public transitionTo(targetStatus: TicketStatus): void {
+  public transitionTo(targetStatus: TicketStatus, actorRole?: string): void {
     if (this.status === targetStatus) {
       return;
+    }
+
+    if (actorRole === 'CUSTOMER') {
+      const allowedCustomerStatuses = [
+        TicketStatus.CLOSED,
+        TicketStatus.OPEN,
+        TicketStatus.WAITING_FOR_AGENT,
+      ];
+      if (!allowedCustomerStatuses.includes(targetStatus)) {
+        throw new UnauthorizedAccessError(
+          `Customers are not permitted to transition ticket to '${targetStatus}'`,
+        );
+      }
     }
 
     const allowed = ALLOWED_TRANSITIONS[this.status] ?? [];
@@ -144,6 +164,10 @@ export class Ticket {
       this.resolvedAt = this.updatedAt;
     } else if (targetStatus === TicketStatus.CLOSED && !this.closedAt) {
       this.closedAt = this.updatedAt;
+    } else if (targetStatus === TicketStatus.OPEN || targetStatus === TicketStatus.IN_PROGRESS) {
+      // Reopening ticket
+      this.resolvedAt = undefined;
+      this.closedAt = undefined;
     }
   }
 
@@ -177,5 +201,20 @@ export class Ticket {
     this.assignedAgentId = agentId;
     this.assignedTeamId = teamId;
     this.updatedAt = new Date();
+  }
+
+  public getSlaDeadline(customSlaHours?: number): Date {
+    const targetHours = customSlaHours ?? DEFAULT_SLA_TARGET_HOURS[this.priority] ?? 24;
+    return new Date(this.createdAt.getTime() + targetHours * 60 * 60 * 1000);
+  }
+
+  public isOverdue(customSlaHours?: number, now = new Date()): boolean {
+    if (this.status === TicketStatus.RESOLVED || this.status === TicketStatus.CLOSED) {
+      return false;
+    }
+    if (this.firstResponseAt) {
+      return false;
+    }
+    return now.getTime() > this.getSlaDeadline(customSlaHours).getTime();
   }
 }

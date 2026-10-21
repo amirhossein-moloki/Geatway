@@ -6,3 +6,4 @@ export * from './repositories/postgres-ticket-message-repository.js';
 export * from './repositories/postgres-ticket-attachment-repository.js';
 export * from './repositories/postgres-ticket-assignment-repository.js';
 export * from './repositories/postgres-ticket-event-repository.js';
+export * from './repositories/postgres-ticket-read-state-repository.js';

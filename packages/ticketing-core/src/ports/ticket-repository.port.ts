@@ -6,6 +6,10 @@ export interface TicketFilterOptions {
   customerId?: string;
   assignedAgentId?: string;
   assignedTeamId?: string;
+  teamIds?: string[];
+  unassignedOnly?: boolean;
+  overdueOnly?: boolean;
+  slaResponseHours?: number;
   status?: TicketStatus | TicketStatus[];
   priority?: TicketPriority | TicketPriority[];
   categoryId?: string;

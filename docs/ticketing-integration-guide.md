@@ -29,7 +29,7 @@ import * as path from 'path';
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const migrator = new DatabaseMigrator(pool);
 
-// Run migrations on startup
+// Run migrations on startup (includes 001_ticketing_initial_schema.sql and 002_ticketing_read_states_and_sla.sql)
 await migrator.runMigrationFiles(
   '/path/to/node_modules/@amirhossein-moloki/ticketing-persistence-postgres/migrations',
 );
@@ -47,6 +47,7 @@ import {
   PostgresTicketCategoryRepository,
   PostgresTicketAssignmentRepository,
   PostgresTicketEventRepository,
+  PostgresTicketReadStateRepository,
 } from '@amirhossein-moloki/ticketing-persistence-postgres';
 
 const ticketingService = new TicketingService({
@@ -55,6 +56,7 @@ const ticketingService = new TicketingService({
   categoryRepository: new PostgresTicketCategoryRepository(pool),
   assignmentRepository: new PostgresTicketAssignmentRepository(pool),
   eventRepository: new PostgresTicketEventRepository(pool),
+  readStateRepository: new PostgresTicketReadStateRepository(pool),
 });
 ```
 
@@ -86,4 +88,18 @@ const agentCtx = {
 await ticketingService.addMessage(agentCtx, ticket.id, {
   content: 'Your order is currently being packaged.',
 });
+
+// Mark as read & check unread count
+await ticketingService.markTicketAsRead(tenantCtx, ticket.id);
+const unreadCount = await ticketingService.getUnreadCount(tenantCtx);
+
+// Bulk update tickets (Agent/Admin)
+await ticketingService.bulkUpdateTickets(agentCtx, [ticket.id], {
+  status: TicketStatus.IN_PROGRESS,
+  assignedAgentId: 'agent-1',
+});
+
+// SLA Metrics & Reports
+const slaMetrics = await ticketingService.getSlaMetrics(agentCtx);
+const report = await ticketingService.getOperationalReport(agentCtx);
 ```
