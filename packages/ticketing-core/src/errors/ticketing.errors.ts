@@ -31,9 +31,7 @@ export class TicketingError extends Error {
         code: this.code,
         message: this.message,
         statusCode: this.statusCode,
-        ...(this.details && Object.keys(this.details).length > 0
-          ? { details: this.details }
-          : {}),
+        ...(this.details && Object.keys(this.details).length > 0 ? { details: this.details } : {}),
       },
     };
   }
