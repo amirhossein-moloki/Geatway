@@ -32,9 +32,7 @@
     "lint:fix": "eslint 'src/**/*.ts' 'tests/**/*.ts' --fix",
     "test": "vitest run"
   },
-  "dependencies": {
-    "@amirhossein-moloki/payment-core": "workspace:*"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/node": "^20.0.0"
   },
