@@ -4,6 +4,7 @@ export * from './ticket-attachment-repository.port.js';
 export * from './ticket-assignment-repository.port.js';
 export * from './ticket-category-repository.port.js';
 export * from './ticket-event-repository.port.js';
+export * from './ticket-read-state-repository.port.js';
 export * from './notification-handler.port.js';
 export * from './storage-service.port.js';
 export * from './ticketing-event-emitter.port.js';

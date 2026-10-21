@@ -13,6 +13,7 @@ import {
   PostgresTicketCategoryRepository,
   PostgresTicketEventRepository,
   PostgresTicketMessageRepository,
+  PostgresTicketReadStateRepository,
   PostgresTicketRepository,
 } from '@amirhossein-moloki/ticketing-persistence-postgres';
 import { TicketingHttpController } from '../src/server.js';
@@ -39,7 +40,7 @@ async function setupDatabase(): Promise<PgExecutor> {
   return pool as unknown as PgExecutor;
 }
 
-describe('Ticketing Integration Example Test', () => {
+describe('Ticketing Integration Example Test Suite', () => {
   let controller: TicketingHttpController;
 
   beforeEach(async () => {
@@ -50,6 +51,7 @@ describe('Ticketing Integration Example Test', () => {
     const attachmentRepo = new PostgresTicketAttachmentRepository(db);
     const assignmentRepo = new PostgresTicketAssignmentRepository(db);
     const eventRepo = new PostgresTicketEventRepository(db);
+    const readStateRepo = new PostgresTicketReadStateRepository(db);
 
     const ticketingService = new TicketingService({
       ticketRepository: ticketRepo,
@@ -58,13 +60,27 @@ describe('Ticketing Integration Example Test', () => {
       attachmentRepository: attachmentRepo,
       assignmentRepository: assignmentRepo,
       eventRepository: eventRepo,
+      readStateRepository: readStateRepo,
     });
 
     controller = new TicketingHttpController(ticketingService);
   });
 
   it('should handle end-to-end customer ticket creation and agent conversation via controller', async () => {
-    // 1. Customer creates ticket
+    // 1. Admin creates category
+    const catReq = {
+      headers: {
+        'x-tenant-id': 'store-alpha',
+        'x-user-id': 'admin-1',
+        'x-user-role': 'TENANT_ADMIN',
+      },
+      body: { name: 'Logistics', description: 'Shipping & Delivery' },
+    };
+    const catRes = await controller.handleCreateCategory(catReq);
+    expect(catRes.status).toBe(201);
+    const categoryId = (catRes.body as any).category.id;
+
+    // 2. Customer creates ticket with category
     const createReq = {
       headers: {
         'x-tenant-id': 'store-alpha',
@@ -74,6 +90,7 @@ describe('Ticketing Integration Example Test', () => {
       body: {
         title: 'Where is my delivery?',
         description: 'Order #5544 has not arrived.',
+        categoryId,
       },
     };
 
@@ -82,7 +99,7 @@ describe('Ticketing Integration Example Test', () => {
     const ticketId = (createRes.body as any).ticket.id;
     expect(ticketId).toBeDefined();
 
-    // 2. Agent replies publicly and changes assignment
+    // 3. Agent replies publicly and changes assignment
     const agentMsgReq = {
       headers: {
         'x-tenant-id': 'store-alpha',
@@ -99,7 +116,7 @@ describe('Ticketing Integration Example Test', () => {
     const agentMsgRes = await controller.handleAddMessage(agentMsgReq);
     expect(agentMsgRes.status).toBe(201);
 
-    // 3. Agent adds internal note
+    // 4. Agent adds internal note
     const agentInternalReq = {
       headers: {
         'x-tenant-id': 'store-alpha',
@@ -115,7 +132,7 @@ describe('Ticketing Integration Example Test', () => {
 
     await controller.handleAddMessage(agentInternalReq);
 
-    // 4. Customer retrieves ticket conversation (should NOT see internal note)
+    // 5. Customer retrieves ticket conversation (should NOT see internal note)
     const getReqCustomer = {
       headers: {
         'x-tenant-id': 'store-alpha',
@@ -128,10 +145,38 @@ describe('Ticketing Integration Example Test', () => {
     const getResCustomer = await controller.handleGetTicket(getReqCustomer);
     expect(getResCustomer.status).toBe(200);
     const messagesCust = (getResCustomer.body as any).messages;
-    expect(messagesCust).toHaveLength(2); // initial + public agent reply, no internal note
+    expect(messagesCust).toHaveLength(2); // initial + public agent reply
     expect(messagesCust.some((m: any) => m.content.includes('tracking ID'))).toBe(false);
 
-    // 5. Cross-tenant attempt from store-beta
+    // 6. Agent performs bulk status update
+    const bulkReq = {
+      headers: {
+        'x-tenant-id': 'store-alpha',
+        'x-user-id': 'agent-7',
+        'x-user-role': 'AGENT',
+      },
+      body: {
+        ticketIds: [ticketId],
+        status: TicketStatus.RESOLVED,
+      },
+    };
+    const bulkRes = await controller.handleBulkUpdateStatus(bulkReq);
+    expect(bulkRes.status).toBe(200);
+    expect((bulkRes.body as any).success).toContain(ticketId);
+
+    // 7. Get metrics
+    const metricsReq = {
+      headers: {
+        'x-tenant-id': 'store-alpha',
+        'x-user-id': 'admin-1',
+        'x-user-role': 'TENANT_ADMIN',
+      },
+    };
+    const metricsRes = await controller.handleGetMetrics(metricsReq);
+    expect(metricsRes.status).toBe(200);
+    expect((metricsRes.body as any).metrics.totalTickets).toBe(1);
+
+    // 8. Cross-tenant security check from store-beta
     const crossReq = {
       headers: {
         'x-tenant-id': 'store-beta',

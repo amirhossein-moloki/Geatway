@@ -26,6 +26,8 @@ export interface TicketProps {
   lastResponseAt?: Date;
   resolvedAt?: Date;
   closedAt?: Date;
+  dueAt?: Date;
+  resolutionDueAt?: Date;
 }
 
 const ALLOWED_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
@@ -77,6 +79,8 @@ export class Ticket {
   public lastResponseAt?: Date;
   public resolvedAt?: Date;
   public closedAt?: Date;
+  public dueAt?: Date;
+  public resolutionDueAt?: Date;
 
   constructor(props: TicketProps) {
     this.id = props.id;
@@ -97,6 +101,8 @@ export class Ticket {
     this.lastResponseAt = props.lastResponseAt;
     this.resolvedAt = props.resolvedAt;
     this.closedAt = props.closedAt;
+    this.dueAt = props.dueAt;
+    this.resolutionDueAt = props.resolutionDueAt;
   }
 
   public static create(
@@ -109,6 +115,8 @@ export class Ticket {
     categoryId?: string,
     relatedEntity?: RelatedEntity,
     metadata?: Record<string, unknown>,
+    dueAt?: Date,
+    resolutionDueAt?: Date,
   ): Ticket {
     const now = new Date();
     return new Ticket({
@@ -124,6 +132,8 @@ export class Ticket {
       metadata: metadata ?? {},
       createdAt: now,
       updatedAt: now,
+      dueAt,
+      resolutionDueAt,
     });
   }
 
@@ -162,11 +172,15 @@ export class Ticket {
     priority?: TicketPriority;
     categoryId?: string;
     metadata?: Record<string, unknown>;
+    dueAt?: Date;
+    resolutionDueAt?: Date;
   }): void {
     if (props.title !== undefined) this.title = props.title;
     if (props.description !== undefined) this.description = props.description;
     if (props.priority !== undefined) this.priority = props.priority;
     if (props.categoryId !== undefined) this.categoryId = props.categoryId;
+    if (props.dueAt !== undefined) this.dueAt = props.dueAt;
+    if (props.resolutionDueAt !== undefined) this.resolutionDueAt = props.resolutionDueAt;
     if (props.metadata !== undefined) {
       this.metadata = { ...this.metadata, ...props.metadata };
     }
@@ -177,5 +191,20 @@ export class Ticket {
     this.assignedAgentId = agentId;
     this.assignedTeamId = teamId;
     this.updatedAt = new Date();
+  }
+
+  public isOverdue(now: Date = new Date()): boolean {
+    if (this.dueAt && now > this.dueAt && !this.firstResponseAt) {
+      return true;
+    }
+    if (
+      this.resolutionDueAt &&
+      now > this.resolutionDueAt &&
+      this.status !== TicketStatus.RESOLVED &&
+      this.status !== TicketStatus.CLOSED
+    ) {
+      return true;
+    }
+    return false;
   }
 }

@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto';
+import * as path from 'path';
 import { TenantContext } from '../domain/context/tenant-context.js';
 import { TicketCategory } from '../domain/entities/ticket-category.entity.js';
 import { TicketMessage } from '../domain/entities/ticket-message.entity.js';
@@ -12,7 +13,12 @@ import { TicketPriority } from '../domain/enums/ticket-priority.enum.js';
 import { TicketStatus } from '../domain/enums/ticket-status.enum.js';
 import { TicketingEventType } from '../domain/enums/ticketing-event-type.enum.js';
 import {
+  IAutoAssignmentStrategy,
+  RoundRobinAutoAssignmentStrategy,
+} from '../domain/assignment/auto-assignment-strategy.js';
+import {
   AttachmentNotFoundError,
+  InvalidAttachmentError,
   InvalidCategoryError,
   TenantMismatchError,
   TicketNotFoundError,
@@ -26,7 +32,13 @@ import { ITicketAttachmentRepository } from '../ports/ticket-attachment-reposito
 import { ITicketCategoryRepository } from '../ports/ticket-category-repository.port.js';
 import { ITicketEventRepository } from '../ports/ticket-event-repository.port.js';
 import { ITicketMessageRepository } from '../ports/ticket-message-repository.port.js';
-import { ITicketRepository, TicketFilterOptions } from '../ports/ticket-repository.port.js';
+import { ITicketReadStateRepository } from '../ports/ticket-read-state-repository.port.js';
+import {
+  ITicketRepository,
+  TenantMetricsOptions,
+  TenantMetricsResult,
+  TicketFilterOptions,
+} from '../ports/ticket-repository.port.js';
 
 export interface TicketAttachmentUploadInput {
   fileName: string;
@@ -42,6 +54,8 @@ export interface CreateTicketInput {
   customerId?: string;
   relatedEntity?: RelatedEntity;
   metadata?: Record<string, unknown>;
+  dueAt?: Date;
+  resolutionDueAt?: Date;
   attachments?: TicketAttachmentUploadInput[];
 }
 
@@ -51,6 +65,13 @@ export interface AddMessageInput {
   attachments?: TicketAttachmentUploadInput[];
 }
 
+export interface TenantTicketingConfig {
+  defaultPriority?: TicketPriority;
+  firstResponseSlaMinutes?: number;
+  resolutionSlaMinutes?: number;
+  maxAttachmentSizeBytes?: number;
+}
+
 export interface TicketingServiceDependencies {
   ticketRepository: ITicketRepository;
   messageRepository: ITicketMessageRepository;
@@ -58,11 +79,33 @@ export interface TicketingServiceDependencies {
   assignmentRepository?: ITicketAssignmentRepository;
   categoryRepository?: ITicketCategoryRepository;
   eventRepository?: ITicketEventRepository;
+  readStateRepository?: ITicketReadStateRepository;
   notificationHandler?: INotificationHandler;
   storageService?: IStorageService;
   eventEmitter?: ITicketingEventEmitter;
+  tenantConfig?: TenantTicketingConfig;
   idGenerator?: () => string;
 }
+
+const DEFAULT_MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024; // 10MB
+const DANGEROUS_EXTENSIONS = [
+  '.exe',
+  '.bat',
+  '.cmd',
+  '.sh',
+  '.php',
+  '.pl',
+  '.cgi',
+  '.js',
+  '.jar',
+  '.vbs',
+  '.dll',
+  '.so',
+  '.dylib',
+  '.msi',
+  '.com',
+  '.scr',
+];
 
 export class TicketingService {
   private readonly generateId: () => string;
@@ -77,6 +120,33 @@ export class TicketingService {
     }
     if (!ctx.userId) {
       throw new UnauthorizedAccessError('User ID is required in TenantContext');
+    }
+  }
+
+  private validateAttachmentInput(
+    file: TicketAttachmentUploadInput,
+    maxSizeBytes: number = DEFAULT_MAX_ATTACHMENT_SIZE,
+  ): void {
+    if (!file.content || file.content.length === 0) {
+      throw new InvalidAttachmentError(`Attachment '${file.fileName}' content is empty`);
+    }
+
+    if (file.content.length > maxSizeBytes) {
+      throw new InvalidAttachmentError(
+        `Attachment '${file.fileName}' exceeds maximum allowed size of ${maxSizeBytes} bytes`,
+      );
+    }
+
+    const cleanName = path.basename(file.fileName);
+    if (!cleanName || cleanName !== file.fileName) {
+      throw new InvalidAttachmentError(`Invalid filename '${file.fileName}'`);
+    }
+
+    const ext = path.extname(cleanName).toLowerCase();
+    if (DANGEROUS_EXTENSIONS.includes(ext)) {
+      throw new InvalidAttachmentError(
+        `File extension '${ext}' is not permitted for attachment '${file.fileName}'`,
+      );
     }
   }
 
@@ -103,6 +173,29 @@ export class TicketingService {
     return this.deps.categoryRepository.create(category);
   }
 
+  public async updateCategory(
+    ctx: TenantContext,
+    categoryId: string,
+    input: { name?: string; description?: string; isActive?: boolean },
+  ): Promise<TicketCategory> {
+    this.validateTenantContext(ctx);
+    if (ctx.userRole === 'CUSTOMER') {
+      throw new UnauthorizedAccessError('Customers are not permitted to update ticket categories');
+    }
+
+    if (!this.deps.categoryRepository) {
+      throw new InvalidCategoryError('Category repository is not configured');
+    }
+
+    const category = await this.deps.categoryRepository.findById(ctx.tenantId, categoryId);
+    if (!category) {
+      throw new InvalidCategoryError(`Category '${categoryId}' was not found`);
+    }
+
+    category.update(input.name, input.description, input.isActive);
+    return this.deps.categoryRepository.update(category);
+  }
+
   public async listCategories(ctx: TenantContext, activeOnly = true): Promise<TicketCategory[]> {
     this.validateTenantContext(ctx);
     if (!this.deps.categoryRepository) {
@@ -126,6 +219,25 @@ export class TicketingService {
       }
     }
 
+    const maxAttachmentSize =
+      this.deps.tenantConfig?.maxAttachmentSizeBytes ?? DEFAULT_MAX_ATTACHMENT_SIZE;
+
+    if (input.attachments && input.attachments.length > 0) {
+      for (const file of input.attachments) {
+        this.validateAttachmentInput(file, maxAttachmentSize);
+      }
+    }
+
+    let dueAt = input.dueAt;
+    let resolutionDueAt = input.resolutionDueAt;
+    const nowMs = Date.now();
+    if (!dueAt && this.deps.tenantConfig?.firstResponseSlaMinutes) {
+      dueAt = new Date(nowMs + this.deps.tenantConfig.firstResponseSlaMinutes * 60 * 1000);
+    }
+    if (!resolutionDueAt && this.deps.tenantConfig?.resolutionSlaMinutes) {
+      resolutionDueAt = new Date(nowMs + this.deps.tenantConfig.resolutionSlaMinutes * 60 * 1000);
+    }
+
     const ticketId = this.generateId();
     const ticket = Ticket.create(
       ticketId,
@@ -133,10 +245,12 @@ export class TicketingService {
       customerId,
       input.title,
       input.description,
-      input.priority ?? TicketPriority.MEDIUM,
+      input.priority ?? this.deps.tenantConfig?.defaultPriority ?? TicketPriority.MEDIUM,
       input.categoryId,
       input.relatedEntity,
       input.metadata,
+      dueAt,
+      resolutionDueAt,
     );
 
     const createdTicket = await this.deps.ticketRepository.create(ticket);
@@ -188,6 +302,12 @@ export class TicketingService {
     );
 
     const createdMessage = await this.deps.messageRepository.create(message);
+
+    if (this.deps.readStateRepository) {
+      await this.deps.readStateRepository
+        .markAsRead(ctx.tenantId, ticketId, ctx.userId)
+        .catch(() => {});
+    }
 
     const event = TicketEvent.create(
       this.generateId(),
@@ -243,6 +363,12 @@ export class TicketingService {
       includeInternal,
     );
 
+    if (this.deps.readStateRepository) {
+      await this.deps.readStateRepository
+        .markAsRead(ctx.tenantId, ticketId, ctx.userId)
+        .catch(() => {});
+    }
+
     return { ticket, messages };
   }
 
@@ -270,6 +396,15 @@ export class TicketingService {
     const requestedVisibility = input.visibility ?? MessageVisibility.PUBLIC;
     if (ctx.userRole === 'CUSTOMER' && requestedVisibility === MessageVisibility.INTERNAL) {
       throw new UnauthorizedAccessError('Customers are not permitted to create internal notes');
+    }
+
+    const maxAttachmentSize =
+      this.deps.tenantConfig?.maxAttachmentSizeBytes ?? DEFAULT_MAX_ATTACHMENT_SIZE;
+
+    if (input.attachments && input.attachments.length > 0) {
+      for (const file of input.attachments) {
+        this.validateAttachmentInput(file, maxAttachmentSize);
+      }
     }
 
     const messageId = this.generateId();
@@ -341,6 +476,12 @@ export class TicketingService {
 
     await this.deps.ticketRepository.update(ticket);
 
+    if (this.deps.readStateRepository) {
+      await this.deps.readStateRepository
+        .markAsRead(ctx.tenantId, ticketId, ctx.userId)
+        .catch(() => {});
+    }
+
     const event = TicketEvent.create(
       this.generateId(),
       ticketId,
@@ -360,11 +501,15 @@ export class TicketingService {
     }
 
     if (this.deps.notificationHandler) {
-      await this.deps.notificationHandler.notifyMessageAdded(ticket, savedMessage).catch(() => {});
-      if (ticket.status !== previousStatus) {
+      if (savedMessage.visibility === MessageVisibility.PUBLIC) {
         await this.deps.notificationHandler
-          .notifyStatusChanged(ticket, previousStatus)
+          .notifyMessageAdded(ticket, savedMessage)
           .catch(() => {});
+        if (ticket.status !== previousStatus) {
+          await this.deps.notificationHandler
+            .notifyStatusChanged(ticket, previousStatus)
+            .catch(() => {});
+        }
       }
     }
 
@@ -380,13 +525,17 @@ export class TicketingService {
       priority?: TicketPriority;
       categoryId?: string;
       metadata?: Record<string, unknown>;
+      dueAt?: Date;
+      resolutionDueAt?: Date;
     },
   ): Promise<Ticket> {
     const ticket = await this.getTicket(ctx, ticketId);
 
     if (ctx.userRole === 'CUSTOMER') {
-      if (input.priority || input.categoryId) {
-        throw new UnauthorizedAccessError('Customers cannot alter ticket priority or category');
+      if (input.priority || input.categoryId || input.dueAt || input.resolutionDueAt) {
+        throw new UnauthorizedAccessError(
+          'Customers cannot alter ticket priority, category, or SLA parameters',
+        );
       }
     }
 
@@ -424,6 +573,18 @@ export class TicketingService {
   ): Promise<Ticket> {
     const ticket = await this.getTicket(ctx, ticketId);
     const previousStatus = ticket.status;
+
+    if (ctx.userRole === 'CUSTOMER') {
+      if (
+        targetStatus !== TicketStatus.RESOLVED &&
+        targetStatus !== TicketStatus.CLOSED &&
+        targetStatus !== TicketStatus.OPEN
+      ) {
+        throw new UnauthorizedAccessError(
+          `Customers are not permitted to set ticket status to '${targetStatus}'`,
+        );
+      }
+    }
 
     if (previousStatus === targetStatus) {
       return ticket;
@@ -526,6 +687,196 @@ export class TicketingService {
     return { ticket: updatedTicket, assignment: savedAssignment };
   }
 
+  public async autoAssignTicket(
+    ctx: TenantContext,
+    ticketId: string,
+    candidateAgentIds: string[],
+    strategy?: IAutoAssignmentStrategy,
+  ): Promise<{ ticket: Ticket; assignment?: TicketAssignment }> {
+    this.validateTenantContext(ctx);
+    if (ctx.userRole === 'CUSTOMER') {
+      throw new UnauthorizedAccessError('Customers are not permitted to auto assign tickets');
+    }
+
+    const ticket = await this.getTicket(ctx, ticketId);
+    const assignmentStrategy = strategy ?? new RoundRobinAutoAssignmentStrategy();
+    const selectedAgentId = await assignmentStrategy.selectAgent(ctx, ticket, candidateAgentIds);
+
+    if (!selectedAgentId) {
+      return { ticket };
+    }
+
+    const result = await this.assignTicket(ctx, ticketId, {
+      agentId: selectedAgentId,
+      teamId: ticket.assignedTeamId,
+    });
+    return { ticket: result.ticket, assignment: result.assignment };
+  }
+
+  public async bulkUpdateStatus(
+    ctx: TenantContext,
+    ticketIds: string[],
+    status: TicketStatus,
+  ): Promise<{ success: string[]; failed: Array<{ id: string; error: string }> }> {
+    this.validateTenantContext(ctx);
+    const success: string[] = [];
+    const failed: Array<{ id: string; error: string }> = [];
+
+    for (const ticketId of ticketIds) {
+      try {
+        await this.changeTicketStatus(ctx, ticketId, status);
+        success.push(ticketId);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        failed.push({ id: ticketId, error: msg });
+      }
+    }
+
+    return { success, failed };
+  }
+
+  public async bulkAssign(
+    ctx: TenantContext,
+    ticketIds: string[],
+    input: { agentId?: string; teamId?: string },
+  ): Promise<{ success: string[]; failed: Array<{ id: string; error: string }> }> {
+    this.validateTenantContext(ctx);
+    if (ctx.userRole === 'CUSTOMER') {
+      throw new UnauthorizedAccessError('Customers are not permitted to bulk assign tickets');
+    }
+
+    const success: string[] = [];
+    const failed: Array<{ id: string; error: string }> = [];
+
+    for (const ticketId of ticketIds) {
+      try {
+        await this.assignTicket(ctx, ticketId, input);
+        success.push(ticketId);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        failed.push({ id: ticketId, error: msg });
+      }
+    }
+
+    return { success, failed };
+  }
+
+  public async markAsRead(ctx: TenantContext, ticketId: string): Promise<void> {
+    this.validateTenantContext(ctx);
+    await this.getTicket(ctx, ticketId);
+
+    if (this.deps.readStateRepository) {
+      await this.deps.readStateRepository.markAsRead(ctx.tenantId, ticketId, ctx.userId);
+    }
+  }
+
+  public async getUnreadCount(ctx: TenantContext, ticketId?: string): Promise<number> {
+    this.validateTenantContext(ctx);
+
+    if (!this.deps.readStateRepository) {
+      return 0;
+    }
+
+    const includeInternal = ctx.userRole !== 'CUSTOMER';
+
+    if (ticketId) {
+      await this.getTicket(ctx, ticketId);
+      const lastReadAt = await this.deps.readStateRepository.getLastReadAt(
+        ctx.tenantId,
+        ticketId,
+        ctx.userId,
+      );
+      return this.deps.readStateRepository.getUnreadCount(
+        ctx.tenantId,
+        ticketId,
+        ctx.userId,
+        lastReadAt,
+        includeInternal,
+      );
+    }
+
+    return this.deps.readStateRepository.getUnreadCountForUser(
+      ctx.tenantId,
+      ctx.userId,
+      includeInternal,
+    );
+  }
+
+  public async getTenantMetrics(
+    ctx: TenantContext,
+    options: TenantMetricsOptions = {},
+  ): Promise<TenantMetricsResult> {
+    this.validateTenantContext(ctx);
+    if (ctx.userRole === 'CUSTOMER') {
+      throw new UnauthorizedAccessError('Customers are not permitted to access tenant metrics');
+    }
+
+    if (this.deps.ticketRepository.getMetrics) {
+      return this.deps.ticketRepository.getMetrics(ctx.tenantId, options);
+    }
+
+    const { items } = await this.deps.ticketRepository.findMany(ctx.tenantId, {});
+    const now = new Date();
+
+    const totalTickets = items.length;
+    let openTickets = 0;
+    let inProgressTickets = 0;
+    let waitingForCustomerTickets = 0;
+    let waitingForAgentTickets = 0;
+    let resolvedTickets = 0;
+    let closedTickets = 0;
+    let unassignedTickets = 0;
+    let overdueTickets = 0;
+    const workloadMap = new Map<string, number>();
+
+    for (const t of items) {
+      if (t.status === TicketStatus.OPEN) openTickets++;
+      if (t.status === TicketStatus.IN_PROGRESS) inProgressTickets++;
+      if (t.status === TicketStatus.WAITING_FOR_CUSTOMER) waitingForCustomerTickets++;
+      if (t.status === TicketStatus.WAITING_FOR_AGENT) waitingForAgentTickets++;
+      if (t.status === TicketStatus.RESOLVED) resolvedTickets++;
+      if (t.status === TicketStatus.CLOSED) closedTickets++;
+
+      if (
+        !t.assignedAgentId &&
+        t.status !== TicketStatus.RESOLVED &&
+        t.status !== TicketStatus.CLOSED
+      ) {
+        unassignedTickets++;
+      }
+
+      if (
+        t.assignedAgentId &&
+        t.status !== TicketStatus.RESOLVED &&
+        t.status !== TicketStatus.CLOSED
+      ) {
+        workloadMap.set(t.assignedAgentId, (workloadMap.get(t.assignedAgentId) ?? 0) + 1);
+      }
+
+      if (t.isOverdue(now)) {
+        overdueTickets++;
+      }
+    }
+
+    return {
+      totalTickets,
+      openTickets,
+      inProgressTickets,
+      waitingForCustomerTickets,
+      waitingForAgentTickets,
+      resolvedTickets,
+      closedTickets,
+      unassignedTickets,
+      overdueTickets,
+      avgFirstResponseTimeMinutes: null,
+      avgResolutionTimeMinutes: null,
+      agentWorkload: Array.from(workloadMap.entries()).map(([agentId, count]) => ({
+        agentId,
+        count,
+      })),
+    };
+  }
+
   public async getAssignmentHistory(
     ctx: TenantContext,
     ticketId: string,
@@ -548,7 +899,10 @@ export class TicketingService {
     return this.deps.eventRepository.findByTicketId(ctx.tenantId, ticketId);
   }
 
-  public async getAttachmentDownloadUrl(ctx: TenantContext, attachmentId: string): Promise<string> {
+  public async getAttachmentDownloadUrl(
+    ctx: TenantContext,
+    attachmentId: string,
+  ): Promise<string> {
     this.validateTenantContext(ctx);
 
     if (!this.deps.attachmentRepository || !this.deps.storageService) {

@@ -12,10 +12,32 @@ export interface TicketFilterOptions {
   searchQuery?: string;
   createdAfter?: Date;
   createdBefore?: Date;
+  unassignedOnly?: boolean;
+  isOverdue?: boolean;
   limit?: number;
   offset?: number;
   sortBy?: 'createdAt' | 'updatedAt' | 'priority' | 'status';
   sortOrder?: 'ASC' | 'DESC';
+}
+
+export interface TenantMetricsOptions {
+  startDate?: Date;
+  endDate?: Date;
+}
+
+export interface TenantMetricsResult {
+  totalTickets: number;
+  openTickets: number;
+  inProgressTickets: number;
+  waitingForCustomerTickets: number;
+  waitingForAgentTickets: number;
+  resolvedTickets: number;
+  closedTickets: number;
+  unassignedTickets: number;
+  overdueTickets: number;
+  avgFirstResponseTimeMinutes: number | null;
+  avgResolutionTimeMinutes: number | null;
+  agentWorkload: Array<{ agentId: string; count: number }>;
 }
 
 export interface ITicketRepository {
@@ -26,4 +48,5 @@ export interface ITicketRepository {
     tenantId: string,
     filter: TicketFilterOptions,
   ): Promise<{ items: Ticket[]; total: number }>;
+  getMetrics?(tenantId: string, options?: TenantMetricsOptions): Promise<TenantMetricsResult>;
 }
