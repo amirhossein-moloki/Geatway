@@ -2,7 +2,6 @@ import { describe, expect, it, beforeEach } from 'vitest';
 import {
   TicketingService,
   TicketPriority,
-  TicketStatus,
   MessageVisibility,
   MessageAuthorRole,
   TenantContext,
