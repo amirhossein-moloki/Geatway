@@ -307,7 +307,12 @@ export class TicketingService {
     const scopedFilter: TicketFilterOptions = { ...filter };
     if (ctx.userRole === 'CUSTOMER') {
       scopedFilter.customerId = ctx.userId;
-    } else if (ctx.teamIds && ctx.teamIds.length > 0 && !scopedFilter.assignedAgentId && !scopedFilter.assignedTeamId) {
+    } else if (
+      ctx.teamIds &&
+      ctx.teamIds.length > 0 &&
+      !scopedFilter.assignedAgentId &&
+      !scopedFilter.assignedTeamId
+    ) {
       scopedFilter.teamIds = ctx.teamIds;
     }
 
@@ -725,7 +730,9 @@ export class TicketingService {
   }> {
     this.validateTenantContext(ctx);
     if (ctx.userRole === 'CUSTOMER') {
-      throw new UnauthorizedAccessError('Customers are not permitted to access operational reports');
+      throw new UnauthorizedAccessError(
+        'Customers are not permitted to access operational reports',
+      );
     }
 
     const { items } = await this.deps.ticketRepository.findMany(ctx.tenantId, { limit: 1000 });
@@ -757,9 +764,9 @@ export class TicketingService {
     };
   }
 
-  public async getAgentWorkload(ctx: TenantContext): Promise<
-    Array<{ agentId?: string; teamId?: string; openTicketCount: number }>
-  > {
+  public async getAgentWorkload(
+    ctx: TenantContext,
+  ): Promise<Array<{ agentId?: string; teamId?: string; openTicketCount: number }>> {
     this.validateTenantContext(ctx);
     if (ctx.userRole === 'CUSTOMER') {
       throw new UnauthorizedAccessError('Customers are not permitted to access agent workload');
@@ -806,7 +813,10 @@ export class TicketingService {
       );
     }
 
-    const { items } = await this.deps.ticketRepository.findMany(ctx.tenantId, { customerId, limit: 1000 });
+    const { items } = await this.deps.ticketRepository.findMany(ctx.tenantId, {
+      customerId,
+      limit: 1000,
+    });
     const anonymizedId = `anonymized-${customerId.slice(0, 8)}`;
 
     let count = 0;

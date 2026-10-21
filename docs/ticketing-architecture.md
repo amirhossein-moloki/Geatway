@@ -100,6 +100,7 @@ Allowed transitions are strictly validated by `ticket.transitionTo(targetStatus,
 ## 4. SLA & Response Management
 
 SLA target response hours per priority:
+
 - `URGENT`: 1 hour
 - `HIGH`: 4 hours
 - `MEDIUM`: 24 hours
@@ -112,6 +113,7 @@ A ticket is considered overdue if it is not in `RESOLVED` or `CLOSED` state, has
 ## 5. Read States & Unread Counting
 
 Read states are tracked per tenant, ticket, and user in table `ticket_read_states`:
+
 - `markTicketAsRead(ctx, ticketId)` upserts the timestamp when a user reads a ticket.
 - `getUnreadCount(ctx)` calculates tickets with messages newer than `last_read_at`.
 

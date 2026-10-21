@@ -9,7 +9,11 @@ import { MessageVisibility } from '../src/domain/enums/message-visibility.enum.j
 import { TicketPriority } from '../src/domain/enums/ticket-priority.enum.js';
 import { TicketStatus } from '../src/domain/enums/ticket-status.enum.js';
 import { TenantContext } from '../src/domain/context/tenant-context.js';
-import { TicketNotFoundError, TicketingError, UnauthorizedAccessError } from '../src/errors/ticketing.errors.js';
+import {
+  TicketNotFoundError,
+  TicketingError,
+  UnauthorizedAccessError,
+} from '../src/errors/ticketing.errors.js';
 import { ITicketAssignmentRepository } from '../src/ports/ticket-assignment-repository.port.js';
 import { ITicketCategoryRepository } from '../src/ports/ticket-category-repository.port.js';
 import { ITicketEventRepository } from '../src/ports/ticket-event-repository.port.js';
@@ -143,7 +147,11 @@ class InMemoryReadStateRepository implements ITicketReadStateRepository {
     return readState;
   }
 
-  async findByUserAndTicket(tenantId: string, userId: string, ticketId: string): Promise<TicketReadState | null> {
+  async findByUserAndTicket(
+    tenantId: string,
+    userId: string,
+    ticketId: string,
+  ): Promise<TicketReadState | null> {
     return this.states.get(`${tenantId}:${ticketId}:${userId}`) ?? null;
   }
 
@@ -233,9 +241,9 @@ describe('TicketingService', () => {
       description: 'Testing message input',
     });
 
-    await expect(
-      service.addMessage(customer1Ctx, ticket.id, { content: '  ' }),
-    ).rejects.toThrow(TicketingError);
+    await expect(service.addMessage(customer1Ctx, ticket.id, { content: '  ' })).rejects.toThrow(
+      TicketingError,
+    );
 
     const msg1 = await service.addMessage(customer1Ctx, ticket.id, {
       content: 'Hello team',
@@ -280,8 +288,14 @@ describe('TicketingService', () => {
   });
 
   it('should perform bulk updates safely', async () => {
-    const { ticket: t1 } = await service.createTicket(customer1Ctx, { title: 'T1', description: 'D1' });
-    const { ticket: t2 } = await service.createTicket(customer1Ctx, { title: 'T2', description: 'D2' });
+    const { ticket: t1 } = await service.createTicket(customer1Ctx, {
+      title: 'T1',
+      description: 'D1',
+    });
+    const { ticket: t2 } = await service.createTicket(customer1Ctx, {
+      title: 'T2',
+      description: 'D2',
+    });
 
     const bulkRes = await service.bulkUpdateTickets(agentCtx, [t1.id, t2.id, 'non-existent-id'], {
       status: TicketStatus.IN_PROGRESS,
@@ -295,8 +309,16 @@ describe('TicketingService', () => {
   });
 
   it('should generate SLA metrics, operational reports, and agent workload', async () => {
-    await service.createTicket(customer1Ctx, { title: 'T1', description: 'D1', priority: TicketPriority.URGENT });
-    await service.createTicket(customer1Ctx, { title: 'T2', description: 'D2', priority: TicketPriority.LOW });
+    await service.createTicket(customer1Ctx, {
+      title: 'T1',
+      description: 'D1',
+      priority: TicketPriority.URGENT,
+    });
+    await service.createTicket(customer1Ctx, {
+      title: 'T2',
+      description: 'D2',
+      priority: TicketPriority.LOW,
+    });
 
     const metrics = await service.getSlaMetrics(tenantAdminCtx);
     expect(metrics.totalTickets).toBe(2);

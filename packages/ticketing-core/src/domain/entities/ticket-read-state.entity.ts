@@ -21,7 +21,12 @@ export class TicketReadState {
     this.updatedAt = props.updatedAt;
   }
 
-  public static create(tenantId: string, ticketId: string, userId: string, lastReadAt = new Date()): TicketReadState {
+  public static create(
+    tenantId: string,
+    ticketId: string,
+    userId: string,
+    lastReadAt = new Date(),
+  ): TicketReadState {
     const now = new Date();
     return new TicketReadState({
       tenantId,

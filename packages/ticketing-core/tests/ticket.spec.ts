@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { Ticket } from '../src/domain/entities/ticket.entity.js';
 import { TicketPriority } from '../src/domain/enums/ticket-priority.enum.js';
 import { TicketStatus } from '../src/domain/enums/ticket-status.enum.js';
-import { InvalidTicketStateError, UnauthorizedAccessError } from '../src/errors/ticketing.errors.js';
+import {
+  InvalidTicketStateError,
+  UnauthorizedAccessError,
+} from '../src/errors/ticketing.errors.js';
 
 describe('Ticket Entity', () => {
   it('should create a new ticket in OPEN status', () => {
