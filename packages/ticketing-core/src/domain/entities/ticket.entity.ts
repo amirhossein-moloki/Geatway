@@ -15,7 +15,8 @@ export interface TicketProps {
   status: TicketStatus;
   priority: TicketPriority;
   categoryId?: string;
-  customerId: string;
+  customerId?: string;
+  requesterId?: string;
   assignedAgentId?: string;
   assignedTeamId?: string;
   relatedEntity?: RelatedEntity;
@@ -93,7 +94,7 @@ export class Ticket {
     this.status = props.status;
     this.priority = props.priority;
     this.categoryId = props.categoryId;
-    this.customerId = props.customerId;
+    this.customerId = props.requesterId ?? props.customerId ?? '';
     this.assignedAgentId = props.assignedAgentId;
     this.assignedTeamId = props.assignedTeamId;
     this.relatedEntity = props.relatedEntity;
@@ -106,10 +107,18 @@ export class Ticket {
     this.closedAt = props.closedAt;
   }
 
+  public get requesterId(): string {
+    return this.customerId;
+  }
+
+  public set requesterId(val: string) {
+    this.customerId = val;
+  }
+
   public static create(
     id: string,
     tenantId: string,
-    customerId: string,
+    requesterIdOrCustomerId: string,
     title: string,
     description: string,
     priority: TicketPriority = TicketPriority.MEDIUM,
@@ -121,7 +130,7 @@ export class Ticket {
     return new Ticket({
       id,
       tenantId,
-      customerId,
+      requesterId: requesterIdOrCustomerId,
       title,
       description,
       status: TicketStatus.OPEN,
@@ -139,7 +148,7 @@ export class Ticket {
       return;
     }
 
-    if (actorRole === 'CUSTOMER') {
+    if (actorRole === 'CUSTOMER' || actorRole === 'REQUESTER') {
       const allowedCustomerStatuses = [
         TicketStatus.CLOSED,
         TicketStatus.OPEN,
@@ -147,7 +156,7 @@ export class Ticket {
       ];
       if (!allowedCustomerStatuses.includes(targetStatus)) {
         throw new UnauthorizedAccessError(
-          `Customers are not permitted to transition ticket to '${targetStatus}'`,
+          `Requesters are not permitted to transition ticket to '${targetStatus}'`,
         );
       }
     }

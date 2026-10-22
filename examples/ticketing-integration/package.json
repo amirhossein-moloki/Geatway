@@ -8,7 +8,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@amirhossein-moloki/payment-core": "workspace:*",
     "@amirhossein-moloki/ticketing-core": "workspace:*",
     "@amirhossein-moloki/ticketing-persistence-postgres": "workspace:*"
   },

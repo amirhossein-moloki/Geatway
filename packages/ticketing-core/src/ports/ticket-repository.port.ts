@@ -3,6 +3,7 @@ import { TicketPriority } from '../domain/enums/ticket-priority.enum.js';
 import { TicketStatus } from '../domain/enums/ticket-status.enum.js';
 
 export interface TicketFilterOptions {
+  requesterId?: string;
   customerId?: string;
   assignedAgentId?: string;
   assignedTeamId?: string;

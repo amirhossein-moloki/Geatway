@@ -157,9 +157,10 @@ export class PostgresTicketRepository implements ITicketRepository {
     const params: unknown[] = [tenantId];
     let paramIdx = 2;
 
-    if (filter.customerId) {
+    const requesterId = filter.requesterId ?? filter.customerId;
+    if (requesterId) {
       whereClauses.push(`customer_id = $${paramIdx++}`);
-      params.push(filter.customerId);
+      params.push(requesterId);
     }
 
     if (filter.unassignedOnly) {

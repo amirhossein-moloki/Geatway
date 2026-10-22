@@ -96,11 +96,22 @@ export class TicketingHttpController {
   public async handleCreateTicket(req: HttpRequest): Promise<HttpResponse> {
     try {
       const ctx = this.extractTenantContext(req);
-      const { title, description, priority, categoryId, relatedEntity, attachments } = req.body as {
+      const {
+        title,
+        description,
+        priority,
+        categoryId,
+        requesterId,
+        customerId,
+        relatedEntity,
+        attachments,
+      } = req.body as {
         title: string;
         description: string;
         priority?: TicketPriority;
         categoryId?: string;
+        requesterId?: string;
+        customerId?: string;
         relatedEntity?: { entityType: string; entityId: string };
         attachments?: Array<{ fileName: string; content: Buffer; mimeType: string }>;
       };
@@ -110,6 +121,7 @@ export class TicketingHttpController {
         description,
         priority,
         categoryId,
+        requesterId: requesterId ?? customerId,
         relatedEntity,
         attachments,
       });
@@ -358,20 +370,24 @@ export class TicketingHttpController {
     }
   }
 
-  public async handleAnonymizeCustomerData(req: HttpRequest): Promise<HttpResponse> {
+  public async handleAnonymizeUserData(req: HttpRequest): Promise<HttpResponse> {
     try {
       const ctx = this.extractTenantContext(req);
-      const customerId = req.params?.customerId;
-      if (!customerId) {
-        return { status: 400, body: { error: 'Missing customerId' } };
+      const userId = req.params?.userId ?? req.params?.customerId;
+      if (!userId) {
+        return { status: 400, body: { error: 'Missing userId' } };
       }
 
-      const result = await this.ticketingService.anonymizeCustomerData(ctx, customerId);
+      const result = await this.ticketingService.anonymizeUserData(ctx, userId);
       return { status: 200, body: result };
     } catch (err: unknown) {
       const error = err as { statusCode?: number; message?: string };
       return { status: error.statusCode ?? 400, body: { error: error.message } };
     }
+  }
+
+  public async handleAnonymizeCustomerData(req: HttpRequest): Promise<HttpResponse> {
+    return this.handleAnonymizeUserData(req);
   }
 
   public async handleGetTicketEvents(req: HttpRequest): Promise<HttpResponse> {

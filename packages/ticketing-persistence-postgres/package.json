@@ -34,7 +34,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@amirhossein-moloki/payment-core": "workspace:*",
     "@amirhossein-moloki/ticketing-core": "workspace:*",
     "pg": "^8.11.5"
   },

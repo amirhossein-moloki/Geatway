@@ -130,9 +130,6 @@ importers:
 
   examples/ticketing-integration:
     dependencies:
-      '@amirhossein-moloki/payment-core':
-        specifier: workspace:*
-        version: link:../../packages/payment-core
       '@amirhossein-moloki/ticketing-core':
         specifier: workspace:*
         version: link:../../packages/ticketing-core
@@ -286,9 +283,6 @@ importers:
 
   packages/ticketing-persistence-postgres:
     dependencies:
-      '@amirhossein-moloki/payment-core':
-        specifier: workspace:*
-        version: link:../payment-core
       '@amirhossein-moloki/ticketing-core':
         specifier: workspace:*
         version: link:../ticketing-core
